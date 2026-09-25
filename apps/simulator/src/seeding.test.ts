@@ -6,18 +6,13 @@ import {
   subjectKeyOf,
 } from '@civora/domain';
 import type { DataProvider } from '@civora/domain';
-import {
-  DEMO_NETWORK_OPTIONS,
-  DEMO_SEED,
-  ITEMS,
-  buildNetwork,
-  historySample,
-  simulateNetwork,
-} from '@civora/simulator';
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
+import { ITEMS } from './anchors/catalogue';
+import { DEMO_NETWORK_OPTIONS, DEMO_SEED, buildNetwork, historySample } from './index';
 import { COLLECTION_NAMES, seedDataProvider } from './seeding';
+import { simulateNetwork } from './simulation';
 
 /**
  * Seeding is only useful if it can be run again.

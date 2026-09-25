@@ -2,9 +2,7 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import type { Item } from '@civora/domain';
-import type { Network, Simulation } from '@civora/simulator';
-
-import type { SeedReport } from './seeding';
+import type { Network, SeedReport, Simulation } from '@civora/simulator';
 
 /**
  * Writing a generated dataset to disk.

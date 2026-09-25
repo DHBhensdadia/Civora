@@ -17,6 +17,8 @@
  *  - `network.ts` — the administrative spine, sized from population.
  *  - `behaviour.ts` — how one facility consumes, stocks out and reports.
  *  - `simulation.ts` — a whole country's worth of observations for one scenario.
+ *  - `seeding.ts` — writing that nation into whatever is behind the
+ *    persistence port, which is how a demonstration environment is set up.
  */
 
 import type { FacilityId } from '@civora/domain';
@@ -35,6 +37,7 @@ export * from './behaviour';
 export * from './network';
 export * from './rng';
 export * from './scenarios';
+export * from './seeding';
 export * from './simulation';
 export * from './summary';
 

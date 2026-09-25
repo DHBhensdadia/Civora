@@ -7,6 +7,7 @@ import {
   ITEMS,
   buildNetwork,
   historySample,
+  seedDataProvider,
   simulateNetwork,
   summariseDataset,
 } from '@civora/simulator';
@@ -14,7 +15,6 @@ import type { NetworkOptions } from '@civora/simulator';
 
 import { exportDataset } from './export';
 import type { ExportFormat } from './export';
-import { seedDataProvider } from './seeding';
 
 /**
  * `pnpm db:seed` — generate the demonstration dataset and store it.

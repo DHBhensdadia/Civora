@@ -1,3 +1,5 @@
+import type { ZodType } from 'zod';
+
 import { CivoraError } from '../errors';
 import type { Instant, Provenance } from '../model/common';
 import { ingestReceiptSchema, ingestRequestSchema, syncConflictSchema } from '../model/ingest';
@@ -9,6 +11,13 @@ import type {
   ObservationType,
   SyncConflict,
 } from '../model/ingest';
+import {
+  bedStatusSchema,
+  footfallObservationSchema,
+  staffAttendanceSchema,
+  stockLedgerEntrySchema,
+  syndromicSignalSchema,
+} from '../model/sensing';
 
 /**
  * What the platform does with a submission, decided without touching a store.
@@ -53,6 +62,30 @@ export const OBSERVATION_COLLECTIONS = {
 
 /** Every collection an observation can be stored in. */
 export type ObservationCollection = (typeof OBSERVATION_COLLECTIONS)[ObservationType];
+
+/**
+ * How each observation type is validated on the way out of storage.
+ *
+ * The third column of the same table. A reader of a stored observation has to
+ * know its shape as well as its address, and looking both up from the type the
+ * client declared is what stops a route handler from carrying its own copy of
+ * the mapping.
+ *
+ * Annotated with the union rather than left inferred so that a caller holding a
+ * type as a *value* can use the lookup at all: inferred, the table is a union of
+ * five schemas and indexing it gives a union back, which no store can be asked
+ * to validate against. Widened, it says what is true — every member validates
+ * some member of the union — and the store still validates on the way in, so a
+ * record filed under the wrong type is a rejected write rather than a corrupt
+ * document.
+ */
+export const OBSERVATION_SCHEMAS: Readonly<Record<ObservationType, ZodType<Observation>>> = {
+  stock_ledger_entry: stockLedgerEntrySchema,
+  bed_status: bedStatusSchema,
+  staff_attendance: staffAttendanceSchema,
+  footfall_observation: footfallObservationSchema,
+  syndromic_signal: syndromicSignalSchema,
+};
 
 /** The keys the ingest receipt and the conflict record are filed under. */
 export const RECEIPT_COLLECTION = 'ingestReceipts';
@@ -173,23 +206,31 @@ export interface IngestStamp {
   readonly provenance: Provenance;
 }
 
-export interface IngestContext {
-  readonly request: IngestRequest;
+/**
+ * What the decision is made against.
+ *
+ * Generic in the request so that the decision carries the record type the
+ * submission declared: a caller that has already narrowed a submission to a bed
+ * report gets a bed report back, and storing it is a call the compiler checks
+ * rather than an assertion the caller has to be trusted about.
+ */
+export interface IngestContext<T extends IngestRequest = IngestRequest> {
+  readonly request: T;
   /** The server's clock, which is authoritative over every device's. */
   readonly receivedAt: Instant;
   /** The receipt already recorded for this idempotency key, if any. */
   readonly existingReceipt: IngestReceipt | null;
   /** The record already stored at this submission's subject key, if any. */
-  readonly existingRecord: Observation | null;
+  readonly existingRecord: T['observation'] | null;
   readonly stamp: IngestStamp;
   /** Allocated by the caller so that this function stays pure. */
   readonly conflictId: string;
 }
 
-export interface IngestDecision {
+export interface IngestDecision<T extends IngestRequest = IngestRequest> {
   readonly outcome: IngestOutcome;
   /** The record to store. Present only when the outcome is `accepted`. */
-  readonly record: Observation | null;
+  readonly record: T['observation'] | null;
   readonly receipt: IngestReceipt;
   /** Present only when the outcome is `conflict`. */
   readonly conflict: SyncConflict | null;
@@ -205,7 +246,7 @@ export interface IngestDecision {
  * produce something the schema rejects, that is a bug here and not a corrupt
  * document discovered later.
  */
-const stamped = (request: IngestRequest, stamp: IngestStamp): Observation =>
+const stamped = <T extends IngestRequest>(request: T, stamp: IngestStamp): T['observation'] =>
   ingestRequestSchema.parse({
     ...request,
     observation: {
@@ -215,9 +256,11 @@ const stamped = (request: IngestRequest, stamp: IngestStamp): Observation =>
       synthetic: stamp.synthetic,
       provenance: stamp.provenance,
     },
-  }).observation;
+  }).observation as T['observation'];
 
-export function decideIngest(context: IngestContext): IngestDecision {
+export function decideIngest<T extends IngestRequest = IngestRequest>(
+  context: IngestContext<T>,
+): IngestDecision<T> {
   const { request, receivedAt, existingReceipt, existingRecord, stamp } = context;
   const subjectKey = subjectKeyOfRequest(request);
   const facilityId = request.observation.facilityId;

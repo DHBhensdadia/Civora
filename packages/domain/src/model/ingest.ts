@@ -46,13 +46,19 @@ export const observationTypeSchema = z.enum(OBSERVATION_TYPES);
 export type ObservationType = z.infer<typeof observationTypeSchema>;
 
 /**
- * One envelope shape per observation type.
- *
  * A discriminated union rather than a loose envelope with an `unknown` body, so
  * that a malformed observation is reported against the type the client declared
  * — "bedsOccupied is not a number", not "your payload is wrong".
  */
-const envelope = <T extends z.ZodType>(type: ObservationType, observation: T) =>
+/**
+ * One envelope shape per observation type.
+ *
+ * The type parameter keeps the literal: written as `ObservationType` it would
+ * widen the discriminant to the whole union in every member, which reads as a
+ * discriminated union and is not one — and the compiler would then refuse to
+ * narrow a submission to the record it declares.
+ */
+const envelope = <K extends ObservationType, T extends z.ZodType>(type: K, observation: T) =>
   z.strictObject({
     type: z.literal(type),
     /**

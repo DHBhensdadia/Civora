@@ -26,13 +26,14 @@ export const MODULES: readonly ModuleDescriptor[] = [
     name: 'Poorvadarshan',
     meaning: 'forecasting',
     responsibility: 'What each facility will need next, from its own consumption history.',
-    status: 'not implemented',
+    status:
+      'forecasting implemented — censored-demand repair, four baselines, backtested against the generated world',
   },
   {
     name: 'Chetavani',
     meaning: 'early warning',
     responsibility: 'Which facilities are heading for a stock-out, and when.',
-    status: 'not implemented',
+    status: 'early warning implemented — nine risk drivers, a ranked list and an alert inbox',
   },
   {
     name: 'Setu',

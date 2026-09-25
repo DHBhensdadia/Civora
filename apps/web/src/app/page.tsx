@@ -36,7 +36,7 @@ export default async function HomePage() {
         className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-6"
       >
         <h2 id="status-heading" className="text-lg font-semibold text-amber-200">
-          The sensing plane exists — nothing is forecast, scored or moved yet
+          The sensing and analytical planes exist — nothing is redistributed yet
         </h2>
         <p className="mt-2 text-amber-100/90">
           What works today is the half that everything else depends on. A facility can record stock,
@@ -57,9 +57,13 @@ export default async function HomePage() {
           .
         </p>
         <p className="mt-2 text-amber-100/90">
-          Nothing has been forecast, risk-scored or redistributed. The stock positions on the
-          visibility surface are read from a ledger; no recommendation is made from them yet, and no
-          transfer has ever been proposed.
+          Forecasts and risk scores are computed from that same generated world, and a district
+          officer can work the ranked list and the alert inbox on the{' '}
+          <Link className="underline underline-offset-4" href="/intelligence">
+            intelligence surface
+          </Link>
+          . What is <em>not</em> written is the redistribution: no transfer has ever been proposed,
+          because the optimiser that would propose one does not exist yet.
         </p>
         <p className="mt-2 text-sm text-amber-100/70">
           All data the platform shows is simulated. Nothing here is a real stock position and this
@@ -97,7 +101,7 @@ export default async function HomePage() {
           Modules
         </h2>
         <p className="text-slate-400">
-          Five capabilities, and a status for each. The unfinished four are named rather than
+          Five capabilities, and a status for each. The two that do not exist are named rather than
           omitted, so nothing here can be mistaken for a feature by being adjacent to one that
           works.
         </p>

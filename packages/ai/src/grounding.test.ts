@@ -41,6 +41,32 @@ describe('reading numerals out of prose', () => {
     expect(numeralsIn('no numerals here')).toEqual([]);
   });
 
+  it('keeps a quantity’s sign, because a fall and a rise share every digit', () => {
+    expect(numeralsIn('rose by 12.5 per cent')).toEqual(['12.5']);
+    expect(numeralsIn('moved -12.5 per cent')).toEqual(['-12.5']);
+    // A model may write a minus as any of three characters, and a typographic
+    // minus is not an invention to be refused.
+    expect(numeralsIn('−12.5 per cent')).toEqual(['-12.5']);
+  });
+
+  it('does not mistake punctuation for a sign', () => {
+    // A hyphen inside a word and a dash between two numbers are not direction.
+    // Reading them as one would refuse correct prose, which is the failure that
+    // gets a check switched off in production.
+    expect(numeralsIn('Tab. Paracetamol 500-mg')).toEqual(['500']);
+    expect(numeralsIn('between 4 - 9 days')).toEqual(['4', '9']);
+    expect(numeralsIn('2026-09-24')).toEqual(['2026', '09', '24']);
+  });
+
+  it('refuses a fall reported as a rise, which is the error a magnitude check cannot see', () => {
+    const signed: readonly Fact[] = [{ key: 'changeSinceLastWeek', value: -12.5 }];
+
+    expect(groundingProblems('demand moved -12.5 per cent', signed)).toEqual([]);
+    expect(groundingProblems('demand rose 12.5 per cent', signed)).toEqual([
+      expect.stringContaining('the number 12.5 is not in the supplied facts'),
+    ]);
+  });
+
   it('treats one quantity written by two conventions as the same quantity', () => {
     // "1,042,492" and "1042492" are the same measurement; only an invention is a
     // grounding failure.

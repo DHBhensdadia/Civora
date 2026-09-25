@@ -23,17 +23,48 @@ import type { ZodType } from 'zod';
  * reader sees came from its own engines.
  */
 
-/** One numeral, reduced to the form a comparison can be made in. */
-const canonical = (raw: string): string => raw.replace(/,/g, '').replace(/\.+$/, '');
+/**
+ * One numeral, reduced to the form a comparison can be made in.
+ *
+ * Grouping separators and spacing are removed, and the three characters a model
+ * may use for a minus sign are folded into one, because "1,042,492" and
+ * "1042492" are the same quantity written by two conventions and neither is an
+ * invention. A trailing full stop is punctuation rather than a decimal point
+ * ("the shelf holds 4." is the number four).
+ */
+const canonical = (raw: string): string =>
+  raw
+    .replace(/[\u2212\u2010\u2011]/g, '-')
+    .replace(/,/g, '')
+    .replace(/\.+$/, '');
 
 /**
- * Every numeral written in a piece of prose.
+ * A numeral, with the sign that belongs to it.
  *
- * Grouping separators are stripped, because "1,042,492" and "1042492" are the
- * same quantity written by two conventions and neither is an invention.
+ * The sign is captured **only where it cannot be punctuation**, which is why it
+ * must be hard against its digits and must not follow a digit: a hyphen inside a
+ * word ("500-mg", "2026-09-24") and a dash between two numbers ("4 - 9 days")
+ * are left to the numerals around them, while a minus at the start of a quantity
+ * is that quantity's own sign. Only the characters a model actually writes for
+ * subtraction are treated as signs; an en dash or em dash is punctuation far more
+ * often than it is a negative.
+ *
+ * The distinction is what makes the rule able to catch the one arithmetic error a
+ * magnitude comparison cannot see: prose that reports a fall of 12.5 where the
+ * fact is -12.5 has every digit right and is wrong.
+ */
+const NUMERAL = /(?<![\d.,])[-\u2212\u2010\u2011]?\d[\d.,]*/g;
+
+/**
+ * Every numeral written in a piece of prose, with its sign.
+ *
+ * The prompt the model is asked with already says *exactly as written*, and this
+ * is that sentence enforced: a fact of `-12.5` admits the numerals `-12.5` and
+ * nothing else, so a body that states the magnitude without the direction fails
+ * the check and is retried with the figure named rather than being published.
  */
 export function numeralsIn(text: string): readonly string[] {
-  return [...text.matchAll(/\d[\d.,]*/g)].map((match) => canonical(match[0]));
+  return [...text.matchAll(NUMERAL)].map((match) => canonical(match[0]));
 }
 
 /** The numerals a narrative is allowed to contain, from the facts it was given. */

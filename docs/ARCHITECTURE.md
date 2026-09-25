@@ -234,6 +234,20 @@ rather than from a list, so what is written for cannot drift from what a reader
 can be shown. Nothing generates a body per row: the set is one pass, before
 anybody opens an alert.
 
+**What the reasoning layer cost is counted at the call, not estimated.**
+`packages/domain/src/ports/reasoning-provider.ts` carries an optional `telemetry()`
+and both adapters implement it: the cloud adapter counts requests, attempts, cache
+hits, refusals, tokens and milliseconds **per task**, and the recorded-replay
+adapter counts the same shape while sending nothing anywhere — no model is named,
+no tokens are reported, and attempts stays at zero. `apps/web/src/lib/telemetry.ts`
+turns those counts into what a reader sees: the adapter is named beside the
+numbers because the same panel under a replay adapter is not a measurement of a
+model, a token count nobody reported reads as _not reported_ rather than as `0`,
+and the volume figures are labelled as arithmetic over the current inbox — one
+request per alert per language, paid once per pass — against which a free tier can
+be assessed. Nothing in the panel makes a call: `/api/telemetry` is a read, which
+is why it is polled while the advisory read beside it is deliberately not.
+
 **Censored demand is corrected before anything is fitted**, and the count and the
 method travel on every forecast (`packages/domain/src/logic/censoring.ts`,
 `packages/forecasting/src/impute.ts`). The measurement of what that correction is

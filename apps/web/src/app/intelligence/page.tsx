@@ -148,6 +148,40 @@ interface AdvisoryPayload {
   }[];
 }
 
+interface TaskTelemetryPayload {
+  readonly task: string;
+  readonly calls: number;
+  readonly attempts: number;
+  readonly cacheHits: number;
+  readonly failures: number;
+  readonly inputTokens: number | null;
+  readonly outputTokens: number | null;
+  readonly durationMs: number;
+  readonly meanRequestMs: number | null;
+}
+
+interface TelemetryPayload {
+  readonly provider: string;
+  readonly model: string | null;
+  readonly reported: boolean;
+  readonly calls: number;
+  readonly attempts: number;
+  readonly cacheHits: number;
+  readonly failures: number;
+  readonly inputTokens: number | null;
+  readonly outputTokens: number | null;
+  readonly durationMs: number;
+  readonly meanRequestMs: number | null;
+  readonly perTask: readonly TaskTelemetryPayload[];
+  readonly projection: {
+    readonly alerts: number;
+    readonly languages: number;
+    readonly advisoryPass: number;
+    readonly perCapture: number;
+  };
+  readonly readAt: string;
+}
+
 const BAND_CLASSES: Readonly<Record<IntelligenceRow['band'], string>> = {
   critical: 'border-rose-500/40 bg-rose-500/10 text-rose-200',
   high: 'border-orange-500/40 bg-orange-500/10 text-orange-200',
@@ -182,6 +216,19 @@ const probability = (row: IntelligenceRow): string =>
 
 const signed = (value: number): string => `${value >= 0 ? '+' : ''}${value.toFixed(2)}`;
 
+/**
+ * A count the provider never reported, said in words.
+ *
+ * Never `0`: a reader who sees a zero believes a measurement was taken. "Not
+ * reported" is the true statement, and it is the difference between a panel that
+ * is evidence and one that is a plausible guess.
+ */
+const countOr = (value: number | null): string =>
+  value === null ? 'not reported' : formatCount(value);
+
+const millisOr = (value: number | null): string =>
+  value === null ? 'no request yet' : `${formatCount(value)} ms`;
+
 export default function IntelligencePage() {
   const [payload, setPayload] = useState<IntelligencePayload | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -192,6 +239,7 @@ export default function IntelligencePage() {
   const [advisories, setAdvisories] = useState<AdvisoryPayload | null>(null);
   const [advisoryResult, setAdvisoryResult] = useState<string | null>(null);
   const [advisoryBusy, setAdvisoryBusy] = useState(false);
+  const [telemetry, setTelemetry] = useState<TelemetryPayload | null>(null);
 
   const load = useCallback(async (): Promise<void> => {
     try {
@@ -244,16 +292,39 @@ export default function IntelligencePage() {
     }
   }, []);
 
+  /**
+   * What the reasoning layer has been asked to do.
+   *
+   * Polled with the inbox, unlike the advisory set beside it: this read makes no
+   * model call and writes nothing, so a five-second refresh costs a reader
+   * nothing — and it is how the counts move visibly when somebody asks the writer
+   * again on this same page.
+   */
+  const loadTelemetry = useCallback(async (): Promise<void> => {
+    try {
+      const response = await fetch('/api/telemetry');
+      if (!response.ok) {
+        return;
+      }
+      setTelemetry((await response.json()) as TelemetryPayload);
+    } catch {
+      // A panel of counts is not worth an error banner over the inbox: the next
+      // refresh either answers or does not.
+    }
+  }, []);
+
   useEffect(() => {
     void load();
     void loadAdvisories();
+    void loadTelemetry();
     const timer = setInterval(() => {
       void load();
+      void loadTelemetry();
     }, REFRESH_INTERVAL_MS);
     return () => {
       clearInterval(timer);
     };
-  }, [load, loadAdvisories]);
+  }, [load, loadAdvisories, loadTelemetry]);
 
   const move = async (alert: AlertPayload, to: string): Promise<void> => {
     const reason = (reasons[alert.id] ?? '').trim();
@@ -614,6 +685,202 @@ export default function IntelligencePage() {
             {advisoryResult === null ? null : (
               <p className="text-sm text-sky-100" data-testid="advisory-result">
                 {advisoryResult}
+              </p>
+            )}
+          </div>
+        )}
+      </Panel>
+
+      <Panel
+        id="telemetry"
+        title="What the reasoning layer has been asked to do"
+        description="Counted at the call by the adapter itself, for this process: requests, attempts against the model, answers served from cache, refusals, tokens and time spent waiting. The ceiling here is a free tier and a per-day rate limit, so the figures are the platform's own account of what it spent rather than an estimate from document counts. The adapter is named beside them, because the same panel under a replay adapter is not a measurement of a model."
+      >
+        {telemetry === null ? (
+          <p className="text-sm text-slate-400" data-testid="telemetry-pending">
+            No telemetry read has happened yet.
+          </p>
+        ) : (
+          <div className="flex flex-col gap-4">
+            <div
+              className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded border border-slate-800 bg-slate-900/60 px-3 py-2 text-sm text-slate-300"
+              data-testid="telemetry-provider"
+              data-provider={telemetry.provider}
+              data-reported={telemetry.reported ? 'yes' : 'no'}
+            >
+              <span>
+                Adapter <span className="font-mono text-sky-300">{telemetry.provider}</span>
+              </span>
+              <span data-testid="telemetry-model">
+                {telemetry.model === null
+                  ? 'sends nowhere — it replays recorded answers'
+                  : `model ${telemetry.model}`}
+              </span>
+              <span className="text-xs text-slate-500">
+                snapshot taken {telemetry.readAt}, refreshed with the inbox every 5 seconds
+              </span>
+            </div>
+
+            {telemetry.reported ? (
+              <>
+                <div
+                  className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-300"
+                  data-testid="telemetry-totals"
+                >
+                  <span>
+                    calls <span className="font-mono">{formatCount(telemetry.calls)}</span>
+                  </span>
+                  <span>
+                    attempts <span className="font-mono">{formatCount(telemetry.attempts)}</span>
+                  </span>
+                  <span>
+                    from cache <span className="font-mono">{formatCount(telemetry.cacheHits)}</span>
+                  </span>
+                  <span className="text-amber-200">
+                    refused <span className="font-mono">{formatCount(telemetry.failures)}</span>
+                  </span>
+                  <span>
+                    tokens in <span className="font-mono">{countOr(telemetry.inputTokens)}</span> ·
+                    out <span className="font-mono">{countOr(telemetry.outputTokens)}</span>
+                  </span>
+                  <span>
+                    mean per request{' '}
+                    <span className="font-mono">{millisOr(telemetry.meanRequestMs)}</span>
+                  </span>
+                </div>
+
+                {telemetry.perTask.length === 0 ? (
+                  <p className="text-sm text-slate-400" data-testid="telemetry-none">
+                    Nothing has been asked of a model in this process yet, so there is nothing to
+                    attribute. A panel of zeros here would be a claim; this is not one.
+                  </p>
+                ) : (
+                  <div className="overflow-x-auto rounded-lg border border-slate-800">
+                    <table className="w-full border-collapse text-sm">
+                      <caption className="sr-only">
+                        Requests made, per task, with attempts, refusals and time
+                      </caption>
+                      <thead>
+                        <tr className="border-b border-slate-800 bg-slate-900/60 text-left">
+                          <th scope="col" className="px-4 py-2 font-medium text-slate-300">
+                            Task
+                          </th>
+                          <th
+                            scope="col"
+                            className="px-4 py-2 text-right font-medium text-slate-300"
+                          >
+                            Calls
+                          </th>
+                          <th
+                            scope="col"
+                            className="px-4 py-2 text-right font-medium text-slate-300"
+                          >
+                            Attempts
+                          </th>
+                          <th
+                            scope="col"
+                            className="px-4 py-2 text-right font-medium text-slate-300"
+                          >
+                            Cache
+                          </th>
+                          <th
+                            scope="col"
+                            className="px-4 py-2 text-right font-medium text-slate-300"
+                          >
+                            Refused
+                          </th>
+                          <th
+                            scope="col"
+                            className="px-4 py-2 text-right font-medium text-slate-300"
+                          >
+                            Tokens in / out
+                          </th>
+                          <th
+                            scope="col"
+                            className="px-4 py-2 text-right font-medium text-slate-300"
+                          >
+                            Mean
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-800/70">
+                        {telemetry.perTask.map((task) => (
+                          <tr key={task.task} data-task={task.task} data-testid="telemetry-task">
+                            <td className="px-4 py-2 font-mono text-slate-200">{task.task}</td>
+                            <td className="px-4 py-2 text-right font-mono text-slate-300">
+                              {formatCount(task.calls)}
+                            </td>
+                            <td className="px-4 py-2 text-right font-mono text-slate-300">
+                              {formatCount(task.attempts)}
+                            </td>
+                            <td className="px-4 py-2 text-right font-mono text-slate-300">
+                              {formatCount(task.cacheHits)}
+                            </td>
+                            <td className="px-4 py-2 text-right font-mono text-amber-200">
+                              {formatCount(task.failures)}
+                            </td>
+                            <td className="px-4 py-2 text-right font-mono text-slate-300">
+                              {countOr(task.inputTokens)} / {countOr(task.outputTokens)}
+                            </td>
+                            <td className="px-4 py-2 text-right font-mono text-slate-300">
+                              {millisOr(task.meanRequestMs)}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </>
+            ) : (
+              <p className="text-sm text-amber-100" data-testid="telemetry-unavailable">
+                This adapter keeps no count of what it has been asked, so there is nothing to show —
+                which is not the same as nothing having happened, and is precisely why the panel
+                says it rather than drawing a zero.
+              </p>
+            )}
+
+            <div
+              className="rounded border border-slate-800 bg-slate-900/60 px-3 py-2 text-sm text-slate-300"
+              data-testid="telemetry-projection"
+            >
+              <p>
+                A full advisory pass for this inbox is{' '}
+                <span className="font-mono text-sky-200">
+                  {formatCount(telemetry.projection.advisoryPass)}
+                </span>{' '}
+                request(s) — {formatCount(telemetry.projection.alerts)} alert(s) in{' '}
+                {formatCount(telemetry.projection.languages)} language(s), one request per body. It
+                is paid once per process rather than once per reader, which is what writing the
+                bodies ahead of the burst buys: one pass a day is{' '}
+                {formatCount(telemetry.projection.advisoryPass)} requests a day for the
+                demonstration profile.
+              </p>
+              <p className="mt-1 text-xs text-slate-500">
+                A photograph and a recording are {formatCount(telemetry.projection.perCapture)}{' '}
+                request each — a capture is one request, and a retry that actually happened is
+                counted in the attempts above rather than estimated here. People take photographs
+                and speak recordings, so no per-day figure for those could be honest; the advisory
+                pass is the clock-driven one. This projection is arithmetic over the current inbox,
+                not a measurement — the counters above are the measurement.
+              </p>
+            </div>
+
+            {telemetry.provider === 'fixture' ? (
+              <p className="text-xs text-amber-100" data-testid="telemetry-caveat">
+                These counters describe this process under a replay adapter: every request was
+                answered from a recording, nothing was sent anywhere, so attempts stays at zero
+                while calls climbs and no tokens are reported. They are true about this process and
+                they are not a measurement of a model — which is exactly why the adapter is named
+                beside them. Configure a live provider and the same panel becomes that
+                provider&apos;s account of itself.
+              </p>
+            ) : (
+              <p className="text-xs text-slate-500" data-testid="telemetry-caveat">
+                A refusal is counted here as a failure, and a retry as an extra attempt against the
+                model: neither is hidden, because a count that only rose on success would make a
+                quota problem invisible until it became an outage. No numeral from this panel
+                reaches a record.
               </p>
             )}
           </div>

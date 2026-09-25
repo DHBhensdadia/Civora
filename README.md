@@ -121,13 +121,22 @@ language; it never authors a quantity that reaches the record.
 
 ## Google AI
 
-Google AI is the intended reasoning layer, behind the `ReasoningProvider` port
-defined in `packages/domain`. The port is implemented and contract-tested in this
-build; the cloud adapter is not, and no Google AI call is made by this code yet.
+Google AI is the reasoning layer, behind the `ReasoningProvider` port defined in
+`packages/domain` and implemented in `packages/ai`. The adapter exists, is
+contract-tested, and every response is validated against the caller's schema
+before it leaves it; a narrative that states a number nobody computed is refused.
+It is used for register extraction, spoken-command parsing, advisory bodies and
+risk-driver explanations, and **no live call has been made yet**: the project has
+no API key, so the recorded-fixture adapter answers in its place, the fixture
+corpus is empty, and the intake surfaces say which reading was supplied rather
+than read. Every attempt, refusal, cache hit, token and millisecond is counted by
+the adapter itself and shown on the intelligence surface, so what a burst would
+cost is the platform's own figure rather than an estimate.
 
-When the adapter lands it will produce schema-locked output, be exercised in CI
-against responses recorded from real calls, and be documented in
-`docs/AI_APPROACH.md` with its evaluation results.
+`pnpm check:bundle` is the standing check that none of this is reachable from the
+browser: it reads the built client bundle and fails if the reasoning endpoint, the
+SDK client or the key's name appears in it, with two positive controls so the
+check cannot pass by scanning nothing.
 
 ## Development
 
@@ -138,7 +147,8 @@ pnpm test         # Vitest: unit and contract tests
 pnpm build        # production build of the web application
 pnpm e2e          # Playwright against the built application
 pnpm db:seed      # generate the demonstration dataset and store it
-pnpm verify       # lint, typecheck, test and build in order
+pnpm check:bundle # the built client bundle carries no reasoning endpoint or key
+pnpm verify       # lint, typecheck, test, build and the bundle check
 ```
 
 CI runs the same gates in the same order, plus a container build.

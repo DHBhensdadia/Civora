@@ -17,12 +17,16 @@
  *    against the hard constraints. It is not a call into the planner, and it
  *    does not share the planner's helpers, so a solver bug cannot make an
  *    invalid plan look valid by agreeing with itself.
+ *  - `impact` prices a plan against the forecasts the platform already stores,
+ *    and is written so it can report a transfer that buys nothing as readily as
+ *    one that pays for itself.
  *
  * A language model may select a strategy and write a rationale. It never
  * originates a quantity: every number in a proposal comes from here.
  */
 
 export * from './feasibility';
+export * from './impact';
 export * from './planner';
 export * from './priorities';
 export * from './validator';

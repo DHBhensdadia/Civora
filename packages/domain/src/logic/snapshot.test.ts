@@ -44,7 +44,10 @@ describe('deriving a stock snapshot', () => {
     const snapshot = deriveStockSnapshot(
       [
         aReceipt({ occurredOn: from, quantity: 500 }),
-        ...dailyIssues(Array.from({ length: windowDays }, () => 2), from),
+        ...dailyIssues(
+          Array.from({ length: windowDays }, () => 2),
+          from,
+        ),
       ],
       FACILITY_A,
       ITEM_PARACETAMOL,
@@ -71,7 +74,10 @@ describe('deriving a stock snapshot', () => {
     const snapshot = deriveStockSnapshot(
       [
         aReceipt({ occurredOn: stockArrived, quantity: 200 }),
-        ...dailyIssues(Array.from({ length: 30 }, () => 5), stockArrived),
+        ...dailyIssues(
+          Array.from({ length: 30 }, () => 5),
+          stockArrived,
+        ),
       ],
       FACILITY_A,
       ITEM_PARACETAMOL,
@@ -85,7 +91,9 @@ describe('deriving a stock snapshot', () => {
     expect(snapshot.demandBasis).toBe('censoring-corrected');
     expect(snapshot.demandRate).toBe(5);
     expect(snapshot.daysOfStock).toBe(10);
-    expect(daysOfStock(snapshot.onHand, recordedRate) ?? 0).toBeGreaterThan(snapshot.daysOfStock ?? 0);
+    expect(daysOfStock(snapshot.onHand, recordedRate) ?? 0).toBeGreaterThan(
+      snapshot.daysOfStock ?? 0,
+    );
   });
 
   it('reports unmeasurable demand as unknown cover rather than as none', () => {
@@ -110,8 +118,14 @@ describe('deriving a stock snapshot', () => {
     const snapshot = deriveStockSnapshot(
       [
         aReceipt({ occurredOn: from, quantity: 500 }),
-        ...dailyIssues(Array.from({ length: 10 }, () => 1), from),
-        ...dailyIssues(Array.from({ length: 30 }, () => 5), addDays(from, 10)),
+        ...dailyIssues(
+          Array.from({ length: 10 }, () => 1),
+          from,
+        ),
+        ...dailyIssues(
+          Array.from({ length: 30 }, () => 5),
+          addDays(from, 10),
+        ),
       ],
       FACILITY_A,
       ITEM_PARACETAMOL,

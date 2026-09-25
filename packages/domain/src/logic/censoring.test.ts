@@ -111,7 +111,9 @@ describe('correcting for it', () => {
     const onHand = 50;
 
     expect(recordedRate).toBeLessThan(correctedRate);
-    expect(daysOfStock(onHand, recordedRate) ?? 0).toBeGreaterThan(daysOfStock(onHand, correctedRate) ?? 0);
+    expect(daysOfStock(onHand, recordedRate) ?? 0).toBeGreaterThan(
+      daysOfStock(onHand, correctedRate) ?? 0,
+    );
   });
 });
 

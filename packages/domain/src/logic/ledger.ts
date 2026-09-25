@@ -113,9 +113,7 @@ export function replayStockLedger(
   }
 
   const superseded = new Set(
-    surviving
-      .map((entry) => entry.correctsEntryId)
-      .filter((id): id is string => id !== null),
+    surviving.map((entry) => entry.correctsEntryId).filter((id): id is string => id !== null),
   );
 
   let supersededEntries = 0;

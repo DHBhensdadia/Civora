@@ -1,8 +1,4 @@
-import {
-  SIMULATED_PROVENANCE,
-  facilityIdSchema,
-  itemIdSchema,
-} from '../model/common';
+import { SIMULATED_PROVENANCE, facilityIdSchema, itemIdSchema } from '../model/common';
 import type { DateOnly, FacilityId, ItemId } from '../model/common';
 import { facilitySchema } from '../model/administrative';
 import type { Facility } from '../model/administrative';
@@ -74,7 +70,10 @@ export const aLedgerEntry = (overrides: RecordOverrides = {}): StockLedgerEntry 
 };
 
 /** A stream of daily issues from `facility-a` of the default item. */
-export const dailyIssues = (quantities: readonly number[], from: DateOnly = BASE_DATE): StockLedgerEntry[] => {
+export const dailyIssues = (
+  quantities: readonly number[],
+  from: DateOnly = BASE_DATE,
+): StockLedgerEntry[] => {
   const start = Date.parse(`${from}T00:00:00.000Z`);
   return quantities
     .map((quantity, offset) => ({ quantity, offset }))

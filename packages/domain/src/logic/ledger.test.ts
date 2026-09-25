@@ -50,7 +50,13 @@ describe('replaying the stock ledger', () => {
     const entries = [
       aReceipt({ id: 'r-1', occurredOn: '2026-01-01', quantity: 60 }),
       ...dailyIssues([4, 4, 4], '2026-01-02'),
-      aLedgerEntry({ id: 'a-1', kind: 'adjust', adjustmentDirection: 'decrease', quantity: 3, occurredOn: '2026-01-05' }),
+      aLedgerEntry({
+        id: 'a-1',
+        kind: 'adjust',
+        adjustmentDirection: 'decrease',
+        quantity: 3,
+        occurredOn: '2026-01-05',
+      }),
     ];
 
     // Arrival order is a property of the transport, not of the record.
@@ -60,7 +66,12 @@ describe('replaying the stock ledger', () => {
   it('ignores a resent entry rather than counting it twice', () => {
     const result = replay([
       aReceipt({ id: 'r-1', idempotencyKey: 'k-receipt', quantity: 40 }),
-      aReceipt({ id: 'r-1-retry', idempotencyKey: 'k-receipt', quantity: 40, recordedAt: '2026-01-01T10:00:00.000Z' }),
+      aReceipt({
+        id: 'r-1-retry',
+        idempotencyKey: 'k-receipt',
+        quantity: 40,
+        recordedAt: '2026-01-01T10:00:00.000Z',
+      }),
     ]);
 
     expect(result.duplicatesIgnored).toBe(1);
@@ -71,7 +82,14 @@ describe('replaying the stock ledger', () => {
     const result = replay([
       aReceipt({ id: 'r-1', occurredOn: '2026-01-01', quantity: 100 }),
       aLedgerEntry({ id: 'i-1', kind: 'issue', quantity: 50, occurredOn: '2026-01-02' }),
-      aLedgerEntry({ id: 'i-2', kind: 'issue', quantity: 30, occurredOn: '2026-01-02', correctsEntryId: 'i-1', recordedAt: '2026-01-02T11:00:00.000Z' }),
+      aLedgerEntry({
+        id: 'i-2',
+        kind: 'issue',
+        quantity: 30,
+        occurredOn: '2026-01-02',
+        correctsEntryId: 'i-1',
+        recordedAt: '2026-01-02T11:00:00.000Z',
+      }),
     ]);
 
     // The corrected entry contributes nothing and the correction stands in its

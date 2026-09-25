@@ -90,13 +90,10 @@ export const transferProposalSchema = z
     message: 'a rejected proposal must name the constraint that refused it',
     path: ['violations'],
   })
-  .refine(
-    (proposal) => proposal.verdict !== 'proposed' || proposal.violations.length === 0,
-    {
-      message: 'a proposal that stands cannot also carry a violation',
-      path: ['violations'],
-    },
-  );
+  .refine((proposal) => proposal.verdict !== 'proposed' || proposal.violations.length === 0, {
+    message: 'a proposal that stands cannot also carry a violation',
+    path: ['violations'],
+  });
 
 export type TransferProposal = z.infer<typeof transferProposalSchema>;
 

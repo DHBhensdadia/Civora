@@ -43,7 +43,8 @@ export interface CensoredInterval {
   readonly estimatedDailyDemand: number;
 }
 
-const sum = (values: readonly number[]): number => values.reduce((total, value) => total + value, 0);
+const sum = (values: readonly number[]): number =>
+  values.reduce((total, value) => total + value, 0);
 
 /**
  * Find spells where stock was exhausted while the item was still in use.

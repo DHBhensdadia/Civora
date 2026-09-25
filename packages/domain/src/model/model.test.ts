@@ -183,7 +183,9 @@ describe('observations', () => {
 
   it('rejects attendance above the posts filled, and filled above the sanctioned strength', () => {
     expect(accepts(staffAttendanceSchema.safeParse(rawAttendance()))).toBe(true);
-    expect(accepts(staffAttendanceSchema.safeParse(rawAttendance({ presentToday: 4 })))).toBe(false);
+    expect(accepts(staffAttendanceSchema.safeParse(rawAttendance({ presentToday: 4 })))).toBe(
+      false,
+    );
     expect(accepts(staffAttendanceSchema.safeParse(rawAttendance({ postsFilled: 5 })))).toBe(false);
   });
 });
@@ -281,7 +283,10 @@ describe('intelligence records', () => {
     raisedOn: '2026-01-31',
     severity: 'high',
     state: 'open',
-    bodies: { en: 'Stock-out expected within 7 days', hi: 'सात दिनों में स्टॉक खत्म होने की संभावना' },
+    bodies: {
+      en: 'Stock-out expected within 7 days',
+      hi: 'सात दिनों में स्टॉक खत्म होने की संभावना',
+    },
     riskScoreId: null,
     dedupeKey: 'facility-a::item-paracetamol::2026-01-31',
     acknowledgedBy: null,
@@ -347,17 +352,23 @@ describe('coordination records', () => {
   });
 
   it('rejects a transfer between a facility and itself', () => {
-    expect(accepts(transferProposalSchema.safeParse(rawProposal({ toFacilityId: 'facility-a' })))).toBe(false);
+    expect(
+      accepts(transferProposalSchema.safeParse(rawProposal({ toFacilityId: 'facility-a' }))),
+    ).toBe(false);
   });
 
   it('requires a rejected proposal to name the constraint that refused it', () => {
-    expect(accepts(transferProposalSchema.safeParse(rawProposal({ verdict: 'rejected' })))).toBe(false);
+    expect(accepts(transferProposalSchema.safeParse(rawProposal({ verdict: 'rejected' })))).toBe(
+      false,
+    );
     expect(
       accepts(
         transferProposalSchema.safeParse(
           rawProposal({
             verdict: 'rejected',
-            violations: [{ constraint: 'cold-chain', detail: 'receiving facility has no working cold chain' }],
+            violations: [
+              { constraint: 'cold-chain', detail: 'receiving facility has no working cold chain' },
+            ],
           }),
         ),
       ),
@@ -420,15 +431,15 @@ describe('coordination records', () => {
     // The load-bearing assertion of the federation story: a payload that could
     // name a patient's record is a breach, so the schema does not offer a way
     // to describe one.
-    expect(accepts(federationRoundSchema.safeParse(rawRound({ containsRecordIdentifiers: true })))).toBe(
-      false,
-    );
+    expect(
+      accepts(federationRoundSchema.safeParse(rawRound({ containsRecordIdentifiers: true }))),
+    ).toBe(false);
   });
 
   it('rejects a round with fewer than two participants or no privacy cost', () => {
-    expect(accepts(federationRoundSchema.safeParse(rawRound({ participantRegionIds: ['region-a'] })))).toBe(
-      false,
-    );
+    expect(
+      accepts(federationRoundSchema.safeParse(rawRound({ participantRegionIds: ['region-a'] }))),
+    ).toBe(false);
     expect(accepts(federationRoundSchema.safeParse(rawRound({ epsilonSpent: 0 })))).toBe(false);
   });
 });
@@ -454,7 +465,9 @@ describe('the catalogue and the network', () => {
     expect(accepts(itemSchema.safeParse({ ...anItem(), unitsPerCase: 12, syndromes: [] }))).toBe(
       false,
     );
-    expect(accepts(itemSchema.safeParse({ ...anItem(), unitsPerCase: 0, syndromes: [] }))).toBe(true);
+    expect(accepts(itemSchema.safeParse({ ...anItem(), unitsPerCase: 0, syndromes: [] }))).toBe(
+      true,
+    );
   });
 
   it('rejects a facility sited against no population', () => {

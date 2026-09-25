@@ -29,7 +29,10 @@ const emptyTierCounts = (): Record<FacilityTier, number> =>
   Object.fromEntries(FACILITY_TIERS.map((tier) => [tier, 0])) as Record<FacilityTier, number>;
 
 const emptyConnectivityCounts = (): Record<ConnectivityBand, number> =>
-  Object.fromEntries(CONNECTIVITY_BANDS.map((band) => [band, 0])) as Record<ConnectivityBand, number>;
+  Object.fromEntries(CONNECTIVITY_BANDS.map((band) => [band, 0])) as Record<
+    ConnectivityBand,
+    number
+  >;
 
 export function summariseNetwork(facilities: readonly Facility[]): NetworkSummary {
   const byTier = emptyTierCounts();

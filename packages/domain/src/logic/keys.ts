@@ -29,5 +29,7 @@ export function parseFacilityItemKey(key: string): FacilityItemRef | null {
   const facilityId = facilityIdSchema.safeParse(rawFacilityId);
   const itemId = itemIdSchema.safeParse(rawItemId);
 
-  return facilityId.success && itemId.success ? { facilityId: facilityId.data, itemId: itemId.data } : null;
+  return facilityId.success && itemId.success
+    ? { facilityId: facilityId.data, itemId: itemId.data }
+    : null;
 }

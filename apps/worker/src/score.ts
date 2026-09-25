@@ -1,9 +1,4 @@
 import { alertSchema, epidemicEventSchema, forecastSchema, riskScoreSchema } from '@civora/domain';
-import type { DateOnly, EpidemicEvent, FacilityId, Item } from '@civora/domain';
-import { detectSurge, epidemicEventOf } from '@civora/domain';
-import type { SyndromeDay } from '@civora/domain';
-import { assessPopulation } from '@civora/forecasting';
-import type { AssessmentInput } from '@civora/forecasting';
 import { InMemoryDataProvider } from '@civora/domain';
 import {
   DEMO_HISTORY_FACILITIES_PER_REGION,
@@ -12,11 +7,9 @@ import {
   ITEMS,
   buildNetwork,
   historySample,
+  scorePopulation,
   simulateNetwork,
 } from '@civora/simulator';
-import type { Network, Simulation } from '@civora/simulator';
-
-import { buildScoredSeries } from './dataset-series';
 
 /**
  * `pnpm worker:score` — the batch job that fills the intelligence surfaces.
@@ -33,8 +26,10 @@ import { buildScoredSeries } from './dataset-series';
  * because the batch that filled each was run on a different day. The scored
  * population has an `asOf`, and everything on screen is from the same one.
  *
- * The output is also printed as a summary, because a job whose only evidence is
- * documents in a store is a job nobody can check.
+ * The pipeline itself lives in `@civora/simulator` because the intelligence
+ * surface runs the same code over the same dataset; this command adds parsing,
+ * persistence and a summary. The output is printed as well as written, because a
+ * job whose only evidence is documents in a store is a job nobody can check.
  */
 
 const USAGE = `
@@ -121,130 +116,6 @@ function parseArguments(argv: readonly string[]): Options {
   };
 }
 
-/** The strongest detected surge per facility, by syndrome. */
-function detectSurges(simulation: Simulation, network: Network): readonly EpidemicEvent[] {
-  const byFacilitySyndrome = new Map<string, SyndromeDay[]>();
-
-  for (const signal of simulation.syndromicSignals) {
-    const key = `${signal.facilityId}|${signal.syndrome}`;
-    const list = byFacilitySyndrome.get(key) ?? [];
-    list.push({ on: signal.observedOn, caseCount: signal.caseCount });
-    byFacilitySyndrome.set(key, list);
-  }
-
-  const districtOf = new Map(
-    network.facilities.map((facility) => [facility.id as string, facility.districtId as string]),
-  );
-  const regionOf = new Map(
-    network.districts.map((district) => [district.id as string, district.regionId as string]),
-  );
-
-  const events: EpidemicEvent[] = [];
-
-  for (const [key, days] of byFacilitySyndrome) {
-    const separator = key.indexOf('|');
-    const facilityId = key.slice(0, separator);
-    const syndromeValue = key.slice(separator + 1);
-    const districtId = districtOf.get(facilityId);
-    const regionId = districtId === undefined ? undefined : regionOf.get(districtId);
-    if (districtId === undefined || regionId === undefined) {
-      continue;
-    }
-
-    const ordered = [...days].sort((left, right) => (left.on < right.on ? -1 : 1));
-    const detection = detectSurge({
-      syndrome: syndromeValue as Parameters<typeof detectSurge>[0]['syndrome'],
-      days: ordered,
-    });
-
-    const event = epidemicEventOf({
-      facilityId: facilityId as FacilityId,
-      regionId: regionId as EpidemicEvent['regionId'],
-      districtId: districtId as EpidemicEvent['districtId'],
-      detection,
-      synthetic: true,
-      provenance: { kind: 'simulated', reference: 'surge-detection' },
-      windowDays: detection.windowDays,
-    });
-
-    if (event !== null) {
-      events.push(event);
-    }
-  }
-
-  return events;
-}
-
-/** Syndromic days per facility and syndrome, for the assessments to consult. */
-function surgeByFacility(
-  simulation: Simulation,
-): ReadonlyMap<string, ReturnType<typeof detectSurge>> {
-  const byFacilitySyndrome = new Map<string, SyndromeDay[]>();
-
-  for (const signal of simulation.syndromicSignals) {
-    const key = `${signal.facilityId}|${signal.syndrome}`;
-    const list = byFacilitySyndrome.get(key) ?? [];
-    list.push({ on: signal.observedOn, caseCount: signal.caseCount });
-    byFacilitySyndrome.set(key, list);
-  }
-
-  const strongest = new Map<string, ReturnType<typeof detectSurge>>();
-
-  for (const [key, days] of byFacilitySyndrome) {
-    const separator = key.indexOf('|');
-    const facilityId = key.slice(0, separator);
-    const syndromeValue = key.slice(separator + 1);
-    const ordered = [...days].sort((left, right) => (left.on < right.on ? -1 : 1));
-
-    const detection = detectSurge({
-      syndrome: syndromeValue as Parameters<typeof detectSurge>[0]['syndrome'],
-      days: ordered,
-    });
-    if (!detection.detected) {
-      continue;
-    }
-
-    const existing = strongest.get(facilityId);
-    if (existing === undefined || detection.excessCasesPerDay > existing.excessCasesPerDay) {
-      strongest.set(facilityId, detection);
-    }
-  }
-
-  return strongest;
-}
-
-interface PairContext {
-  readonly facilityId: FacilityId;
-  readonly item: Item;
-  readonly series: ReturnType<typeof buildScoredSeries>['entries'][number]['series'];
-  readonly leadTimeDays: number;
-  readonly lastOrderOn: DateOnly | null;
-}
-
-function contextsFrom(scored: ReturnType<typeof buildScoredSeries>): readonly PairContext[] {
-  const itemById = new Map(ITEMS.map((item): [string, Item] => [item.id, item]));
-
-  return scored.entries.map((entry) => {
-    const item = itemById.get(entry.series.itemId);
-    // Unreachable in practice — the series builder walks the catalogue — but a
-    // pair with no item would silently score against the wrong essentiality, so
-    // it stops the job instead of being defaulted away.
-    if (item === undefined) {
-      throw new Error(
-        `the generated series names an item the catalogue does not hold: ${entry.series.itemId}`,
-      );
-    }
-
-    return {
-      facilityId: entry.series.facilityId,
-      item,
-      series: entry.series,
-      leadTimeDays: 7,
-      lastOrderOn: null,
-    };
-  });
-}
-
 async function run(argv: readonly string[]): Promise<number> {
   const options = parseArguments(argv);
   const startedAt = Date.now();
@@ -257,100 +128,26 @@ async function run(argv: readonly string[]): Promise<number> {
   const facilityIds = historySample(network, DEMO_HISTORY_FACILITIES_PER_REGION);
   const simulation = simulateNetwork(network, { seed: options.seed, facilityIds });
 
-  const scored = buildScoredSeries(simulation);
-  const events = detectSurges(simulation, network);
-  const surges = surgeByFacility(simulation);
-
-  const byFacility = new Map(
-    network.facilities.map((facility) => [facility.id as string, facility]),
-  );
-  const asOf: DateOnly = simulation.to;
-
-  let contexts = contextsFrom(scored);
-  if (options.limit !== null) {
-    contexts = contexts.slice(0, options.limit);
-  }
-
-  const ordersByPair = new Map<string, { lastPlaced: DateOnly; waits: number[] }>();
-  for (const order of simulation.orders) {
-    if (order.receivedOn === null) {
-      continue;
-    }
-    const key = `${order.facilityId}|${order.itemId}`;
-    const existing = ordersByPair.get(key) ?? { lastPlaced: order.placedOn, waits: [] };
-    existing.waits.push(
-      Math.round(
-        (Date.parse(`${order.receivedOn}T00:00:00.000Z`) -
-          Date.parse(`${order.placedOn}T00:00:00.000Z`)) /
-          86_400_000,
-      ),
-    );
-    if (order.placedOn > existing.lastPlaced) {
-      existing.lastPlaced = order.placedOn;
-    }
-    ordersByPair.set(key, existing);
-  }
-
-  const inputs: AssessmentInput[] = contexts.map((context) => {
-    const key = `${context.facilityId}|${context.item.id}`;
-    const observed = ordersByPair.get(key);
-    const surge = surges.get(context.facilityId) ?? null;
-    const first = context.series.points[context.series.points.length - 1];
-
-    return {
-      facilityId: context.facilityId,
-      item: context.item,
-      series: context.series,
-      asOf,
-      horizonDays: options.horizonDays,
-      // The last day's closing position, which is what the platform last saw.
-      onHand: first?.onHand ?? 0,
-      inTransit: 0,
-      // The generated world's lead times are the ones its own ordering rule was
-      // given; the job reads them off the orders it actually placed.
-      leadTimeDays:
-        observed === undefined || observed.waits.length === 0
-          ? 7
-          : Math.round(
-              [...observed.waits].sort((left, right) => left - right)[
-                Math.floor(observed.waits.length / 2)
-              ] ?? 7,
-            ),
-      leadTimeSpreadDays:
-        observed === undefined || observed.waits.length < 2
-          ? 0
-          : Math.max(...observed.waits) - Math.min(...observed.waits),
-      orderInFlight: false,
-      catchmentPopulation: byFacility.get(context.facilityId)?.catchmentPopulation ?? 20000,
-      footfallTrend: null,
-      surge,
-      daysToNearestExpiry: null,
-      nearExpiryUnits: 0,
-      daysSinceReading: 0,
-      reportingGapDays: 0,
-      coldChainBreachDays: null,
-      seed: `score:${key}:${asOf}`,
-      synthetic: true,
-      provenance: { kind: 'derived', reference: 'worker-score' },
-      engineOptions: { bootstrapReplications: 200 },
-    };
+  const scored = scorePopulation(simulation, network, {
+    horizonDays: options.horizonDays,
+    limit: options.limit,
   });
 
-  const itemById = new Map(ITEMS.map((item) => [item.id as string, item]));
-  const { assessments, raised } = assessPopulation(inputs, {
-    facilityNameOf: (facilityId) => byFacility.get(facilityId)?.name ?? facilityId,
-    itemNameOf: (itemId) => itemById.get(itemId)?.genericName ?? itemId,
-  });
-
+  const assessments = scored.assessments;
   const forecasts = assessments.map((assessment) => assessment.forecast);
   const risks = assessments.map((assessment) => assessment.risk);
+  const raised = scored.alerts;
+  const events = scored.epidemicEvents;
 
   const bandCounts = new Map<string, number>();
   for (const risk of risks) {
     bandCounts.set(risk.band, (bandCounts.get(risk.band) ?? 0) + 1);
   }
 
-  const liftCount = assessments.filter((assessment) => assessment.lift.multiplier > 1).length;
+  const facilityNameOf = new Map(
+    network.facilities.map((facility) => [facility.id as string, facility.name]),
+  );
+  const itemById = new Map(ITEMS.map((item) => [item.id as string, item]));
 
   let written = { forecasts: 0, riskScores: 0, alerts: 0, epidemicEvents: 0 };
   if (!options.dryRun) {
@@ -384,11 +181,13 @@ async function run(argv: readonly string[]): Promise<number> {
 
   const lines = [
     '',
-    `Scored ${String(assessments.length)} facility-item pairs at ${asOf}`,
+    `Scored ${String(assessments.length)} facility-item pairs at ${scored.asOf}`,
     `  profile            ${options.profile} · scenario ${simulation.scenario.id} · seed ${options.seed}`,
-    `  horizon            ${String(options.horizonDays)} days`,
-    `  epidemic events    ${String(events.length)} detected across ${String(surges.size)} facilities`,
-    `  forecasts lifted   ${String(liftCount)} by a surge`,
+    `  horizon            ${String(scored.horizonDays)} days`,
+    `  epidemic events    ${String(events.length)} detected across ${String(
+      scored.surgingFacilities,
+    )} facilities`,
+    `  forecasts lifted   ${String(scored.liftedForecasts)} by a surge`,
     `  bands              ${[...bandCounts]
       .sort()
       .map(([band, count]) => `${band} ${String(count)}`)
@@ -411,7 +210,7 @@ async function run(argv: readonly string[]): Promise<number> {
       .slice(0, 8)
       .map((assessment) => {
         const worst = assessment.risk.drivers[0];
-        const name = byFacility.get(assessment.facilityId)?.name ?? assessment.facilityId;
+        const name = facilityNameOf.get(assessment.facilityId) ?? assessment.facilityId;
         const chance =
           assessment.risk.shortfallProbability === null
             ? '  n/a'

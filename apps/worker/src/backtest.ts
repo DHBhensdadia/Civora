@@ -7,12 +7,12 @@ import {
   DEMO_NETWORK_OPTIONS,
   DEMO_SEED,
   buildNetwork,
+  buildScoredSeries,
   historySample,
   simulateNetwork,
 } from '@civora/simulator';
 import type { NetworkOptions } from '@civora/simulator';
 
-import { buildScoredSeries } from './dataset-series';
 import { renderEvaluationReport } from './evaluation-report';
 import { comparePolicies, pairsFromSimulation } from './policy';
 

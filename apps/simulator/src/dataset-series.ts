@@ -1,7 +1,8 @@
 import { eachDay, replayStockLedger } from '@civora/domain';
 import type { FacilityId, ItemId } from '@civora/domain';
 import type { BacktestSeries } from '@civora/forecasting';
-import type { Simulation } from '@civora/simulator';
+
+import type { Simulation } from './simulation';
 
 /**
  * Turning the generated world into something a forecaster can be scored on.

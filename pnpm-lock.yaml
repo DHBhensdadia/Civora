@@ -101,6 +101,9 @@ importers:
       '@civora/domain':
         specifier: workspace:*
         version: link:../../packages/domain
+      '@civora/forecasting':
+        specifier: workspace:*
+        version: link:../../packages/forecasting
       '@civora/interop':
         specifier: workspace:*
         version: link:../../packages/interop

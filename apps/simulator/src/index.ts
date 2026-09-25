@@ -19,6 +19,11 @@
  *  - `simulation.ts` — a whole country's worth of observations for one scenario.
  *  - `seeding.ts` — writing that nation into whatever is behind the
  *    persistence port, which is how a demonstration environment is set up.
+ *  - `dataset-series.ts` — the same world read as demand series, with the
+ *    demand nobody could meet kept apart from the demand that was served.
+ *  - `intelligence.ts` — the surge, forecast, score and alert pipeline over a
+ *    generated world, shared by the batch job and the surfaces so that the two
+ *    cannot disagree about the same dataset.
  */
 
 import type { FacilityId } from '@civora/domain';
@@ -34,6 +39,8 @@ export * from './anchors/catalogue';
 export * from './anchors/geography';
 export * from './anchors/sources';
 export * from './behaviour';
+export * from './dataset-series';
+export * from './intelligence';
 export * from './network';
 export * from './rng';
 export * from './scenarios';

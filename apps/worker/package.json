@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@civora/domain": "workspace:*",
+    "@civora/forecasting": "workspace:*",
     "@civora/simulator": "workspace:*",
     "zod": "catalog:"
   },

@@ -5,6 +5,7 @@ import {
   withAdvisoryBodies,
 } from '@civora/ai';
 import { alertSchema, InMemoryDataProvider } from '@civora/domain';
+import type { ReasoningTelemetry } from '@civora/domain';
 import { languageLabelOf } from '@civora/i18n';
 import {
   DEMO_HISTORY_FACILITIES_PER_REGION,
@@ -59,6 +60,12 @@ that refusal is reported rather than hidden. Needs no credentials to run.
 `.trim();
 
 class UsageError extends Error {}
+
+/** Token counts said in words, because a provider that reports none has not reported zero. */
+function tokensOf(telemetry: ReasoningTelemetry): string {
+  const count = (value: number | null): string => (value === null ? 'not reported' : String(value));
+  return `${count(telemetry.totalInputTokens)} in / ${count(telemetry.totalOutputTokens)} out`;
+}
 
 interface Options {
   readonly profile: 'demo' | 'national';
@@ -168,6 +175,10 @@ async function run(argv: readonly string[]): Promise<number> {
   const attempts = await generateAdvisories(provider, { alerts, languages });
   const written = attempts.filter((attempt) => attempt.status === 'written');
   const refused = attempts.filter((attempt) => attempt.status === 'refused');
+  // The command that spends the calls reports what they cost, out of the
+  // adapter's own counters rather than out of the request count above: a refused
+  // request still happened, and against a free tier that is the whole point.
+  const telemetry = provider.telemetry?.() ?? null;
 
   let stored = 0;
   if (!options.dryRun) {
@@ -199,6 +210,14 @@ async function run(argv: readonly string[]): Promise<number> {
     `  attempted          ${String(attempts.length)}`,
     `  written            ${String(written.length)}`,
     `  refused            ${String(refused.length)}`,
+    telemetry === null
+      ? '  accounted          this adapter keeps no count of what it was asked'
+      : `  accounted          ${String(telemetry.calls)} request(s) · ${String(telemetry.attempts)} attempt(s) against a model · ${String(telemetry.cacheHits)} from cache · ${String(telemetry.failures)} refused · ${String(telemetry.totalDurationMs)} ms waiting`,
+    telemetry === null
+      ? '  tokens             the adapter reports no usage'
+      : `  tokens             ${tokensOf(telemetry)}${
+          provider.kind === 'fixture' ? ' — a replay sends nowhere, so none are reported' : ''
+        }`,
     options.dryRun
       ? '  stored             nothing (--dry-run)'
       : `  stored             ${String(stored)} alert(s) with a new body`,
@@ -217,6 +236,10 @@ async function run(argv: readonly string[]): Promise<number> {
     'Bodies retrieved from a model are grounded: a numeral in them that the alert’s own facts do',
     'not carry is refused before it can reach a record. A refusal above therefore means the alert',
     'keeps the body it had — never that it lost one.',
+    '',
+    `A full pass here is ${String(attempts.length)} request(s); run once a day that is ${String(
+      attempts.length,
+    )} request(s) a day, which is the figure the free tier has to be assessed against.`,
     '',
     ...(options.dryRun
       ? ['Note: --dry-run read the alert set and computed the bodies, and wrote nothing.', '']

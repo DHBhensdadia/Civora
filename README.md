@@ -3,11 +3,13 @@
 A federated AI platform for health resource and supply-chain planning across a
 national primary health centre network.
 
-> **Status: foundation build.** This repository currently contains the workspace
-> foundation, the architecture's boundary ports and the local development
-> platform. It does **not** yet contain a working prototype: there is no facility
-> data, no forecasting, no advisory generation and no transfer planning. Nothing
-> below is claimed to work, and no module is marked as implemented.
+> **Status: domain and data foundation.** This repository currently contains the
+> workspace foundation, the architecture's boundary ports, the local development
+> platform, the domain model, and a deterministic simulator that generates a
+> national facility network and its consumption and reporting history. It does
+> **not** yet contain a working prototype: there is no forecasting, no advisory
+> generation and no transfer planning. Nothing below is claimed to work beyond
+> what the test suite exercises, and no module is marked as implemented.
 
 ---
 
@@ -29,6 +31,13 @@ first end-to-end slice will take a stock capture at one facility, propagate it
 into a national risk view, forecast its consumption, explain the resulting
 stock-out risk in the facility's own language, and propose a constraint-checked
 transfer from a facility that can spare the stock.
+
+So far the repository can generate the world that slice operates on. `pnpm test`
+runs the simulator against the same seeded inputs every time, and its scenarios —
+a monsoon surge, a diarrhoeal outbreak, a facility that goes offline, a disrupted
+state warehouse, a cold-chain failure, a district expiry cliff — are asserted to
+produce the effects they are named for, alongside two negative controls that are
+asserted to produce nothing at all.
 
 ## Quickstart
 

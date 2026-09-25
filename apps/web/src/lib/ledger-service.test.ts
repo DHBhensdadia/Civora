@@ -128,6 +128,58 @@ describe('how old a reading is', () => {
     expect(ledger.asOf()).toBe('2026-01-12');
     expect(ledger.readingFor(FACILITY_A).newestReadingOn).toBe('2026-01-12');
   });
+
+  it('replays a back-dated adjustment against the day it happened, not the day it arrived', () => {
+    const ledger = service('2026-01-31');
+    ledger.applyEntry(receiptOn('2026-01-01', 100));
+    ledger.applyEntry(receiptOn('2026-01-20', 50, { id: 'receipt-later' }));
+
+    // Written into a paper register a week late and entered against the day it
+    // happened: it belongs inside the window the position is replayed over, so
+    // the derived on-hand moves — while the day the platform reads at, and the
+    // last actual movement, do not.
+    const late = aLedgerEntry({
+      id: 'adjust-back-dated',
+      kind: 'adjust',
+      adjustmentDirection: 'decrease',
+      quantity: 30,
+      occurredOn: '2026-01-05',
+      recordedAt: '2026-01-25T09:00:00.000Z',
+    });
+    ledger.applyEntry(late);
+
+    expect(ledger.stockFor(FACILITY_A)?.items[0]?.onHand).toBe(120);
+    expect(ledger.stockFor(FACILITY_A)?.items[0]?.lastMovementOn).toBe('2026-01-20');
+    expect(ledger.asOf()).toBe('2026-01-31');
+
+    // A client that cannot tell whether the first attempt landed resends it: a
+    // late entry is no more exempt from idempotency than a timely one.
+    ledger.applyEntry(late);
+    expect(ledger.stockFor(FACILITY_A)?.items[0]?.onHand).toBe(120);
+  });
+
+  it('floors a late adjustment recorded against a day the shelf was empty, rather than letting it corrupt the position', () => {
+    const ledger = service('2026-01-31');
+    ledger.applyEntry(receiptOn('2026-01-10', 100));
+
+    // The paper register says thirty units were withdrawn on the fifth, but the
+    // ledger has no stock before the tenth: the ledger is incomplete, and the
+    // position is floored rather than driven below zero. The receipt that
+    // follows still stands, which is what keeps one bad day from becoming a
+    // wrong answer for the whole window.
+    ledger.applyEntry(
+      aLedgerEntry({
+        id: 'adjust-before-any-stock',
+        kind: 'adjust',
+        adjustmentDirection: 'decrease',
+        quantity: 30,
+        occurredOn: '2026-01-05',
+        recordedAt: '2026-01-25T09:00:00.000Z',
+      }),
+    );
+
+    expect(ledger.stockFor(FACILITY_A)?.items[0]?.onHand).toBe(100);
+  });
 });
 
 describe('cover, and the days it may not be computed from', () => {

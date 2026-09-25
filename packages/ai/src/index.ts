@@ -11,7 +11,21 @@
  * contains a numeral absent from the supplied facts is rejected — quantities
  * originate in the deterministic engines, never in a model.
  *
- * Not implemented yet. The provider adapters land with the Gemini reasoning
- * layer.
+ * The first rule is enforced here, on every call. The second is enforced by the
+ * governance layer the advisories are written through, which is where a
+ * narrative — as opposed to a validated record — first exists.
  */
-export {};
+
+export { GeminiReasoningProvider } from './gemini-provider';
+export type {
+  GeminiProviderOptions,
+  InteractionClient,
+  ModelInteractionResult,
+  ReasoningTelemetry,
+} from './gemini-provider';
+
+export { createGeminiClient } from './gemini-client';
+export type { GeminiClientOptions } from './gemini-client';
+
+export { correctionTextOf, factsTextOf, interactionRequestFor } from './request';
+export type { ModelContent, ModelInteractionRequest, ModelUsage } from './request';

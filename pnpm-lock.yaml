@@ -200,6 +200,9 @@ importers:
 
   packages/ai:
     dependencies:
+      '@civora/domain':
+        specifier: workspace:*
+        version: link:../domain
       '@google/genai':
         specifier: 'catalog:'
         version: 2.24.0(@modelcontextprotocol/sdk@1.30.1(zod@4.6.5))
@@ -210,9 +213,15 @@ importers:
       '@civora/config':
         specifier: workspace:*
         version: link:../config
+      '@types/node':
+        specifier: 'catalog:'
+        version: 26.6.2
       typescript:
         specifier: 'catalog:'
         version: 6.0.3
+      vitest:
+        specifier: 'catalog:'
+        version: 5.0.1(@opentelemetry/api@1.9.1)(@types/node@26.6.2)(vite@8.3.1(@types/node@26.6.2)(jiti@2.7.0)(yaml@2.9.1))
 
   packages/config:
     dependencies:

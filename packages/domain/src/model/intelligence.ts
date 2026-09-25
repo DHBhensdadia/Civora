@@ -24,8 +24,10 @@ import { syndromeSchema } from './sensing';
  */
 
 export const FORECAST_METHODS = [
+  'croston',
   'croston-sba',
   'tsb',
+  'holt-winters',
   'seasonal-naive',
   'moving-average',
   'pooled-prior',
@@ -60,6 +62,20 @@ export const forecastSchema = z
     /** How many days of history were censored, and therefore imputed. */
     censoredDaysImputed: z.int().nonnegative(),
     imputation: imputationSchema,
+    /**
+     * The named numbers the fit was made on.
+     *
+     * Stored with the forecast rather than recomputed, because a forecaster that
+     * cannot say what it looked at cannot be argued with — and because the
+     * federated training in Phase 7 shares exactly this list across silos.
+     */
+    features: z.array(z.strictObject({ name: z.string().trim().min(1), value: z.number() })),
+    /**
+     * Everything a reader is entitled to know about how the number was reached:
+     * a censored history that could not be repaired, a series too short to
+     * measure its own error, a rate borrowed from comparable facilities.
+     */
+    warnings: z.array(z.string().trim().min(1)),
     synthetic: syntheticSchema,
     provenance: provenanceSchema,
   })

@@ -9,7 +9,18 @@
  * forecast, with no network access and no clock reads. The Cloud backend sits
  * behind an adapter so local development and CI never need credentials.
  *
- * Not implemented yet. The forecasting work lands with the Poorvadarshan and
- * Chetavani modules.
+ * The entry point is `forecastDemand`, which corrects censored demand before it
+ * fits anything, chooses an engine from the shape of the series, and returns a
+ * `Forecast` that carries its method, its features and every reason it may be
+ * wrong.
  */
-export {};
+
+export * from './types';
+export * from './series';
+export * from './randomness';
+export * from './impute';
+export * from './methods';
+export * from './quantiles';
+export * from './select';
+export * from './priors';
+export * from './engine';

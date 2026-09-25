@@ -266,6 +266,8 @@ describe('intelligence records', () => {
     modelVersion: '0.0.0',
     censoredDaysImputed: 0,
     imputation: 'none',
+    features: [{ name: 'days', value: 120 }],
+    warnings: [],
     synthetic: true,
     provenance: SIMULATED_PROVENANCE,
     ...overrides,
@@ -282,6 +284,21 @@ describe('intelligence records', () => {
 
   it('rejects an upper quantile below the median', () => {
     expect(accepts(forecastSchema.safeParse(rawForecast({ p90: [0, 3, 4] })))).toBe(false);
+  });
+
+  it('accepts a forecast that states what it looked at, and refuses one that does not', () => {
+    // A forecast with no features cannot be argued with, and one with a warning
+    // that names nothing is noise rather than disclosure.
+    expect(accepts(forecastSchema.safeParse(rawForecast({ features: [] })))).toBe(true);
+    expect(
+      accepts(forecastSchema.safeParse(rawForecast({ warnings: ['pooled from peers'] }))),
+    ).toBe(true);
+    expect(accepts(forecastSchema.safeParse(rawForecast({ warnings: ['  '] })))).toBe(false);
+    expect(
+      accepts(
+        forecastSchema.safeParse(rawForecast({ features: [{ name: 'days', value: 'many' }] })),
+      ),
+    ).toBe(false);
   });
 
   const rawAlert = (overrides: Record<string, unknown> = {}): Record<string, unknown> => ({

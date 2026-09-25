@@ -214,6 +214,69 @@ export interface IngestStamp {
  * report gets a bed report back, and storing it is a call the compiler checks
  * rather than an assertion the caller has to be trusted about.
  */
+/**
+ * How this build labels what it stores.
+ *
+ * A property of the platform and not of the device that sent the record, so it
+ * lives here rather than in a route handler or a form. Everything that needs to
+ * know what the platform will store reads it from this one place: the boundary
+ * that stores it, and the capture surface that checks a capture against the same
+ * contract before it queues anything. A deployment with real facilities changes
+ * this value, and no client can influence it — a submission that asserts its own
+ * provenance is overwritten rather than believed.
+ */
+export const PLATFORM_STAMP: IngestStamp = {
+  synthetic: true,
+  provenance: { kind: 'simulated', reference: 'capture-surface' },
+};
+
+/**
+ * A submission as the platform will store it.
+ *
+ * The observation schemas describe the *stored* record, so they require the
+ * fields the platform owns: when it was received, how it arrived, whether it is
+ * simulated, and the key that a replay of the ledger deduplicates on. A client
+ * knows none of those and decides none of them.
+ *
+ * Filling them in one exported function is what keeps a single contract instead
+ * of two. The boundary completes a submission before validating it, so it
+ * accepts exactly what a capture surface is able to send; the surface completes
+ * the same submission before validating it, so a capture the platform would
+ * refuse is refused before it is queued; and neither can drift from the other,
+ * because there is no second copy of the rules to drift.
+ */
+export function completeSubmission(body: unknown, stamp: IngestStamp = PLATFORM_STAMP): unknown {
+  if (typeof body !== 'object' || body === null) {
+    return body;
+  }
+
+  const observation: unknown = Reflect.get(body, 'observation');
+  if (typeof observation !== 'object' || observation === null) {
+    return body;
+  }
+
+  const supplied: unknown = Reflect.get(observation, 'idempotencyKey');
+  const capturedAt: unknown = Reflect.get(body, 'capturedAt');
+  const captureSource: unknown = Reflect.get(body, 'captureSource');
+  const submissionKey: unknown = Reflect.get(body, 'idempotencyKey');
+
+  return {
+    ...body,
+    observation: {
+      ...observation,
+      recordedAt: capturedAt,
+      captureSource,
+      // A submission of several observations supplies one key per record; a
+      // submission of one inherits the submission's, which is the key it will
+      // reuse on every retry.
+      idempotencyKey:
+        typeof supplied === 'string' && supplied.trim() !== '' ? supplied : submissionKey,
+      synthetic: stamp.synthetic,
+      provenance: stamp.provenance,
+    },
+  };
+}
+
 export interface IngestContext<T extends IngestRequest = IngestRequest> {
   readonly request: T;
   /** The server's clock, which is authoritative over every device's. */
@@ -256,7 +319,7 @@ const stamped = <T extends IngestRequest>(request: T, stamp: IngestStamp): T['ob
       synthetic: stamp.synthetic,
       provenance: stamp.provenance,
     },
-  }).observation as T['observation'];
+  }).observation;
 
 export function decideIngest<T extends IngestRequest = IngestRequest>(
   context: IngestContext<T>,

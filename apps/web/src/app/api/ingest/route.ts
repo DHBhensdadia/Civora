@@ -2,15 +2,16 @@ import {
   CONFLICT_COLLECTION,
   OBSERVATION_COLLECTIONS,
   OBSERVATION_SCHEMAS,
+  PLATFORM_STAMP,
   RECEIPT_COLLECTION,
   assertCaptureTimePlausible,
+  completeSubmission,
   decideIngest,
   ingestReceiptSchema,
   ingestRequestSchema,
   subjectKeyOfRequest,
   syncConflictSchema,
 } from '@civora/domain';
-import type { IngestStamp, Provenance } from '@civora/domain';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
@@ -41,20 +42,6 @@ import { SESSION_COOKIE, canSubmitForFacility, parseSession, scopeRefusalFor } f
 
 export const dynamic = 'force-dynamic';
 
-/**
- * How this build labels what a capture surface sends.
- *
- * The demonstration runs on generated data, so a capture submitted through it is
- * a simulated capture and says so. The stamp is applied by the platform, after
- * the client's payload and in place of anything the client claimed, so a device
- * can neither have its data believed nor have it discarded by asserting its own
- * provenance. A deployment with real facilities changes this one value.
- */
-const CAPTURE_STAMP: IngestStamp = {
-  synthetic: true,
-  provenance: { kind: 'simulated', reference: 'capture-surface' } satisfies Provenance,
-};
-
 interface FieldIssue {
   readonly path: string;
   readonly message: string;
@@ -67,43 +54,6 @@ const issuesOf = (
     path: issue.path.map((part) => String(part)).join('.'),
     message: issue.message,
   }));
-
-/**
- * Fill in the fields the platform owns before validating.
- *
- * The observation schemas are the stored shape, so they require the fields the
- * platform stamps. A capture client has no business deciding them, and a form
- * should not have to send placeholders for them either — so they are supplied
- * here, validated as part of the request, and then replaced by the stamp below.
- * A client that sends them anyway is not refused; it is simply ignored.
- */
-function withPlatformFields(body: unknown): unknown {
-  if (typeof body !== 'object' || body === null) {
-    return body;
-  }
-
-  const observation = Reflect.get(body, 'observation');
-  if (typeof observation !== 'object' || observation === null) {
-    return body;
-  }
-
-  return {
-    ...body,
-    observation: {
-      ...observation,
-      recordedAt: Reflect.get(body, 'capturedAt'),
-      captureSource: Reflect.get(body, 'captureSource'),
-      // The record's own retry key, which the replay of the ledger deduplicates
-      // on. A client that submits several observations under one submission key
-      // supplies one per record; a client submitting one inherits the
-      // submission's, which is the key it will reuse on every retry.
-      idempotencyKey:
-        Reflect.get(observation, 'idempotencyKey') ?? Reflect.get(body, 'idempotencyKey'),
-      synthetic: CAPTURE_STAMP.synthetic,
-      provenance: CAPTURE_STAMP.provenance,
-    },
-  };
-}
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   const receivedAt = new Date().toISOString();
@@ -120,7 +70,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     );
   }
 
-  const parsed = ingestRequestSchema.safeParse(withPlatformFields(body));
+  // Completed from the submission's envelope and this build's stamp before it is
+  // validated, so the contract the boundary accepts is exactly the one a capture
+  // surface can satisfy: a client sends what it observed, and the platform
+  // supplies the rest.
+  const parsed = ingestRequestSchema.safeParse(completeSubmission(body, PLATFORM_STAMP));
   if (!parsed.success) {
     return NextResponse.json(
       {
@@ -178,7 +132,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     receivedAt,
     existingReceipt,
     existingRecord,
-    stamp: CAPTURE_STAMP,
+    stamp: PLATFORM_STAMP,
     conflictId: `conflict-${subjectKey}-${submission.idempotencyKey}`,
   });
 

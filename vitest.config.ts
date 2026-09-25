@@ -11,10 +11,16 @@ import { defineConfig } from 'vitest/config';
 const packageEntry = (name: string): string =>
   fileURLToPath(new URL(`./packages/${name}/src/index.ts`, import.meta.url));
 
+const subpathEntry = (name: string, subpath: string): string =>
+  fileURLToPath(new URL(`./packages/${name}/src/${subpath}/index.ts`, import.meta.url));
+
 export default defineConfig({
   resolve: {
     alias: {
       '@civora/ai': packageEntry('ai'),
+      // Declared before `@civora/domain`, because a plain alias matches by
+      // prefix and the subpath would otherwise be rewritten into the entry.
+      '@civora/domain/testing': subpathEntry('domain', 'testing'),
       '@civora/domain': packageEntry('domain'),
       '@civora/federated': packageEntry('federated'),
       '@civora/forecasting': packageEntry('forecasting'),

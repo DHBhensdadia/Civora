@@ -9,6 +9,7 @@ export {
   FACILITY_A,
   FACILITY_B,
   ITEM_PARACETAMOL,
+  aBedReport,
   aFacility,
   aLedgerEntry,
   aReceipt,

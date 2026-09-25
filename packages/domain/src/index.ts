@@ -13,9 +13,11 @@
 export * from './errors';
 
 export * from './model';
+export * from './model/ingest';
 
 export * from './logic/censoring';
 export * from './logic/dates';
+export * from './logic/ingest';
 export * from './logic/inventory';
 export * from './logic/keys';
 export * from './logic/ledger';

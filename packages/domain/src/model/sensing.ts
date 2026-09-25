@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 import {
   batchIdSchema,
+  captureSourceSchema,
   dateSchema,
   facilityIdSchema,
   idempotencyKeySchema,
@@ -83,6 +84,7 @@ export const stockLedgerEntrySchema = z
      * and a platform that cannot see it will double-order.
      */
     transferId: recordIdSchema.nullable(),
+    captureSource: captureSourceSchema,
     synthetic: syntheticSchema,
     provenance: provenanceSchema,
   })
@@ -134,6 +136,7 @@ export const bedStatusSchema = z
     bedsOccupied: z.int().nonnegative(),
     recordedAt: instantSchema,
     idempotencyKey: idempotencyKeySchema,
+    captureSource: captureSourceSchema,
     synthetic: syntheticSchema,
     provenance: provenanceSchema,
   })
@@ -175,6 +178,7 @@ export const staffAttendanceSchema = z
     presentToday: z.int().nonnegative(),
     recordedAt: instantSchema,
     idempotencyKey: idempotencyKeySchema,
+    captureSource: captureSourceSchema,
     synthetic: syntheticSchema,
     provenance: provenanceSchema,
   })
@@ -196,6 +200,7 @@ export const footfallObservationSchema = z.strictObject({
   ipdCount: z.int().nonnegative(),
   recordedAt: instantSchema,
   idempotencyKey: idempotencyKeySchema,
+  captureSource: captureSourceSchema,
   synthetic: syntheticSchema,
   provenance: provenanceSchema,
 });
@@ -232,6 +237,7 @@ export const syndromicSignalSchema = z.strictObject({
   caseCount: z.int().nonnegative(),
   recordedAt: instantSchema,
   idempotencyKey: idempotencyKeySchema,
+  captureSource: captureSourceSchema,
   synthetic: syntheticSchema,
   provenance: provenanceSchema,
 });

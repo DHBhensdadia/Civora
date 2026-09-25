@@ -1,4 +1,10 @@
-import { InMemoryDataProvider, bedStatusSchema, stockLedgerEntrySchema } from '@civora/domain';
+import {
+  InMemoryDataProvider,
+  OBSERVATION_COLLECTIONS,
+  bedStatusSchema,
+  stockLedgerEntrySchema,
+  subjectKeyOf,
+} from '@civora/domain';
 import type { DataProvider } from '@civora/domain';
 import {
   DEMO_NETWORK_OPTIONS,
@@ -48,6 +54,17 @@ const storedCount = async (provider: DataProvider, collection: string): Promise<
   const ref = provider.collection(collection, z.unknown());
   return (await ref.list()).length;
 };
+
+describe('the collections a dataset is written to', () => {
+  it('covers every collection the ingest boundary writes to', () => {
+    // Two writers exist — this seeder and the ingest boundary — and they address
+    // the same collections. A collection added to one and not the other would
+    // give the platform two half-empty stores and no error anywhere.
+    for (const collection of Object.values(OBSERVATION_COLLECTIONS)) {
+      expect(COLLECTION_NAMES).toContain(collection);
+    }
+  });
+});
 
 describe('seeding through the persistence port', () => {
   it('writes every collection the platform stores', async () => {
@@ -101,7 +118,9 @@ describe('seeding through the persistence port', () => {
     // the same size afterwards — and holds the report, not a hole.
     const before = await storedCount(provider, 'bedStatuses');
     const ref = provider.collection('bedStatuses', bedStatusSchema);
-    const key = `${bedStatus.facilityId}|${bedStatus.observedOn}`;
+    // The same key the ingest boundary would compute, which is the point: a
+    // resend through the API addresses the document this seeder wrote.
+    const key = subjectKeyOf('bed_status', bedStatus);
 
     await ref.set(key, bedStatus);
     await ref.set(key, bedStatus);
@@ -118,10 +137,9 @@ describe('seeding through the persistence port', () => {
     if (entry === undefined) {
       throw new Error('the simulated history is expected to contain ledger entries');
     }
-
     const stored = await provider
       .collection('stockLedgerEntries', stockLedgerEntrySchema)
-      .get(entry.id);
+      .get(subjectKeyOf('stock_ledger_entry', entry));
     expect(stored).not.toBeNull();
     expect(stored?.synthetic).toBe(true);
     expect(stored?.provenance).toEqual({ kind: 'simulated', reference: 'simulator' });

@@ -91,3 +91,40 @@ export const SIMULATED_PROVENANCE: Provenance = {
   kind: 'simulated',
   reference: 'simulator',
 };
+
+/**
+ * How a record reached the platform.
+ *
+ * This is the field that makes the trust story checkable rather than asserted.
+ * A stock position is worth different things depending on whether a pharmacist
+ * counted it, a photograph was interpreted, a voice note was transcribed, an
+ * incumbent system was imported, or a generator invented it — and a reader of
+ * the record is entitled to know which without asking.
+ *
+ * `simulation` is in the enum so that generated data says so in its own fields
+ * rather than only in a provenance object, and it is deliberately absent from
+ * the sources a client may claim: `CLIENT_CAPTURE_SOURCES` is what the ingest
+ * boundary accepts, and accepting `simulation` from an upload would let anyone
+ * label their own records as generated and unusable. The boundary refuses it.
+ */
+export const CAPTURE_SOURCES = ['manual', 'vision', 'voice', 'import', 'simulation'] as const;
+
+export const captureSourceSchema = z.enum(CAPTURE_SOURCES);
+export type CaptureSource = z.infer<typeof captureSourceSchema>;
+
+/**
+ * Sources an upload may claim.
+ *
+ * Everything except `simulation`, for the reason given above. Written as a
+ * literal rather than derived from `CAPTURE_SOURCES`, because `z.enum` needs the
+ * literal type to survive; a test asserts the two lists differ by exactly
+ * `simulation`, so a new capture path cannot be added to one and forgotten in
+ * the other.
+ */
+export const CLIENT_CAPTURE_SOURCES = ['manual', 'vision', 'voice', 'import'] as const;
+
+export const clientCaptureSourceSchema = z.enum(CLIENT_CAPTURE_SOURCES);
+export type ClientCaptureSource = z.infer<typeof clientCaptureSourceSchema>;
+
+/** The capture source attached to anything the simulator emits. */
+export const SIMULATED_CAPTURE_SOURCE: CaptureSource = 'simulation';

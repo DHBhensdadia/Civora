@@ -1,11 +1,18 @@
-import { SIMULATED_PROVENANCE, facilityIdSchema, itemIdSchema } from '../model/common';
+import {
+  SIMULATED_CAPTURE_SOURCE,
+  SIMULATED_PROVENANCE,
+  facilityIdSchema,
+  itemIdSchema,
+} from '../model/common';
 import type { DateOnly, FacilityId, ItemId } from '../model/common';
 import { facilitySchema } from '../model/administrative';
 import type { Facility } from '../model/administrative';
 import { itemSchema } from '../model/catalogue';
 import type { Item } from '../model/catalogue';
-import { stockLedgerEntrySchema } from '../model/sensing';
-import type { StockLedgerEntry } from '../model/sensing';
+import { ingestRequestSchema } from '../model/ingest';
+import type { IngestRequest } from '../model/ingest';
+import { bedStatusSchema, stockLedgerEntrySchema } from '../model/sensing';
+import type { BedStatus, StockLedgerEntry } from '../model/sensing';
 
 /**
  * Factories for valid records.
@@ -48,6 +55,7 @@ const DEFAULT_ENTRY: Record<string, unknown> = {
   correctsEntryId: null,
   counterpartFacilityId: null,
   transferId: null,
+  captureSource: SIMULATED_CAPTURE_SOURCE,
   synthetic: true,
   provenance: SIMULATED_PROVENANCE,
 };
@@ -99,6 +107,54 @@ export const aReceipt = (overrides: RecordOverrides = {}): StockLedgerEntry => {
     quantity: 100,
     batchId: `${id}-batch`,
     expiresOn: '2027-01-01',
+    ...overrides,
+  });
+};
+
+/** A valid daily bed report. */
+export const aBedReport = (overrides: RecordOverrides = {}): BedStatus =>
+  bedStatusSchema.parse({
+    facilityId: FACILITY_A,
+    observedOn: BASE_DATE,
+    bedsTotal: 6,
+    bedsOccupied: 4,
+    recordedAt: '2026-01-01T09:00:00.000Z',
+    idempotencyKey: 'key-beds-1',
+    captureSource: SIMULATED_CAPTURE_SOURCE,
+    synthetic: true,
+    provenance: SIMULATED_PROVENANCE,
+    ...overrides,
+  });
+
+/**
+ * A valid ingest envelope.
+ *
+ * Defaults to a stock movement, because that is the payload with the most
+ * required fields and therefore the most useful default to test against. The
+ * envelope's key defaults to the observation's own key, which is what an outbox
+ * item naturally does: one key per queued change, used for both.
+ */
+export const anIngestRequest = (overrides: RecordOverrides = {}): IngestRequest => {
+  const observation = aLedgerEntry();
+  return ingestRequestSchema.parse({
+    type: 'stock_ledger_entry',
+    idempotencyKey: observation.idempotencyKey,
+    captureSource: 'manual',
+    capturedAt: '2026-01-01T09:00:00.000Z',
+    observation,
+    ...overrides,
+  });
+};
+
+/** An ingest envelope carrying a daily bed report. */
+export const aBedIngestRequest = (overrides: RecordOverrides = {}): IngestRequest => {
+  const observation = aBedReport();
+  return ingestRequestSchema.parse({
+    type: 'bed_status',
+    idempotencyKey: observation.idempotencyKey,
+    captureSource: 'manual',
+    capturedAt: '2026-01-01T09:00:00.000Z',
+    observation,
     ...overrides,
   });
 };

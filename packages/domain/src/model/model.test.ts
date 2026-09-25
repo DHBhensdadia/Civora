@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
 import { aFacility, anItem } from '../testing/factories';
-import { SIMULATED_PROVENANCE, dateSchema, instantSchema } from './common';
+import {
+  SIMULATED_CAPTURE_SOURCE,
+  SIMULATED_PROVENANCE,
+  dateSchema,
+  instantSchema,
+} from './common';
 import { facilitySchema } from './administrative';
 import { itemSchema } from './catalogue';
 import { federationRoundSchema, transferProposalSchema } from './coordination';
@@ -35,6 +40,7 @@ const rawEntry = (overrides: Record<string, unknown> = {}): Record<string, unkno
   correctsEntryId: null,
   counterpartFacilityId: null,
   transferId: null,
+  captureSource: SIMULATED_CAPTURE_SOURCE,
   synthetic: true,
   provenance: SIMULATED_PROVENANCE,
   ...overrides,
@@ -154,6 +160,7 @@ describe('observations', () => {
     bedsOccupied: 4,
     recordedAt: '2026-01-01T09:00:00.000Z',
     idempotencyKey: 'key-beds-1',
+    captureSource: SIMULATED_CAPTURE_SOURCE,
     synthetic: true,
     provenance: SIMULATED_PROVENANCE,
     ...overrides,
@@ -168,6 +175,7 @@ describe('observations', () => {
     presentToday: 2,
     recordedAt: '2026-01-01T09:00:00.000Z',
     idempotencyKey: 'key-attendance-1',
+    captureSource: SIMULATED_CAPTURE_SOURCE,
     synthetic: true,
     provenance: SIMULATED_PROVENANCE,
     ...overrides,

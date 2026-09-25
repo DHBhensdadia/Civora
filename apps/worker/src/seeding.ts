@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 
 import {
+  OBSERVATION_COLLECTIONS,
   bedStatusSchema,
   blockSchema,
   countrySchema,
@@ -11,6 +12,7 @@ import {
   regionSchema,
   staffAttendanceSchema,
   stockLedgerEntrySchema,
+  subjectKeyOf,
   syndromicSignalSchema,
 } from '@civora/domain';
 import type { DataProvider } from '@civora/domain';
@@ -68,10 +70,14 @@ export interface SeedInput {
 }
 
 /**
- * The collections the platform stores, in the order they are written.
+ * The collections a dataset is written to, in the order they are written.
  *
  * Reference data first, so a reader of a seeded store meets the administrative
- * spine before the observations that refer to it.
+ * spine before the observations that refer to it — then the observations, whose
+ * names come from the ingest contract's own table rather than from string
+ * literals here. Two writers exist, this seeder and the ingest boundary, and if
+ * they disagreed about where a bed report lives the platform would have two
+ * half-empty collections and no error anywhere.
  */
 export const COLLECTION_NAMES = [
   'countries',
@@ -80,23 +86,10 @@ export const COLLECTION_NAMES = [
   'blocks',
   'facilities',
   'items',
-  'stockLedgerEntries',
-  'bedStatuses',
-  'staffAttendance',
-  'footfallObservations',
-  'syndromicSignals',
+  ...Object.values(OBSERVATION_COLLECTIONS),
 ] as const;
 
 export type CollectionName = (typeof COLLECTION_NAMES)[number];
-
-/** `(facility, day)` — the natural key of a daily facility-level observation. */
-const byFacilityAndDay = (record: {
-  readonly facilityId: string;
-  readonly observedOn: string;
-}): string => `${record.facilityId}|${record.observedOn}`;
-
-/** The label an identifier is built with, escaped so it cannot collide with the separator. */
-const part = (value: string): string => value.replaceAll('|', '%7C');
 
 /** The digest a dataset is identified by. Exported so a caller can check a store against it. */
 export const fingerprintOf = (identifiers: ReadonlyMap<string, readonly string[]>): string => {
@@ -155,33 +148,35 @@ export async function seedDataProvider(
   await writeAll('blocks', blockSchema, input.network.blocks, (block) => block.id);
   await writeAll('facilities', facilitySchema, input.network.facilities, (facility) => facility.id);
   await writeAll('items', itemSchema, input.items, (item) => item.id);
-
   await writeAll(
-    'stockLedgerEntries',
+    OBSERVATION_COLLECTIONS.stock_ledger_entry,
     stockLedgerEntrySchema,
     input.simulation.ledgerEntries,
-    (entry) => entry.id,
-  );
-  await writeAll('bedStatuses', bedStatusSchema, input.simulation.bedStatuses, (status) =>
-    byFacilityAndDay(status),
+    (entry) => subjectKeyOf('stock_ledger_entry', entry),
   );
   await writeAll(
-    'staffAttendance',
+    OBSERVATION_COLLECTIONS.bed_status,
+    bedStatusSchema,
+    input.simulation.bedStatuses,
+    (status) => subjectKeyOf('bed_status', status),
+  );
+  await writeAll(
+    OBSERVATION_COLLECTIONS.staff_attendance,
     staffAttendanceSchema,
     input.simulation.staffAttendance,
-    (attendance) => `${byFacilityAndDay(attendance)}|${part(attendance.cadre)}`,
+    (attendance) => subjectKeyOf('staff_attendance', attendance),
   );
   await writeAll(
-    'footfallObservations',
+    OBSERVATION_COLLECTIONS.footfall_observation,
     footfallObservationSchema,
     input.simulation.footfall,
-    (observation) => byFacilityAndDay(observation),
+    (observation) => subjectKeyOf('footfall_observation', observation),
   );
   await writeAll(
-    'syndromicSignals',
+    OBSERVATION_COLLECTIONS.syndromic_signal,
     syndromicSignalSchema,
     input.simulation.syndromicSignals,
-    (signal) => `${byFacilityAndDay(signal)}|${part(signal.syndrome)}`,
+    (signal) => subjectKeyOf('syndromic_signal', signal),
   );
 
   return {

@@ -248,6 +248,29 @@ request per alert per language, paid once per pass — against which a free tier
 be assessed. Nothing in the panel makes a call: `/api/telemetry` is a read, which
 is why it is polled while the advisory read beside it is deliberately not.
 
+**An evaluation that cannot fail is not evidence, so both evaluations carry a
+control.** `pnpm ai:eval` has two modes and they are deliberately different kinds
+of claim. `--grounding` (`packages/ai/src/eval/grounding-cases.ts`) injects an
+alert whose facts take the shapes that break a numeral comparison — a seven-digit
+figure, a negative change, a three-place decimal — and states, for each draft,
+whether a reader may be shown it. Every accepted draft is then re-run with a
+figure no fact carries, and the run fails unless it stops being accepted: that
+control is what makes the acceptances mean something, and it is why the mode needs
+neither credentials nor a corpus. It also prints the rule refusing a draft written
+without it. `--golden-set` (`packages/ai/src/eval/golden-set.ts`) scores readings
+against hand-written labels, and its own integrity is part of the contract — a case
+without provenance, without its media, or whose media digest does not match is
+**refused by name** rather than skipped, because a corpus that cannot be read is
+not a smaller corpus. It scores the platform's _decision_, not only the reader's
+answer: each labelled line goes through `decideLine`, and a line that would have
+been written where the label says a person should have decided is a false accept,
+which is not a rate and cannot be traded against accuracy. The accuracy figures
+carry the threshold they were measured against and every failure beside them, and
+with an empty corpus the mode prints `NOT MEASURED` with the reason and **no
+percentage**, because a rate over nothing is the one output that would make a green
+run mean nothing was checked. CI runs both, accepts `0` (measured and passing) and
+`2` (not measured) for the golden set, fails on `1`, and prints which one it saw.
+
 **Censored demand is corrected before anything is fitted**, and the count and the
 method travel on every forecast (`packages/domain/src/logic/censoring.ts`,
 `packages/forecasting/src/impute.ts`). The measurement of what that correction is
@@ -300,6 +323,15 @@ Stated here so they cannot drift into a claim:
 - **The Cloud backend has never been executed.** The `bqml` adapter is unit-tested
   against fixtures and the report records the live path as unexecuted, because
   there are no Google Cloud credentials in this environment.
+- **No model has been called.** Every reasoning test drives a stub, the recorded
+  adapter has no recordings, and the intake surfaces accept a supplied reading
+  instead of reading a photograph or hearing a recording. So the **golden set is
+  empty**, and every report of extraction accuracy says `NOT MEASURED` rather than
+  quoting a figure: a fixture is only a fixture if it was captured from a real
+  call, with the command and the day recorded, and writing one by hand would be
+  manufacturing the evidence the command exists to produce. The grounding
+  assertion does not depend on a model — it checks a rule against injected facts —
+  and it is the half of this that is genuinely measured today.
 - **The negative controls are tested, not asserted.** `apps/simulator/src/intelligence.test.ts`
   runs the whole pipeline over the generated scenarios with nothing wrong in them
   and asserts what it finds: no surge, nothing lifted, six alerts out of 789 pairs,

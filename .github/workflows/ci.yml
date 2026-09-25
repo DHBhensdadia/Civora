@@ -41,6 +41,28 @@ jobs:
       - name: Unit and contract tests
         run: pnpm test
 
+      # The grounding assertion injects an alert whose facts take the shapes that
+      # break a numeral comparison, and it needs neither credentials nor a build.
+      # It fails if any accepted draft stays accepted once a figure nobody measured
+      # is invented into it, which is what stops it passing vacuously.
+      - name: Grounding evaluation
+        run: pnpm ai:eval --grounding
+
+      # Exit 0 is a measurement that met its stated threshold and 1 is a
+      # measurement that did not — 1 fails the job. Exit 2 is *not measured*: the
+      # corpus is empty because a case is only a case if it was captured from a
+      # real call, and no key is configured. This step accepts 0 and 2 and says
+      # which it saw, so a green log cannot be read as "the accuracy was checked".
+      - name: Extraction accuracy against the golden set
+        run: |
+          code=0
+          pnpm ai:eval --golden-set || code=$?
+          case "$code" in
+            0) echo "golden set: measured, and met the threshold" ;;
+            2) echo "golden set: NOT MEASURED — the corpus is empty, so no accuracy was checked" ;;
+            *) echo "golden set: exit $code — a measurement that failed, or a corpus file that cannot be scored"; exit "$code" ;;
+          esac
+
       - name: Audit dependencies
         run: pnpm audit --audit-level high
 

@@ -138,6 +138,20 @@ browser: it reads the built client bundle and fails if the reasoning endpoint, t
 SDK client or the key's name appears in it, with two positive controls so the
 check cannot pass by scanning nothing.
 
+`pnpm ai:eval` is how that layer is checked, in two modes that answer different
+questions. `--grounding` injects an alert whose facts are a seven-digit figure, a
+negative change and a three-place decimal, states for each draft whether it may be
+published, and **fails unless every accepted draft stops being accepted once a
+figure nobody measured is put in it** — a check that accepts everything and a
+check that rejects everything both look like a green run, so it proves it is
+neither, and it needs no key. `--golden-set` scores recorded readings against
+hand-written labels, and a case is only a case if its response came from a real
+call: the command, the day and the digest of the media it answers are all required,
+and a corpus file without them is **refused by name** rather than quietly skipped.
+The corpus is empty, so that mode prints `NOT MEASURED` with the reason and **no
+percentage at all** — a rate over nothing is not a measurement — and exits `2`,
+which CI accepts while the key is missing and prints that it did.
+
 ## Development
 
 ```bash
@@ -148,6 +162,7 @@ pnpm build        # production build of the web application
 pnpm e2e          # Playwright against the built application
 pnpm db:seed      # generate the demonstration dataset and store it
 pnpm check:bundle # the built client bundle carries no reasoning endpoint or key
+pnpm ai:eval      # the grounding assertion, and extraction accuracy against a corpus
 pnpm verify       # lint, typecheck, test, build and the bundle check
 ```
 

@@ -127,6 +127,31 @@ export const readCatalogue = async (
   return (await json<{ items: readonly CatalogueItem[] }>(response)).items;
 };
 
+/**
+ * A catalogue item whose written name resolves without ambiguity.
+ *
+ * The demonstration catalogue is the national essential medicines list, and some
+ * generic names are stocked at more than one strength. A journey that needs the
+ * platform to resolve a written name by itself has to name an entry that appears
+ * once when written as `name strength`; otherwise it is exercising the ambiguity
+ * rule by accident and reading the result as a bug.
+ */
+export const unambiguousCatalogueItem = (catalogue: readonly CatalogueItem[]): CatalogueItem => {
+  const counts = new Map<string, number>();
+  for (const item of catalogue) {
+    const written = `${item.name} ${item.strength}`;
+    counts.set(written, (counts.get(written) ?? 0) + 1);
+  }
+
+  const item = catalogue.find(
+    (candidate) => counts.get(`${candidate.name} ${candidate.strength}`) === 1,
+  );
+  if (item === undefined) {
+    throw new Error('the catalogue has no item whose written name is unambiguous');
+  }
+  return item;
+};
+
 /** The identifier of a district, by the name an officer would use for it. */
 export const districtIdNamed = async (
   request: APIRequestContext,

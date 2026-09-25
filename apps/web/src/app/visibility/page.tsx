@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import { CountList, DataTable, Notice, Panel, StatCard, formatCount } from '@/components/ui';
+import { captureBadge } from '@/lib/capture-label';
+import type { CaptureTone } from '@/lib/capture-label';
 
 /**
  * What the district can see, and what it cannot.
@@ -22,6 +24,25 @@ import { CountList, DataTable, Notice, Panel, StatCard, formatCount } from '@/co
 
 /** How often to re-read. Short enough to look live, long enough to be cheap. */
 const REFRESH_INTERVAL_MS = 5000;
+
+/**
+ * How many movements the panel lists across the whole district.
+ *
+ * Twelve, newest first, rather than five per facility: the question the panel
+ * answers is "did the thing I captured land, and does it read as a capture", and
+ * a per-facility window pushes a single capture off the end of the list as the
+ * facility's own history moves on.
+ */
+const MOVEMENTS_SHOWN = 12;
+
+/** How each capture family is drawn, so the words and the colour agree. */
+const CAPTURE_TONES: Readonly<Record<CaptureTone, string>> = {
+  extracted: 'border-sky-500/40 bg-sky-500/10 text-sky-200',
+  typed: 'border-slate-600 bg-slate-800/60 text-slate-300',
+  imported: 'border-violet-500/40 bg-violet-500/10 text-violet-200',
+  generated: 'border-slate-700 bg-slate-900/60 text-slate-400',
+  unknown: 'border-rose-500/40 bg-rose-500/10 text-rose-200',
+};
 
 interface ReadItem {
   readonly itemId: string;
@@ -60,6 +81,15 @@ interface FacilityView {
     } | null;
     readonly footfall: { readonly opd: number; readonly ipd: number } | null;
     readonly syndromic: { readonly cases: number } | null;
+    readonly recentMovements: readonly {
+      readonly id: string;
+      readonly itemName: string;
+      readonly kind: string;
+      readonly quantity: number;
+      readonly occurredOn: string;
+      readonly recordedAt: string;
+      readonly captureSource: string;
+    }[];
     readonly stock: {
       readonly asOf: string;
       readonly itemsTracked: number;
@@ -201,6 +231,24 @@ export default function VisibilityPage() {
     )
     .sort((left, right) => (left.item.daysOfStock ?? 0) - (right.item.daysOfStock ?? 0))
     .slice(0, 12);
+
+  // The district's newest movements, which is where a capture is read back. The
+  // badge beside each one says how it arrived, so a movement a person typed and
+  // one a photograph produced are told apart without opening the ledger.
+  const movements = facilities
+    .flatMap((facility) =>
+      facility.reading.recentMovements.map((movement) => ({ facility, movement })),
+    )
+    .sort((left, right) => {
+      if (left.movement.occurredOn !== right.movement.occurredOn) {
+        return left.movement.occurredOn < right.movement.occurredOn ? 1 : -1;
+      }
+      if (left.movement.recordedAt !== right.movement.recordedAt) {
+        return left.movement.recordedAt < right.movement.recordedAt ? 1 : -1;
+      }
+      return left.movement.id < right.movement.id ? 1 : -1;
+    })
+    .slice(0, MOVEMENTS_SHOWN);
 
   return (
     <main className="mx-auto flex max-w-6xl flex-col gap-10 px-6 py-12">
@@ -431,6 +479,43 @@ export default function VisibilityPage() {
               entry.item.lastMovementOn ?? UNKNOWN,
             ])}
           />
+        )}
+      </Panel>
+
+      <Panel
+        id="movements"
+        title="How the record arrived"
+        description={`The ${formatCount(MOVEMENTS_SHOWN)} most recent movements across the district, each labelled with the channel that produced it — extracted from a photograph or a voice note, typed by a person, imported from another system, or generated for the demonstration. A capture reads differently from the seeded history it sits beside, and a movement the platform cannot place is labelled with its raw source rather than folded into the nearest known one.`}
+      >
+        {movements.length === 0 ? (
+          <p className="text-sm text-slate-400">No movements are held for this district.</p>
+        ) : (
+          <ul
+            className="flex flex-col divide-y divide-slate-800 rounded-lg border border-slate-800"
+            data-testid="movement-list"
+          >
+            {movements.map(({ facility, movement }) => {
+              const badge = captureBadge(movement.captureSource);
+              return (
+                <li
+                  key={movement.id}
+                  className="flex flex-wrap items-baseline justify-between gap-2 px-4 py-3"
+                  data-testid="movement-row"
+                  data-capture={movement.captureSource}
+                >
+                  <span className="text-sm text-slate-200">
+                    {facility.name} · {movement.itemName} · {movement.kind}{' '}
+                    {formatCount(movement.quantity)} · {movement.occurredOn}
+                  </span>
+                  <span
+                    className={`rounded border px-2 py-1 text-xs whitespace-nowrap ${CAPTURE_TONES[badge.tone]}`}
+                  >
+                    {badge.label}
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
         )}
       </Panel>
 

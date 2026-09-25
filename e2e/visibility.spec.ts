@@ -5,8 +5,11 @@ import {
   districtIdNamed,
   facilityOfTier,
   postIngest,
+  readCatalogue,
   readVisibility,
+  stockEnvelope,
   today,
+  unambiguousCatalogueItem,
 } from './support';
 
 /**
@@ -119,6 +122,46 @@ test.describe('the district visibility surface', () => {
     expect(captured.body.outcome).toBe('accepted');
 
     await expect(row).toContainText('22/30', { timeout: 20_000 });
+  });
+
+  test('says a typed movement was typed, and the generated history generated', async ({
+    page,
+    request,
+  }) => {
+    const districtId = await districtIdNamed(request, DISTRICT);
+    const facility = await facilityOfTier(request, districtId, 'PHC');
+    const item = unambiguousCatalogueItem(await readCatalogue(request));
+    const stamp = String(Date.now());
+
+    // A movement a person entered, through the ordinary ingest boundary. The
+    // quantity is unique to this run, so the assertion is about *this* movement
+    // rather than about a figure the seeded ledger already holds.
+    const typed = await postIngest(
+      request,
+      stockEnvelope({
+        facilityId: facility.id,
+        itemId: item.id,
+        entryId: `e2e-arrival-manual-${stamp}`,
+        key: `e2e-arrival-manual-${stamp}`,
+        quantity: 4321,
+        occurredOn: today(),
+      }),
+    );
+    expect(typed.body.outcome).toBe('accepted');
+
+    // Read back on the district surface, which is where a movement is checked.
+    await page.goto('/visibility');
+
+    const rows = page.getByTestId('movement-row');
+    const typedRow = rows.filter({ has: page.getByText('Typed · manual') });
+    // The badge is built from the same field the ledger carries, so it cannot
+    // read one thing while the record says another.
+    await expect(typedRow.first()).toHaveAttribute('data-capture', 'manual');
+    await expect(typedRow.filter({ hasText: item.name }).first()).toContainText('4,321');
+
+    // The generated history it sits beside stays labelled as generated — the
+    // label that keeps a capture and the seeded data apart in one list.
+    await expect(rows.filter({ has: page.getByText('Simulated') }).first()).toBeVisible();
   });
 
   test('opens where a scoped identity is, and lists only the districts it may read', async ({

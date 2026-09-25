@@ -1,7 +1,14 @@
 import { expect, test } from '@playwright/test';
 import type { APIRequestContext } from '@playwright/test';
 
-import { districtIdNamed, facilityOfTier, readCatalogue, readVisibility, today } from './support';
+import {
+  districtIdNamed,
+  facilityOfTier,
+  readCatalogue,
+  readVisibility,
+  today,
+  unambiguousCatalogueItem,
+} from './support';
 import type { CatalogueItem, FacilityView } from './support';
 
 /**
@@ -49,23 +56,6 @@ const aLine = (overrides: Record<string, unknown> = {}): Record<string, unknown>
   note: null,
   ...overrides,
 });
-
-/** An item whose written name the catalogue can resolve on its own. */
-function unambiguousItem(catalogue: readonly CatalogueItem[]): CatalogueItem {
-  const counts = new Map<string, number>();
-  for (const item of catalogue) {
-    const written = `${item.name} ${item.strength}`;
-    counts.set(written, (counts.get(written) ?? 0) + 1);
-  }
-
-  const item = catalogue.find(
-    (candidate) => counts.get(`${candidate.name} ${candidate.strength}`) === 1,
-  );
-  if (item === undefined) {
-    throw new Error('the catalogue has no item whose written name is unambiguous');
-  }
-  return item;
-}
 
 interface VisionView {
   readonly outcome: string;
@@ -116,7 +106,7 @@ test.describe('reading a paper register', () => {
     facilityId = facility.id;
 
     catalogue = await readCatalogue(request);
-    unambiguous = unambiguousItem(catalogue);
+    unambiguous = unambiguousCatalogueItem(catalogue);
     matched = `${unambiguous.name} ${unambiguous.strength}`;
 
     // The facility's own record first. The seeded ledger was generated rather
@@ -283,5 +273,23 @@ test.describe('reading a paper register', () => {
 
     await expect(page.getByTestId('vision-refusal')).toContainText('no recorded response');
     await expect(page.getByTestId('vision-written-line')).toHaveCount(3);
+  });
+
+  test('the movement a photograph produced reads back as extracted, not as typed', async ({
+    page,
+  }) => {
+    // The ledger field the API assertions above check is what the badge on the
+    // district surface is built from. Reading it back here is the point of the
+    // label: an officer looking at a facility's recent movements can tell a
+    // photographed entry from one a person typed, without opening the ledger.
+    await page.goto('/visibility');
+    await page.getByLabel('District', { exact: true }).selectOption(districtId);
+
+    const captured = page
+      .getByTestId('movement-row')
+      .filter({ has: page.getByText('Extracted · vision') });
+    await expect(captured.first()).toHaveAttribute('data-capture', 'vision');
+    // One of them names the medicine this register carried.
+    await expect(captured.filter({ hasText: unambiguous.name }).first()).toBeVisible();
   });
 });

@@ -17,6 +17,7 @@ const subpathEntry = (name: string, subpath: string): string =>
 export default defineConfig({
   resolve: {
     alias: {
+      '@civora/ai/eval': subpathEntry('ai', 'eval'),
       '@civora/ai': packageEntry('ai'),
       // Declared before `@civora/domain`, because a plain alias matches by
       // prefix and the subpath would otherwise be rewritten into the entry.

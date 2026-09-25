@@ -14,3 +14,5 @@ export * from './sensing';
 export * from './derived';
 export * from './intelligence';
 export * from './coordination';
+export * from './extraction';
+export * from './advisory';

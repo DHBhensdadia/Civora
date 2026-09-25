@@ -29,3 +29,18 @@ export type { GeminiClientOptions } from './gemini-client';
 
 export { correctionTextOf, factsTextOf, interactionRequestFor } from './request';
 export type { ModelContent, ModelInteractionRequest, ModelUsage } from './request';
+
+export {
+  advisoryPrompt,
+  contextTextOf,
+  definePrompt,
+  driverExplanationPrompt,
+  JSON_ONLY,
+  NO_INVENTED_NUMBERS,
+  PROMPTS,
+  promptById,
+  stockExtractionPrompt,
+  transferRationalePrompt,
+  voiceCommandPrompt,
+} from './prompts';
+export type { Prompt, PromptInput, PromptParameter, PromptSpec, RegisteredPrompt } from './prompts';

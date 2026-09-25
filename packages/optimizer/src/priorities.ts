@@ -143,6 +143,15 @@ export function receiverPriorityOf(input: {
 }
 
 export interface RankedReceiver extends ReceiverPriority {
+  /**
+   * Never `null` here: a pair with no measured probability is not ranked at all.
+   *
+   * The narrowing is the whole reason the ranked and unranked halves are separate
+   * lists rather than one list with a nullable score — anything downstream of a
+   * ranking can then treat a score as a number, and the one place an unknown can
+   * enter is the check that produced it.
+   */
+  readonly priority: number;
   /** Position in the ranked list, from one. Ties are broken by facility, then item. */
   readonly rank: number;
 }
@@ -175,7 +184,11 @@ export function rankReceivers(positions: readonly ReceiverPriority[]): ReceiverR
         compareText(left.facilityId, right.facilityId) ||
         compareText(left.itemId, right.itemId),
     )
-    .map((position, index) => ({ ...position, rank: index + 1 }));
+    .map((position, index): RankedReceiver => ({
+      ...position,
+      priority: position.priority,
+      rank: index + 1,
+    }));
 
   unmeasured.sort(
     (left, right) =>
@@ -283,6 +296,8 @@ export function expiryPressureOf(earliestExpiryDays: number | null): number {
 }
 
 export interface RankedDonor extends DonorPriority {
+  /** Never `null` here: a donor with no computable floor is not ranked at all. */
+  readonly priority: number;
   readonly rank: number;
 }
 
@@ -309,7 +324,11 @@ export function rankDonors(positions: readonly DonorPriority[]): DonorRanking {
         compareText(left.facilityId, right.facilityId) ||
         compareText(left.itemId, right.itemId),
     )
-    .map((position, index) => ({ ...position, rank: index + 1 }));
+    .map((position, index): RankedDonor => ({
+      ...position,
+      priority: position.priority,
+      rank: index + 1,
+    }));
 
   ineligible.sort(
     (left, right) =>

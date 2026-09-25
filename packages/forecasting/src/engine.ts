@@ -164,6 +164,11 @@ export function forecastDemand(
     imputation: imputed.imputation,
     features,
     warnings,
+    // Null unless something has adjusted this forecast for an epidemic surge.
+    // The engine itself never does: a surge is an external signal with its own
+    // detection pipeline, and folding it in here would make a statistical fit
+    // silently depend on a syndromic count.
+    surge: null,
     synthetic: request.synthetic,
     provenance: request.provenance,
   });

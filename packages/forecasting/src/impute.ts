@@ -34,7 +34,7 @@ import type { DemandPoint, DemandSeries } from './types';
  * claimed.
  */
 
-export type ImputationMethod = 'auto' | 'facility-mean' | 'peer-mean';
+export type ImputationMethod = 'auto' | 'facility-mean' | 'peer-mean' | 'none';
 
 export interface ImputationOptions {
   /**
@@ -75,6 +75,24 @@ export function imputeCensoredDemand(
   const intervals = detectCensoredIntervals(series.points, detection);
   const censoredDaysFound = countCensoredDays(intervals);
   const warnings: string[] = [];
+
+  if (censoredDaysFound > 0 && options.method === 'none') {
+    // A caller may ask for the uncorrected series — the backtest does, to measure
+    // what the correction is worth. The days are still counted and named, because
+    // choosing not to correct is a decision the forecast has to disclose rather
+    // than an absence of information.
+    warnings.push(
+      `${String(censoredDaysFound)} censored days were left uncorrected by request, so the fitted demand describes what this facility could dispense rather than what its patients needed`,
+    );
+    return {
+      points: series.points,
+      censoredDaysFound,
+      censoredDaysImputed: 0,
+      imputation: 'none',
+      latentDailyDemand: 0,
+      warnings,
+    };
+  }
 
   if (censoredDaysFound === 0) {
     return {

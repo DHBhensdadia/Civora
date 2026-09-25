@@ -24,3 +24,7 @@ export * from './quantiles';
 export * from './select';
 export * from './priors';
 export * from './engine';
+export * from './backtest';
+export * from './bqml';
+export * from './parity';
+export * from './assess';

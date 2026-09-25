@@ -104,6 +104,43 @@ test.describe('capture at a facility with no connection', () => {
     ).toHaveLength(1);
   });
 
+  test('opens the capture screen with no connection at all, once it has been saved to the device', async ({
+    page,
+    context,
+  }) => {
+    await page.goto('/capture');
+    // The screen is only saved once the worker says it has stored something, so
+    // this waits for the device to have the shell rather than for the worker to
+    // exist — those are different facts and only the first one is useful.
+    await expect(page.getByTestId('shell-state')).toContainText('Screen saved on this device', {
+      timeout: 20_000,
+    });
+
+    await context.setOffline(true);
+    await page.reload({ waitUntil: 'load' });
+
+    // The screen came out of the device, not off the wire: the browser was told
+    // there is no network before it asked for anything.
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText(
+      'Capture what the facility counted',
+    );
+    await expect(page.getByTestId('sync-state')).toContainText('No connection');
+    await expect(page.getByTestId('shell-state')).toContainText('Screen saved on this device');
+    // And the page that came back is the worker's: a document that loaded out of
+    // the browser's own cache would not be controlled by it, which is what
+    // separates a stored shell from a lucky hit.
+    expect(await page.evaluate(() => navigator.serviceWorker.controller !== null)).toBe(true);
+
+    await context.setOffline(false);
+
+    // Reading the platform's own interface is not something the device is
+    // allowed to answer for itself: with no connection it must say so rather
+    // than show a facility list it remembered from an hour ago.
+    await expect(page.getByTestId('context-state')).toContainText('could not be reached', {
+      timeout: 20_000,
+    });
+  });
+
   test('keeps a refused capture in the queue with the reason, rather than retrying it', async ({
     page,
     request,

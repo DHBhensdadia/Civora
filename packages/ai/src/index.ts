@@ -27,6 +27,16 @@ export type {
 export { createGeminiClient } from './gemini-client';
 export type { GeminiClientOptions } from './gemini-client';
 
+export {
+  advisoryFactsOf,
+  advisoryRequestFor,
+  advisorySchemaFor,
+  advisoryTextsOf,
+  writeAdvisory,
+} from './advisory';
+
+export { allowedNumeralsOf, grounded, groundingProblems, numeralsIn } from './grounding';
+
 export { correctionTextOf, factsTextOf, interactionRequestFor } from './request';
 export type { ModelContent, ModelInteractionRequest, ModelUsage } from './request';
 

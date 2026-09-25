@@ -1,0 +1,20 @@
+{
+  "name": "@civora/federated",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Federated aggregation, differential-privacy accounting and round coordination.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "devDependencies": {
+    "@civora/config": "workspace:*",
+    "typescript": "catalog:"
+  }
+}

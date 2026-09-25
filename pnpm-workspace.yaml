@@ -1,0 +1,60 @@
+# Workspace layout. Applications are deployables; packages are libraries that
+# more than one deployable needs. See README.md for what belongs where.
+packages:
+  - 'apps/*'
+  - 'packages/*'
+
+# Every third-party version is pinned once, here. Packages reference the
+# catalog with `"catalog:"` so a version bump is a single-line change and the
+# tree cannot drift apart.
+#
+# TypeScript is held at 6.x deliberately: typescript-eslint 8 declares support
+# for `>=4.8.4 <6.1.0`, so the 7.x line cannot yet be used for type-aware
+# linting. Revisit when typescript-eslint widens that range.
+catalog:
+  # Application runtime
+  next: 16.3.6
+  react: 19.3.0
+  react-dom: 19.3.0
+  zod: 4.6.5
+
+  # Type system
+  typescript: 6.0.3
+  '@types/node': 26.6.2
+  '@types/react': 19.3.0
+  '@types/react-dom': 19.3.0
+
+  # Lint and format
+  eslint: 10.11.0
+  '@eslint/js': 10.0.1
+  typescript-eslint: 8.70.1
+  eslint-config-prettier: 10.1.8
+  prettier: 3.9.9
+
+  # Test
+  vitest: 5.0.1
+  vite: 8.3.1
+  '@playwright/test': 1.63.0
+
+  # Styling
+  tailwindcss: 4.3.3
+  '@tailwindcss/postcss': 4.3.3
+  postcss: 8.5.28
+
+  # Local platform
+  firebase-tools: 15.31.0
+
+# pnpm blocks lifecycle scripts by default. These packages need theirs to fetch
+# or link a native binary; everything else is pure JavaScript.
+onlyBuiltDependencies:
+  - '@tailwindcss/oxide'
+  - esbuild
+  - protobufjs
+  - sharp
+  - unrs-resolver
+
+# `re2` is an optional accelerator pulled in by the emulator tooling. It falls
+# back to a pure-JavaScript implementation when its native binary is absent, so
+# it is deliberately left unbuilt rather than adding a compiler to the setup.
+ignoredBuiltDependencies:
+  - re2

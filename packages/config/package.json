@@ -1,0 +1,28 @@
+{
+  "name": "@civora/config",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Shared TypeScript, ESLint and Prettier presets. The root of the extends chain for every other package.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "files": [
+    "tsconfig.base.json",
+    "eslint",
+    "prettier.config.js"
+  ],
+  "exports": {
+    "./tsconfig.base.json": "./tsconfig.base.json",
+    "./eslint": "./eslint/index.js",
+    "./prettier": "./prettier.config.js"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@eslint/js": "catalog:",
+    "eslint": "catalog:",
+    "eslint-config-prettier": "catalog:",
+    "typescript": "catalog:",
+    "typescript-eslint": "catalog:"
+  }
+}

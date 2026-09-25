@@ -1,0 +1,13 @@
+LICENSE
+node_modules/
+.next/
+out/
+dist/
+build/
+coverage/
+playwright-report/
+test-results/
+.firebase/
+emulator-data/
+pnpm-lock.yaml
+*.tsbuildinfo

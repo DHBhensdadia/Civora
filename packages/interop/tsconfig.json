@@ -1,0 +1,4 @@
+{
+  "extends": "@civora/config/tsconfig.base.json",
+  "include": ["src/**/*.ts"]
+}

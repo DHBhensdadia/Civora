@@ -1,0 +1,41 @@
+{
+  "name": "civora",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Federated AI platform for national-scale health resource and supply chain management across India's primary health centre network.",
+  "license": "Apache-2.0",
+  "author": "Devansh <dhbhensdadia@gmail.com>",
+  "type": "module",
+  "packageManager": "pnpm@10.32.1",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "bootstrap": "bash scripts/setup.sh",
+    "dev": "bash scripts/dev.sh",
+    "build": "pnpm --filter @civora/web run build",
+    "start": "node scripts/serve-standalone.mjs",
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p e2e/tsconfig.json && pnpm -r run typecheck",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "e2e": "playwright test",
+    "emulators": "firebase emulators:start --config infra/firebase.json --project civora-local",
+    "audit": "pnpm audit --audit-level high",
+    "verify": "pnpm lint && pnpm typecheck && pnpm test && pnpm build"
+  },
+  "devDependencies": {
+    "@civora/config": "workspace:*",
+    "@playwright/test": "catalog:",
+    "@types/node": "catalog:",
+    "eslint": "catalog:",
+    "firebase-tools": "catalog:",
+    "prettier": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vitest": "catalog:"
+  }
+}

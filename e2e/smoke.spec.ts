@@ -5,15 +5,17 @@ test.describe('the foundation build', () => {
     await page.goto('/');
 
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Civora');
-    await expect(page.getByRole('heading', { name: /Foundation build/ })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /sensing plane exists/ })).toBeVisible();
     await expect(page.getByText(/All data the platform shows is simulated/)).toBeVisible();
 
-    // The five modules are named, and every one of them is declared unfinished
-    // rather than implied to work.
+    // The five modules are named, each with a status, and the four that do not
+    // exist say so rather than being implied to work by their proximity to the
+    // one that does.
     for (const module of ['Drishti', 'Poorvadarshan', 'Chetavani', 'Setu', 'Samvad']) {
       await expect(page.getByText(module, { exact: true })).toBeVisible();
     }
     await expect(page.getByText('not implemented').first()).toBeVisible();
+    await expect(page.getByText(/sensing plane implemented/)).toBeVisible();
   });
 
   test('reports the adapters it is running against', async ({ page }) => {

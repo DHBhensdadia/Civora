@@ -373,9 +373,21 @@ export class LedgerService {
     }
   }
 
-  /** The stock position at a facility, or null if it has never reported. */
+  /**
+   * The stock position at a facility, or null when there is nothing to stand on.
+   *
+   * Items the facility holds and items dispatched towards it are both in scope,
+   * and the second is not an optimisation. Stock on a truck is a fact about the
+   * facility it is going to, and a facility that cannot see it orders again —
+   * which is how stock ends up expiring in a store while a shelf runs empty. So
+   * a facility with nothing in its ledger but a delivery on the way still has a
+   * position: zero on hand, thirty in transit, and no cover figure at all.
+   */
   stockFor(facilityId: FacilityId): StockPosition | null {
-    if (!this.heardDays.has(facilityId)) {
+    const inbound = this.inbound.get(facilityId) ?? new Map<ItemId, number>();
+    const tracked = new Set<ItemId>([...(this.itemIds.get(facilityId) ?? []), ...inbound.keys()]);
+
+    if (tracked.size === 0) {
       return null;
     }
 
@@ -388,10 +400,9 @@ export class LedgerService {
     const windowDays = this.options.windowDays ?? DEFAULT_WINDOW_DAYS;
     const from = addDays(asOf, -(windowDays - 1));
     const entries = this.entries.get(facilityId) ?? [];
-    const inbound = this.inbound.get(facilityId) ?? new Map<ItemId, number>();
 
     const positions: ItemPosition[] = [];
-    for (const itemId of this.itemIds.get(facilityId) ?? []) {
+    for (const itemId of tracked) {
       const item = this.itemsById.get(itemId);
       if (item === undefined) {
         continue;

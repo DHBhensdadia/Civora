@@ -71,8 +71,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       { status: 400 },
     );
   }
-
-  const id =
+  const id: unknown =
     typeof body === 'object' && body !== null ? Reflect.get(body, 'principalId') : undefined;
   const principal = store.principals.find((candidate) => candidate.id === id);
 

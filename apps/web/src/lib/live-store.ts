@@ -183,11 +183,10 @@ async function build(): Promise<LiveStore> {
 
   const historyFacilities = [...dataset.facilityIds].sort(ascending);
   const firstFacility = historyFacilities[0];
-  const defaultDistrictId = (
+  const defaultDistrictId: DistrictId | undefined =
     firstFacility === undefined
       ? dataset.network.districts[0]?.id
-      : dataset.network.facilities.find((facility) => facility.id === firstFacility)?.districtId
-  ) as DistrictId | undefined;
+      : dataset.network.facilities.find((facility) => facility.id === firstFacility)?.districtId;
 
   if (defaultDistrictId === undefined) {
     throw new Error('the demonstration network is expected to contain at least one district');
@@ -203,7 +202,7 @@ async function build(): Promise<LiveStore> {
       scenarioId: dataset.simulation.scenario.id,
       scenarioLabel: dataset.simulation.scenario.label,
       expectation: dataset.simulation.scenario.expectation,
-      negativeControl: dataset.simulation.scenario.negativeControl ?? false,
+      negativeControl: dataset.simulation.scenario.negativeControl,
       window: {
         from: dataset.simulation.from,
         to: dataset.simulation.to,

@@ -14,6 +14,12 @@
  * The first rule is enforced here, on every call. The second is enforced by the
  * governance layer the advisories are written through, which is where a
  * narrative — as opposed to a validated record — first exists.
+ *
+ * Advisories are written **ahead of the burst**: `generateAdvisories` walks a
+ * whole alert set for every language the record carries, `generateAdvisory`
+ * reports a refusal as a result rather than throwing it, and
+ * `withAdvisoryBodies` puts only the written bodies onto the record — so a
+ * language that could not be written keeps the body somebody may be reading.
  */
 
 export { GeminiReasoningProvider } from './gemini-provider';
@@ -28,12 +34,24 @@ export { createGeminiClient } from './gemini-client';
 export type { GeminiClientOptions } from './gemini-client';
 
 export {
+  REASONING_PROVIDER_KINDS,
+  ReasoningSelectionError,
+  selectReasoningProvider,
+} from './select-provider';
+export type { ReasoningProviderKind, ReasoningSelection } from './select-provider';
+
+export {
   advisoryFactsOf,
+  advisoryLanguagesOf,
   advisoryRequestFor,
   advisorySchemaFor,
   advisoryTextsOf,
+  generateAdvisories,
+  generateAdvisory,
+  withAdvisoryBodies,
   writeAdvisory,
 } from './advisory';
+export type { AdvisoryAttempt } from './advisory';
 
 export { allowedNumeralsOf, grounded, groundingProblems, numeralsIn } from './grounding';
 

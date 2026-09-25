@@ -28,6 +28,12 @@ import type { ScopeLookup, Session } from './session';
  * computed from the generated dataset, and the seed and the scoring day travel
  * with the payload so a reader can tell which run they are looking at.
  *
+ * The alert set is the platform's own state rather than a projection of the
+ * dataset: a person moves an alert through its life here, and the advisory
+ * writer puts a generated body on it here. Both are writes into this map and
+ * both go through this file, so an alert read by a surface is always the alert
+ * as it was last changed by something in the platform.
+ *
  * Two deliberate inheritances from the batch job: the population is scored at one
  * `asOf`, so no two readers see different numbers for the same pair; and a
  * condition that already has an open alert does not raise a second one, which is
@@ -312,6 +318,23 @@ export interface AlertMove {
   readonly alertId: string;
   readonly to: AlertState;
   readonly reason: string;
+}
+
+/**
+ * Store an alert the platform itself has changed.
+ *
+ * The one write path that is not a person's decision. Nothing a caller can send
+ * reaches this: the advisory writer takes an alert out of this store, produces a
+ * body for a language, and puts the same alert back with that body on it. It is
+ * separate from `moveAlert` because the two are different acts — a move is a
+ * decision somebody made and has to justify, and this is the platform recording
+ * prose it generated — and merging them would make it possible to write a body
+ * without a reason, or to move an alert without a person.
+ */
+export async function storeAlert(alert: Alert): Promise<Alert> {
+  const state = await built();
+  state.alerts.set(alert.id, alert);
+  return alert;
 }
 
 /**

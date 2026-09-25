@@ -15,8 +15,10 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@civora/ai": "workspace:*",
     "@civora/domain": "workspace:*",
     "@civora/forecasting": "workspace:*",
+    "@civora/i18n": "workspace:*",
     "@civora/simulator": "workspace:*",
     "zod": "catalog:"
   },

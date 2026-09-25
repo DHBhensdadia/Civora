@@ -221,6 +221,19 @@ ledger → demand series → censored-demand correction → forecast (p50, p90)
    └── surge lift ────────────────┴→ nine drivers → band → alert
 ```
 
+**An alert's explanation is written ahead of the burst, in one place for two
+callers.** `@civora/ai` walks the whole alert set for every language the records
+carry (`generateAdvisories`), reports a refusal as a result rather than throwing
+it, and puts back only the languages a draft was actually written for
+(`withAdvisoryBodies`) — so a language that could not be written keeps the body
+the alert was raised with, and prose that failed validation never reaches a
+record. `apps/worker/src/advisories.ts` (`pnpm worker:advisories`) is the batch
+form and `apps/web/src/lib/advisory-service.ts` is the form the surface reads;
+both call the same function, and the languages come off `Object.keys(alert.bodies)`
+rather than from a list, so what is written for cannot drift from what a reader
+can be shown. Nothing generates a body per row: the set is one pass, before
+anybody opens an alert.
+
 **Censored demand is corrected before anything is fitted**, and the count and the
 method travel on every forecast (`packages/domain/src/logic/censoring.ts`,
 `packages/forecasting/src/impute.ts`). The measurement of what that correction is

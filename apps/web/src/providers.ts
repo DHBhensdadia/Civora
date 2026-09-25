@@ -1,13 +1,8 @@
-import { GeminiReasoningProvider, createGeminiClient } from '@civora/ai';
-import {
-  CivoraError,
-  FixtureAuthProvider,
-  FixtureReasoningProvider,
-  InMemoryDataProvider,
-} from '@civora/domain';
+import { selectReasoningProvider } from '@civora/ai';
+import { CivoraError, FixtureAuthProvider, InMemoryDataProvider } from '@civora/domain';
 import type { AuthProvider, DataProvider, ReasoningProvider } from '@civora/domain';
 
-import { EnvValidationError, getEnv } from './env';
+import { getEnv } from './env';
 import type { Env } from './env';
 
 /** The adapters this process is running against. */
@@ -50,34 +45,22 @@ function createAuthProvider(env: Env): AuthProvider {
   }
 }
 
+/**
+ * The reasoning adapter, selected by `@civora/ai` rather than here.
+ *
+ * The rule lives in the package because the batch jobs make the same choice from
+ * the same variables, and a job that wrote fixture prose while the surface talked
+ * to a model would make the platform's evidence about itself unreliable. What
+ * stays here is the environment: this application validates it at start-up and
+ * refuses to boot half-configured, so the selection below is handed values that
+ * have already been checked and exists to keep the two callers identical.
+ */
 function createReasoningProvider(env: Env): ReasoningProvider {
-  switch (env.reasoningProvider) {
-    case 'fixture':
-      // Replays recorded responses. With no recordings in this build it refuses
-      // every request rather than inventing an answer, which is what keeps a
-      // surface from appearing to work while no model is behind it.
-      return new FixtureReasoningProvider();
-    case 'gemini': {
-      const { geminiApiKey, geminiModel } = env;
-      // Environment validation already refuses to start without both of these
-      // when this adapter is selected; the check is here because the type does
-      // not carry that guarantee and a keyless client would fail at the first
-      // call instead of at start-up.
-      if (geminiApiKey === undefined || geminiModel === undefined) {
-        throw new EnvValidationError([
-          {
-            variable: 'GEMINI_API_KEY',
-            message: 'required when CIVORA_REASONING_PROVIDER is "gemini"',
-          },
-        ]);
-      }
-      return new GeminiReasoningProvider({
-        client: createGeminiClient({ apiKey: geminiApiKey, model: geminiModel }),
-      });
-    }
-    default:
-      return assertNever(env.reasoningProvider);
-  }
+  return selectReasoningProvider({
+    provider: env.reasoningProvider,
+    apiKey: env.geminiApiKey,
+    model: env.geminiModel,
+  });
 }
 
 let cached: Providers | undefined;

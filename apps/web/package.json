@@ -13,6 +13,7 @@
   "dependencies": {
     "@civora/ai": "workspace:*",
     "@civora/domain": "workspace:*",
+    "@civora/i18n": "workspace:*",
     "@civora/simulator": "workspace:*",
     "next": "catalog:",
     "react": "catalog:",

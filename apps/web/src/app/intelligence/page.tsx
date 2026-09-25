@@ -110,6 +110,44 @@ interface IntelligencePayload {
   };
 }
 
+interface AdvisoryLanguagePayload {
+  readonly language: string;
+  readonly label: string;
+  readonly offered: boolean;
+  readonly status: 'written' | 'refused';
+  readonly inRecord: string | null;
+  readonly generated: string | null;
+  readonly title: string | null;
+  readonly actions: readonly string[];
+  readonly reasoning: readonly string[];
+  readonly citations: readonly string[];
+  readonly refusal: string | null;
+  readonly model: string | null;
+  readonly cacheHit: boolean;
+  readonly attemptedAt: string;
+}
+
+interface AdvisoryPayload {
+  readonly provider: string;
+  readonly offered: readonly { readonly code: string; readonly label: string }[];
+  readonly languages: readonly string[];
+  readonly attempted: number;
+  readonly written: number;
+  readonly refused: number;
+  readonly regenerated: boolean;
+  readonly generatedAt: string;
+  readonly generatedInMs: number;
+  readonly alerts: readonly {
+    readonly alertId: string;
+    readonly facilityName: string;
+    readonly itemName: string;
+    readonly severity: string;
+    readonly state: string;
+    readonly raisedOn: string;
+    readonly languages: readonly AdvisoryLanguagePayload[];
+  }[];
+}
+
 const BAND_CLASSES: Readonly<Record<IntelligenceRow['band'], string>> = {
   critical: 'border-rose-500/40 bg-rose-500/10 text-rose-200',
   high: 'border-orange-500/40 bg-orange-500/10 text-orange-200',
@@ -151,6 +189,9 @@ export default function IntelligencePage() {
   const [reasons, setReasons] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState<string | null>(null);
   const [updatedAt, setUpdatedAt] = useState<string>('');
+  const [advisories, setAdvisories] = useState<AdvisoryPayload | null>(null);
+  const [advisoryResult, setAdvisoryResult] = useState<string | null>(null);
+  const [advisoryBusy, setAdvisoryBusy] = useState(false);
 
   const load = useCallback(async (): Promise<void> => {
     try {
@@ -167,15 +208,52 @@ export default function IntelligencePage() {
     }
   }, []);
 
+  /**
+   * Ask for the advisory set once, and answer from the process afterwards.
+   *
+   * Deliberately not in the poll below. A read of this set is what makes the
+   * platform write the bodies, and a five-second poll would turn a batch step
+   * into a repeated one; the point of writing ahead of the burst is that the
+   * second reader — and the five-second refresh — cost nothing.
+   */
+  const loadAdvisories = useCallback(async (regenerate = false): Promise<void> => {
+    setAdvisoryBusy(true);
+    try {
+      const response = await fetch('/api/advisories', {
+        method: regenerate ? 'POST' : 'GET',
+        ...(regenerate
+          ? {
+              headers: { 'content-type': 'application/json' },
+              body: JSON.stringify({ regenerate: true }),
+            }
+          : {}),
+      });
+      if (!response.ok) {
+        setAdvisoryResult(`the advisory read answered ${String(response.status)}`);
+        return;
+      }
+      const payload = (await response.json()) as AdvisoryPayload;
+      setAdvisories(payload);
+      setAdvisoryResult(
+        regenerate
+          ? `Asked the writer again for ${String(payload.attempted)} language(s) across ${String(payload.alerts.length)} alert(s): ${String(payload.written)} written, ${String(payload.refused)} refused.`
+          : null,
+      );
+    } finally {
+      setAdvisoryBusy(false);
+    }
+  }, []);
+
   useEffect(() => {
     void load();
+    void loadAdvisories();
     const timer = setInterval(() => {
       void load();
     }, REFRESH_INTERVAL_MS);
     return () => {
       clearInterval(timer);
     };
-  }, [load]);
+  }, [load, loadAdvisories]);
 
   const move = async (alert: AlertPayload, to: string): Promise<void> => {
     const reason = (reasons[alert.id] ?? '').trim();
@@ -371,6 +449,174 @@ export default function IntelligencePage() {
               </li>
             ))}
           </ul>
+        )}
+      </Panel>
+
+      <Panel
+        id="advisories"
+        title="Advisory bodies, written ahead of the burst"
+        description="An alert says a shelf is going to run out; it does not explain it, in the language the officer reads. These are the bodies a writer produced for the whole alert set, once, before anybody opened a row — and every language the alert record carries is named, whether or not prose exists for it, because a blank space where a body should be is the one thing a reader would take for agreement."
+      >
+        {advisories === null ? (
+          <p className="text-sm text-slate-400" data-testid="advisory-pending">
+            {advisoryBusy
+              ? 'Asking the writer for a body per language for the whole alert set…'
+              : 'No advisory read has happened yet.'}
+          </p>
+        ) : (
+          <div className="flex flex-col gap-4">
+            <div
+              className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded border border-slate-800 bg-slate-900/60 px-3 py-2 text-sm text-slate-300"
+              data-testid="advisory-summary"
+            >
+              <span>
+                Writer <span className="font-mono text-sky-300">{advisories.provider}</span>
+              </span>
+              <span>
+                languages the record carries{' '}
+                <span className="font-mono">{String(advisories.languages.length)}</span>
+              </span>
+              <span>
+                attempted <span className="font-mono">{String(advisories.attempted)}</span>
+              </span>
+              <span className="text-emerald-300">
+                written <span className="font-mono">{String(advisories.written)}</span>
+              </span>
+              <span className="text-amber-200">
+                refused <span className="font-mono">{String(advisories.refused)}</span>
+              </span>
+              <span className="text-xs text-slate-500">
+                {advisories.regenerated
+                  ? `written by this read in ${String(advisories.generatedInMs)} ms, at ${advisories.generatedAt}`
+                  : `answered from this process; the set was written at ${advisories.generatedAt}`}
+              </span>
+            </div>
+
+            {advisories.languages.some((code) =>
+              advisories.offered.every((offered) => offered.code !== code),
+            ) ? (
+              <p className="text-xs text-slate-500">
+                An alert carries a language this build does not offer:{' '}
+                {advisories.languages
+                  .filter((code) => advisories.offered.every((offered) => offered.code !== code))
+                  .join(', ')}
+                . It is written for and named by its tag rather than being relabelled as English.
+              </p>
+            ) : null}
+
+            <p className="text-xs text-slate-500">
+              Offered and not carried by any alert yet:{' '}
+              {advisories.offered
+                .filter((offered) => !advisories.languages.includes(offered.code))
+                .map((offered) => offered.label)
+                .join(', ') || 'none — every offered language has a body'}
+              . A reader of those languages is shown nothing until the alert record carries one,
+              which is what adding a language to the alert template means.
+            </p>
+
+            <ul className="flex flex-col gap-3">
+              {advisories.alerts.map((alert) => (
+                <li
+                  key={alert.alertId}
+                  className="rounded-lg border border-slate-800 bg-slate-900/60 p-3"
+                  data-testid="advisory-alert"
+                >
+                  <p className="text-sm text-slate-200">
+                    {alert.facilityName} · {alert.itemName} ·{' '}
+                    <span className="text-rose-200">{alert.severity}</span> · raised{' '}
+                    {alert.raisedOn}
+                  </p>
+
+                  <ul className="mt-2 flex flex-col gap-2">
+                    {alert.languages.map((language) => (
+                      <li
+                        key={`${alert.alertId}:${language.language}`}
+                        className="rounded border border-slate-800 bg-slate-950/60 px-3 py-2"
+                        data-language={language.language}
+                        data-status={language.status}
+                        data-testid="advisory-language"
+                      >
+                        <div className="flex flex-wrap items-center gap-2 text-xs">
+                          <span className="text-slate-300">{language.label}</span>
+                          <span
+                            className={
+                              language.status === 'written'
+                                ? 'rounded border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5 text-emerald-200'
+                                : 'rounded border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-amber-100'
+                            }
+                            data-testid="advisory-status"
+                          >
+                            {language.status}
+                          </span>
+                          {language.model === null ? null : (
+                            <span className="text-slate-500">
+                              {language.model}
+                              {language.cacheHit ? ' · from cache' : ''}
+                            </span>
+                          )}
+                        </div>
+
+                        {language.generated === null ? null : (
+                          <div className="mt-2 flex flex-col gap-1">
+                            <p className="text-sm text-slate-200">{language.generated}</p>
+                            {language.actions.length === 0 ? null : (
+                              <ul className="list-inside list-disc text-xs text-slate-300">
+                                {language.actions.map((action) => (
+                                  <li key={action}>{action}</li>
+                                ))}
+                              </ul>
+                            )}
+                            <p className="text-xs text-slate-500">
+                              cites {language.citations.join(', ')}
+                            </p>
+                          </div>
+                        )}
+
+                        <p className="mt-2 text-xs text-slate-400">
+                          In the record for this language:{' '}
+                          <span className="text-slate-300">
+                            {language.inRecord ?? 'nothing — no body exists in this language yet'}
+                          </span>
+                        </p>
+
+                        {language.refusal === null ? null : (
+                          <p className="mt-1 text-xs text-amber-100" data-testid="advisory-refusal">
+                            No prose was written: {language.refusal}
+                          </p>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </li>
+              ))}
+            </ul>
+
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                className="rounded border border-sky-500/40 bg-sky-500/10 px-3 py-2 text-sm text-sky-200 disabled:opacity-40"
+                data-testid="advisory-regenerate"
+                disabled={advisoryBusy}
+                onClick={() => {
+                  void loadAdvisories(true);
+                }}
+                type="button"
+              >
+                Ask the writer again
+              </button>
+              <span className="text-xs text-slate-500">
+                A refusal is a result, not a failure: with no reasoning provider configured every
+                language above refuses, and the alert keeps the body it was raised with rather than
+                losing it to a writer that could not improve it. No numeral in a generated body may
+                come from anywhere but the alert's own facts.
+              </span>
+            </div>
+
+            {advisoryResult === null ? null : (
+              <p className="text-sm text-sky-100" data-testid="advisory-result">
+                {advisoryResult}
+              </p>
+            )}
+          </div>
         )}
       </Panel>
 

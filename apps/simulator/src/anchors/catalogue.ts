@@ -1,183 +1,42 @@
-import type { Item } from '@civora/domain';
-import { itemSchema, itemIdSchema } from '@civora/domain';
+import type { Item, ItemCategory } from '@civora/domain';
+import { parseNlemExtract } from '@civora/interop';
+import type { NlemCareMarker, NlemItemRow } from '@civora/interop';
+
+import { RETRIEVAL_DATE } from './sources';
 
 /**
  * The item catalogue, anchored on the National List of Essential Medicines.
  *
- * Section codes, generic names and dosage forms are read from the NLEM 2022
- * document recorded in `sources.ts`, as are the level-of-care markers: an item
- * NLEM marks `P` is one a primary-level facility is expected to hold, which is
- * what decides whether a sub-centre or a primary health centre stocks it.
- *
- * The fields NLEM does not carry — unit of consumption, shelf life, pack size,
- * storage class, and the consumption figures that turn routine prescribing and
- * a surveillance surge into a demand lift — are derived by the documented rules
- * below rather than typed in per item. Deriving them keeps the assumptions in
- * one readable place instead of scattered across fifty rows, and every
- * derivation is listed in the assumptions table of `docs/DATA_PROVENANCE.md`.
- * The consumption figures are exported because the behavioural model in
- * `behaviour.ts` is the only place they are read.
+ * The rows below are what the published list carries: a section code, a generic
+ * name, a dosage form, a strength and the list's own level-of-care markers. The
+ * fields it does not carry — unit of consumption, storage class, shelf life,
+ * pack size and the consumption figures that turn routine prescribing and a
+ * surveillance surge into a demand lift — are not written here at all. They are
+ * derived by the importer in `@civora/interop`, so the catalogue the
+ * demonstration runs on is produced by the same code that would consume a real
+ * extract of the list. Anything else would make the importer's deployability
+ * unprovable.
  *
  * One gap is deliberate: Oral Rehydration Salts are absent because their
  * section code could not be extracted from the parsed document. They are not
  * replaced with an invented code. See `sources.ts`.
  */
 
-export type CareLevel = 'primary' | 'secondary' | 'tertiary';
-export type ItemCategory = Item['category'];
-export type StorageClass = Item['storage'];
+export type { CareLevel, ItemCategory, StorageClass } from '@civora/domain';
+export {
+  ROUTINE_UNITS_PER_THOUSAND_PER_DAY,
+  UNITS_PER_CASE_BY_CATEGORY,
+  buildCatalogue,
+  parseNlemExtract,
+} from '@civora/interop';
 
-/** `code`, generic name, dosage form, strength, category, NLEM level markers. */
-type ItemRow = readonly [string, string, string, string, ItemCategory, readonly CareLevel[]];
+/** `section`, generic name, dosage form, strength, category, level markers. */
+type ItemRow = readonly [string, string, string, string, ItemCategory, readonly NlemCareMarker[]];
 
-const ALL: readonly CareLevel[] = ['primary', 'secondary', 'tertiary'];
-
-/**
- * Consumption counted in one dispensing unit, keyed by dosage form.
- * An assumption: the unit the facility's own register counts in.
- */
-const UNIT_BY_FORM: Readonly<Record<string, string>> = {
-  tablet: 'tablet',
-  'chewable tablet': 'tablet',
-  'dispersible tablet': 'tablet',
-  capsule: 'capsule',
-  injection: 'vial',
-  'oral liquid': 'bottle',
-  inhaler: 'inhaler',
-  'iv fluid': 'bag',
-  powder: 'sachet',
-};
-
-/** Storage class by category. Cold chain is a property of the product, not the form. */
-const STORAGE_BY_CATEGORY: Readonly<Record<ItemCategory, StorageClass>> = {
-  analgesic: 'ambient',
-  antibiotic: 'ambient',
-  antimalarial: 'ambient',
-  antidiabetic: 'cool',
-  cardiovascular: 'ambient',
-  rehydration: 'ambient',
-  vaccine: 'cold-chain',
-  'iv-fluid': 'ambient',
-  'maternal-health': 'ambient',
-  'programme-tb': 'ambient',
-  'programme-hiv': 'ambient',
-  other: 'ambient',
-};
-
-/**
- * Items that must travel cold regardless of category.
- *
- * Insulin and oxytocin are the ones a broken cold chain actually ruins, and the
- * redistribution rules in Phase 6 need to know. Matched on generic name so the
- * rule survives a change to the identifier scheme.
- */
-const COLD_CHAIN_GENERIC_NAMES: ReadonlySet<string> = new Set([
-  'insulin (soluble)',
-  'insulin glargine',
-  'oxytocin',
-]);
-
-/** Shelf life in days by dosage form, from manufacture. An assumption. */
-const SHELF_LIFE_BY_FORM: Readonly<Record<string, number>> = {
-  tablet: 730,
-  'chewable tablet': 730,
-  'dispersible tablet': 730,
-  capsule: 730,
-  injection: 540,
-  'oral liquid': 365,
-  inhaler: 540,
-  'iv fluid': 540,
-  powder: 730,
-};
-
-/** Units per retail pack by dosage form. An assumption, used for transport capacity. */
-const PACK_SIZE_BY_FORM: Readonly<Record<string, number>> = {
-  tablet: 10,
-  'chewable tablet': 10,
-  'dispersible tablet': 10,
-  capsule: 10,
-  injection: 1,
-  'oral liquid': 1,
-  inhaler: 1,
-  'iv fluid': 1,
-  powder: 1,
-};
-
-/**
- * Units dispensed per reported case, averaged over the cases that receive the
- * item.
- *
- * This is the mapping that turns a syndromic surge into a demand lift, and it
- * is the roughest figure in the simulator. The values are deliberately
- * fractional where they need to be: a fever case receives several paracetamol
- * but only occasionally an antibiotic, so antibiotics are counted as a fraction
- * of a unit per case rather than a whole one. Reading them as "what one patient
- * is given" would overstate antibiotic consumption tenfold and make every fever
- * surge look like a supply emergency.
- *
- * Order-of-magnitude figures, documented as assumptions; Phase 4 is where they
- * are replaced by anything better.
- */
-export const UNITS_PER_CASE_BY_CATEGORY: Readonly<Record<ItemCategory, number>> = {
-  analgesic: 3.5,
-  antibiotic: 0.22,
-  antimalarial: 0.1,
-  antidiabetic: 0,
-  cardiovascular: 0,
-  rehydration: 2.4,
-  vaccine: 0,
-  'iv-fluid': 0.07,
-  'maternal-health': 0,
-  'programme-tb': 0,
-  'programme-hiv': 0,
-  other: 0,
-};
-
-/**
- * Units dispensed per 1,000 catchment population per day, before any surge.
- *
- * This is the ordinary, unremarkable consumption of a facility: the chronic
- * prescriptions, the antenatal supplements, the programme drugs. It is what a
- * facility would dispense in a quiet month, and it is separate from
- * `unitsPerCase` so that a surge adds to routine use rather than replacing it.
- *
- * Categories whose items are driven entirely by presentations (analgesics,
- * rehydration, intravenous fluids) carry no routine figure: their demand is the
- * case load, and counting it twice would flatter the surge.
- */
-export const ROUTINE_UNITS_PER_THOUSAND_PER_DAY: Readonly<Record<ItemCategory, number>> = {
-  analgesic: 1.2,
-  antibiotic: 1.5,
-  antimalarial: 0,
-  antidiabetic: 7,
-  cardiovascular: 9,
-  rehydration: 0,
-  vaccine: 1.5,
-  'iv-fluid': 0,
-  'maternal-health': 3.5,
-  'programme-tb': 0.8,
-  'programme-hiv': 0.2,
-  other: 2,
-};
-
-/**
- * Syndromes whose surge lifts demand for a category, using the syndrome names
- * the domain model defines. An assumption, and the one most worth arguing with.
- */
-const SYNDROMES_BY_CATEGORY: Readonly<Record<ItemCategory, readonly string[]>> = {
-  analgesic: ['fever'],
-  antibiotic: ['fever', 'cough'],
-  antimalarial: ['fever'],
-  antidiabetic: [],
-  cardiovascular: [],
-  rehydration: ['diarrhoea'],
-  vaccine: [],
-  'iv-fluid': ['diarrhoea', 'fever'],
-  'maternal-health': [],
-  'programme-tb': ['cough'],
-  'programme-hiv': [],
-  other: [],
-};
+/** Listed at every level of care. */
+const ALL: readonly NlemCareMarker[] = ['P', 'S', 'T'];
+/** Listed only where referral care is available. */
+const REFERRAL: readonly NlemCareMarker[] = ['S', 'T'];
 
 const ITEM_ROWS: readonly ItemRow[] = [
   ['2.1.5', 'Paracetamol', 'tablet', '500 mg', 'analgesic', ALL],
@@ -195,14 +54,7 @@ const ITEM_ROWS: readonly ItemRow[] = [
   ['4.2.7', 'Naloxone', 'injection', '0.4 mg/mL', 'other', ALL],
   ['5.1.1', 'Carbamazepine', 'tablet', '200 mg', 'other', ALL],
   ['5.1.3', 'Diazepam', 'injection', '5 mg/mL', 'other', ALL],
-  [
-    '5.1.6',
-    'Magnesium sulphate',
-    'injection',
-    '500 mg/mL',
-    'maternal-health',
-    ['secondary', 'tertiary'],
-  ],
+  ['5.1.6', 'Magnesium sulphate', 'injection', '500 mg/mL', 'maternal-health', REFERRAL],
   ['5.1.9', 'Phenytoin', 'tablet', '100 mg', 'other', ALL],
   ['5.2.1.1', 'Amitriptyline', 'tablet', '25 mg', 'other', ALL],
   ['6.1.1.1', 'Albendazole', 'chewable tablet', '400 mg', 'other', ALL],
@@ -229,18 +81,18 @@ const ITEM_ROWS: readonly ItemRow[] = [
   ['6.10.1.4', 'Chloroquine', 'tablet', '150 mg', 'antimalarial', ALL],
   ['6.10.1.6', 'Primaquine', 'tablet', '7.5 mg', 'antimalarial', ALL],
   ['8.1.4', 'Folic acid', 'tablet', '5 mg', 'other', ALL],
-  ['8.2.2', 'Heparin', 'injection', '5000 IU/mL', 'cardiovascular', ['secondary', 'tertiary']],
+  ['8.2.2', 'Heparin', 'injection', '5000 IU/mL', 'cardiovascular', REFERRAL],
   ['8.2.5', 'Tranexamic acid', 'injection', '100 mg/mL', 'maternal-health', ALL],
-  ['8.2.6', 'Warfarin', 'tablet', '5 mg', 'cardiovascular', ['secondary', 'tertiary']],
+  ['8.2.6', 'Warfarin', 'tablet', '5 mg', 'cardiovascular', REFERRAL],
   ['10.3.1', 'Amlodipine', 'tablet', '5 mg', 'cardiovascular', ALL],
   ['10.3.2', 'Enalapril', 'tablet', '5 mg', 'cardiovascular', ALL],
-  ['10.4.4', 'Noradrenaline', 'injection', '2 mg/mL', 'cardiovascular', ['secondary', 'tertiary']],
+  ['10.4.4', 'Noradrenaline', 'injection', '2 mg/mL', 'cardiovascular', REFERRAL],
   ['10.4.5', 'Spironolactone', 'tablet', '25 mg', 'cardiovascular', ALL],
   ['10.6.1', 'Atorvastatin', 'tablet', '10 mg', 'cardiovascular', ALL],
   ['15.1', 'Furosemide', 'oral liquid', '10 mg/mL', 'cardiovascular', ALL],
   ['16.1', 'Budesonide', 'inhaler', '100 mcg', 'other', ALL],
   ['17.1.1', 'Omeprazole', 'capsule', '20 mg', 'other', ALL],
-  ['17.2.3', 'Ondansetron', 'oral liquid', '2 mg/5 mL', 'other', ['secondary', 'tertiary']],
+  ['17.2.3', 'Ondansetron', 'oral liquid', '2 mg/5 mL', 'other', REFERRAL],
   ['17.6.2', 'Zinc sulphate', 'dispersible tablet', '20 mg', 'rehydration', ALL],
   ['18.3.1.2', 'Insulin (soluble)', 'injection', '40 IU/mL', 'antidiabetic', ALL],
   ['18.3.1.4', 'Insulin glargine', 'injection', '100 IU/mL', 'antidiabetic', ALL],
@@ -251,7 +103,7 @@ const ITEM_ROWS: readonly ItemRow[] = [
   ['22.1.3', 'Mifepristone', 'tablet', '200 mg', 'maternal-health', ALL],
   ['22.1.4', 'Misoprostol', 'tablet', '200 mcg', 'maternal-health', ALL],
   ['22.1.5', 'Oxytocin', 'injection', '5 IU/mL', 'maternal-health', ALL],
-  ['22.2.2', 'Nifedipine', 'tablet', '10 mg', 'maternal-health', ['secondary', 'tertiary']],
+  ['22.2.2', 'Nifedipine', 'tablet', '10 mg', 'maternal-health', REFERRAL],
   ['24.1.4', 'Ipratropium', 'inhaler', '20 mcg', 'other', ALL],
   ['24.1.6', 'Salbutamol', 'inhaler', '100 mcg', 'other', ALL],
   ['25.1.5', 'Ringer lactate', 'iv fluid', 'as per IP', 'iv-fluid', ALL],
@@ -259,44 +111,35 @@ const ITEM_ROWS: readonly ItemRow[] = [
   ['26.8', 'Vitamin A', 'capsule', '200 000 IU', 'other', ALL],
 ];
 
-/** A stable identifier from an NLEM code and a generic name. */
-const itemId = (code: string, genericName: string): string =>
-  `nlem-${code.replace(/\./g, '-')}-${genericName.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
+const toRow = (row: ItemRow): NlemItemRow => ({
+  section: row[0],
+  genericName: row[1],
+  form: row[2],
+  strength: row[3],
+  category: row[4],
+  levels: [...row[5]],
+});
 
-const buildItem = (row: ItemRow): Item => {
-  const [code, genericName, form, strength, category, careLevels] = row;
-  const id = itemId(code, genericName);
-  const coldChain =
-    STORAGE_BY_CATEGORY[category] === 'cold-chain' ||
-    COLD_CHAIN_GENERIC_NAMES.has(genericName.toLowerCase());
-  const syndromes = SYNDROMES_BY_CATEGORY[category];
-
-  return itemSchema.parse({
-    id: itemIdSchema.parse(id),
-    nlemCode: code,
-    genericName,
-    form,
-    strength,
-    unit: UNIT_BY_FORM[form] ?? 'unit',
-    category,
-    essentiality: category === 'programme-tb' ? 'programme' : 'essential',
-    careLevels: [...careLevels],
-    storage: coldChain ? 'cold-chain' : STORAGE_BY_CATEGORY[category],
-    coldChain,
-    shelfLifeDays: SHELF_LIFE_BY_FORM[form] ?? 540,
-    packSize: PACK_SIZE_BY_FORM[form] ?? 1,
-    unitsPerCase: syndromes.length === 0 ? 0 : UNITS_PER_CASE_BY_CATEGORY[category],
-    syndromes,
-    synthetic: true,
-    provenance: { kind: 'source', reference: 'nlem2022' },
-  });
+/**
+ * The extract, in the shape an upload of the published list would arrive in.
+ *
+ * Built as a plain object rather than passed straight to the importer so the
+ * demonstration's catalogue travels the same path as an imported file: through
+ * the document schema, and out through the derivation rules.
+ */
+const NLEM_EXTRACT = {
+  sourceId: 'nlem2022',
+  title: 'National List of Essential Medicines 2022',
+  retrievedOn: RETRIEVAL_DATE,
+  items: ITEM_ROWS.map(toRow),
 };
 
-export const ITEMS: readonly Item[] = ITEM_ROWS.map(buildItem);
+export const ITEMS: readonly Item[] = parseNlemExtract(NLEM_EXTRACT).items;
 
 export const ITEM_BY_ID: ReadonlyMap<string, Item> = new Map(ITEMS.map((item) => [item.id, item]));
 
-const hasLevel = (item: Item, level: CareLevel): boolean =>
+/** The levels of care NLEM lists an item for, in the domain's own vocabulary. */
+const hasLevel = (item: Item, level: string): boolean =>
   (item.careLevels as readonly string[]).includes(level);
 
 /** The categories a community-level facility actually dispenses. An assumption. */

@@ -15,7 +15,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@civora/domain": "workspace:*"
+    "@civora/domain": "workspace:*",
+    "@civora/interop": "workspace:*"
   },
   "devDependencies": {
     "@civora/config": "workspace:*",

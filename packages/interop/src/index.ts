@@ -10,7 +10,9 @@
  * retrieval date and the transformation applied are recorded, and a record
  * whose origin cannot be established is rejected rather than guessed at.
  *
- * Not implemented yet. The interop adapters land as their source formats are
- * introduced.
+ * One importer exists so far: `nlem.ts`, for the national essential medicines
+ * list. It is used by the generator rather than merely tested, so the catalogue
+ * the demonstration runs on is produced by the same code a real extract would
+ * go through.
  */
-export {};
+export * from './nlem';

@@ -36,6 +36,11 @@ catalog:
   vite: 8.3.1
   '@playwright/test': 1.63.0
 
+  # AI. The Gemini SDK is pinned like everything else: a model hot-swap mid-evaluation
+  # would be an unexplained behaviour change, and the same applies to the SDK that
+  # talks to it.
+  '@google/genai': 2.24.0
+
   # Styling
   tailwindcss: 4.3.3
   '@tailwindcss/postcss': 4.3.3

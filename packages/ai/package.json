@@ -13,6 +13,10 @@
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
+  "dependencies": {
+    "@google/genai": "catalog:",
+    "zod": "catalog:"
+  },
   "devDependencies": {
     "@civora/config": "workspace:*",
     "typescript": "catalog:"

@@ -163,6 +163,10 @@ export interface RedistributionTotals {
 }
 
 export interface Redistribution {
+  /** Who is reading, so the surface can say what this session may decide. */
+  readonly session: { readonly role: Role; readonly label: string };
+  /** The decision events themselves, oldest first — the audit view reads them. */
+  readonly auditEvents: readonly AuditEvent[];
   readonly asOf: DateOnly;
   readonly seed: string;
   readonly scenarioId: string;
@@ -665,6 +669,8 @@ export async function readRedistribution(session: Session): Promise<Redistributi
     Object.values(plan.graph.removedByRule).reduce((sum, count) => sum + count, 0);
 
   return {
+    session: { role: session.role, label: session.label },
+    auditEvents,
     asOf: state.asOf,
     seed: state.seed,
     scenarioId: state.scenarioId,

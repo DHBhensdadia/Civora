@@ -36,7 +36,7 @@ export default async function HomePage() {
         className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-6"
       >
         <h2 id="status-heading" className="text-lg font-semibold text-amber-200">
-          The sensing and analytical planes exist — nothing is redistributed yet
+          The platform proposes redistribution — and executes none of it
         </h2>
         <p className="mt-2 text-amber-100/90">
           What works today is the half that everything else depends on. A facility can record stock,
@@ -76,8 +76,15 @@ export default async function HomePage() {
           <Link className="underline underline-offset-4" href="/intelligence">
             intelligence surface
           </Link>
-          . What is <em>not</em> written is the redistribution: no transfer has ever been proposed,
-          because the optimiser that would propose one does not exist yet.
+          . Setu goes one step further: the{' '}
+          <Link className="underline underline-offset-4" href="/redistribution">
+            redistribution workbench
+          </Link>{' '}
+          shows what the optimiser proposes under hard safety constraints, the independent
+          validator&rsquo;s verdict on every proposal, and what each transfer is expected to buy —
+          with the assumptions printed beside the figure — and an officer approves or rejects it
+          with a reason that is recorded in a hash-chained trail. Nothing there executes a transfer,
+          and that is deliberate.
         </p>
         <p className="mt-2 text-sm text-amber-100/70">
           All data the platform shows is simulated. Nothing here is a real stock position and this
@@ -153,6 +160,9 @@ export default async function HomePage() {
         </Link>
         <Link className="text-sky-400 underline-offset-4 hover:underline" href="/dataset">
           Dataset inspector
+        </Link>
+        <Link className="text-sky-400 underline-offset-4 hover:underline" href="/redistribution">
+          Redistribution
         </Link>
         <Link className="text-sky-400 underline-offset-4 hover:underline" href="/healthz">
           Health check

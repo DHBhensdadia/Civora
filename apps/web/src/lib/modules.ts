@@ -39,7 +39,8 @@ export const MODULES: readonly ModuleDescriptor[] = [
     name: 'Setu',
     meaning: 'redistribution',
     responsibility: 'Which transfers would help, subject to every safety constraint.',
-    status: 'not implemented',
+    status:
+      'redistribution implemented — constraint-checked proposals, quantified impact with its assumptions, and human decisions with a reason; nothing is executed',
   },
   {
     name: 'Samvad',

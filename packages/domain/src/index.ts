@@ -15,6 +15,8 @@ export * from './errors';
 export * from './model';
 export * from './model/ingest';
 
+export * from './logic/alert';
+export * from './logic/case-demand';
 export * from './logic/censoring';
 export * from './logic/dates';
 export * from './logic/ingest';
@@ -23,7 +25,9 @@ export * from './logic/keys';
 export * from './logic/ledger';
 export * from './logic/network';
 export * from './logic/reporting';
+export * from './logic/risk';
 export * from './logic/snapshot';
+export * from './logic/surge';
 
 export * from './ports/data-provider';
 export * from './ports/auth-provider';

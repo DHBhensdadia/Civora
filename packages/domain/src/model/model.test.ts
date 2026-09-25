@@ -268,6 +268,7 @@ describe('intelligence records', () => {
     imputation: 'none',
     features: [{ name: 'days', value: 120 }],
     warnings: [],
+    surge: null,
     synthetic: true,
     provenance: SIMULATED_PROVENANCE,
     ...overrides,
@@ -284,6 +285,21 @@ describe('intelligence records', () => {
 
   it('rejects an upper quantile below the median', () => {
     expect(accepts(forecastSchema.safeParse(rawForecast({ p90: [0, 3, 4] })))).toBe(false);
+  });
+
+  it('accepts a surge adjustment that raises demand, and refuses one that lowers it', () => {
+    const surge = {
+      eventId: 'epi-1',
+      syndrome: 'fever',
+      growthRate: 0.09,
+      multiplier: 1.4,
+      daysApplied: 7,
+    };
+    expect(accepts(forecastSchema.safeParse(rawForecast({ surge })))).toBe(true);
+    expect(
+      accepts(forecastSchema.safeParse(rawForecast({ surge: { ...surge, multiplier: 0.7 } }))),
+    ).toBe(false);
+    expect(accepts(forecastSchema.safeParse(rawForecast()))).toBe(true);
   });
 
   it('accepts a forecast that states what it looked at, and refuses one that does not', () => {
@@ -307,13 +323,16 @@ describe('intelligence records', () => {
     itemId: 'item-paracetamol',
     raisedOn: '2026-01-31',
     severity: 'high',
-    state: 'open',
+    state: 'raised',
     bodies: {
       en: 'Stock-out expected within 7 days',
       hi: 'सात दिनों में स्टॉक खत्म होने की संभावना',
     },
     riskScoreId: null,
     dedupeKey: 'facility-a::item-paracetamol::2026-01-31',
+    facts: [{ name: 'daysOfStock', value: 4 }],
+    drivers: [{ driver: 'daysOfStock', contribution: 2.4, detail: '4 days of cover' }],
+    history: [],
     acknowledgedBy: null,
     acknowledgedByRole: null,
     acknowledgedAt: null,
@@ -331,6 +350,13 @@ describe('intelligence records', () => {
     // An empty record satisfies a record-of-strings validator on its own, which
     // is exactly why this case has to be asserted.
     expect(accepts(alertSchema.safeParse(rawAlert({ bodies: {} })))).toBe(false);
+  });
+
+  it('rejects an alert with no evidence behind it', () => {
+    // Phase 5 writes the narrative from these facts, so an alert without them
+    // is one a narrative would have to invent.
+    expect(accepts(alertSchema.safeParse(rawAlert({ facts: [] })))).toBe(false);
+    expect(accepts(alertSchema.safeParse(rawAlert({ drivers: [] })))).toBe(false);
   });
 
   it('rejects an alert that was acted on without recording who acted', () => {

@@ -47,6 +47,32 @@ export const IMPUTATIONS = ['facility-mean', 'peer-mean', 'tobit', 'none'] as co
 export const imputationSchema = z.enum(IMPUTATIONS);
 export type Imputation = z.infer<typeof imputationSchema>;
 
+/**
+ * A surge adjustment carried on the forecast that used it.
+ *
+ * The demand lift is recorded on the forecast rather than only in the surge
+ * detector's own record, because a reader looking at a number that has been
+ * multiplied is entitled to see the multiplier and the event behind it without
+ * joining two collections.
+ */
+export const surgeAdjustmentSchema = z
+  .strictObject({
+    eventId: recordIdSchema,
+    syndrome: syndromeSchema,
+    /** Exponential growth rate of case counts per day. */
+    growthRate: z.number(),
+    /** Demand multiplier applied to the affected item. */
+    multiplier: z.number().positive(),
+    /** Days of the horizon the multiplier was applied over. */
+    daysApplied: z.int().nonnegative(),
+  })
+  .refine((surge) => surge.multiplier >= 1, {
+    message: 'a surge may only raise demand, never lower it',
+    path: ['multiplier'],
+  });
+
+export type SurgeAdjustment = z.infer<typeof surgeAdjustmentSchema>;
+
 export const forecastSchema = z
   .strictObject({
     facilityId: facilityIdSchema,
@@ -76,6 +102,14 @@ export const forecastSchema = z
      * measure its own error, a rate borrowed from comparable facilities.
      */
     warnings: z.array(z.string().trim().min(1)),
+    /**
+     * The epidemic surge this forecast was adjusted for, or null.
+     *
+     * Null means no surge was detected, which is a statement the forecast makes
+     * rather than an absence: a reader can tell "checked, nothing found" from
+     * "not checked", because the surge pipeline records what it searched.
+     */
+    surge: surgeAdjustmentSchema.nullable(),
     synthetic: syntheticSchema,
     provenance: provenanceSchema,
   })
@@ -99,24 +133,44 @@ export type Forecast = z.infer<typeof forecastSchema>;
  *
  * Named rather than combined into one opaque number, because an officer who is
  * asked to move stock between districts is entitled to know which of these
- * produced the recommendation.
+ * produced the recommendation. The list is closed: scoring may only ever
+ * produce these nine, so a driver cannot be added to a score without being
+ * named, documented and given a place in the interface.
  */
 export const RISK_DRIVERS = [
+  /** Forecast probability that demand outruns stock inside the horizon. */
+  'shortfallProbability',
+  /** Cover on hand plus in transit, measured in days of forecast demand. */
   'daysOfStock',
-  'consumptionTrend',
-  'reportingGap',
-  'surgeSignal',
+  /** Length and variability of the replenishment lead time. */
   'leadTime',
+  /** How essential the item is, and whether it cannot be substituted. */
+  'criticality',
+  /** The population the facility serves, and how its footfall is moving. */
+  'populationAtRisk',
+  /** A detected epidemic surge in a syndrome this item treats. */
+  'surgeSignal',
+  /** Stock approaching expiry, which is both a loss and a reason not to order. */
+  'expiryPressure',
+  /** How long since the platform last heard from this facility at all. */
+  'reportingGap',
+  /** Cold-chain dependence, and any recorded breach. */
   'coldChain',
-  'expiry',
-  'seasonality',
-  'supplyDisruption',
 ] as const;
 
 export const riskDriverSchema = z.enum(RISK_DRIVERS);
 export type RiskDriver = z.infer<typeof riskDriverSchema>;
 
-export const RISK_BANDS = ['low', 'watch', 'high', 'critical'] as const;
+/**
+ * How urgently a score asks to be acted on.
+ *
+ * `unknown` is not a low score. It is what the platform says when it cannot
+ * measure cover at all — a facility that has stopped reporting, or an item with
+ * no history to derive a rate from. Rendering that as green is the single most
+ * dangerous thing a risk surface can do, so it is its own band and it sorts at
+ * the top of an investigation list beside `critical`.
+ */
+export const RISK_BANDS = ['unknown', 'low', 'watch', 'high', 'critical'] as const;
 export const riskBandSchema = z.enum(RISK_BANDS);
 export type RiskBand = z.infer<typeof riskBandSchema>;
 
@@ -125,8 +179,24 @@ export const riskScoreSchema = z.strictObject({
   itemId: itemIdSchema,
   asOf: dateSchema,
   horizonDays: z.int().positive(),
-  /** Probability that demand exceeds stock within the horizon. */
-  stockOutProbability: z.number().min(0).max(1),
+  /**
+   * What the forecast says: the chance demand outruns stock inside the horizon.
+   *
+   * The *measured* number, straight off the forecast's own quantiles, and null
+   * when there was no forecast to read it from. Kept apart from `riskIndex`
+   * deliberately: a card that showed a composite where a probability belongs
+   * would state one number and explain it with another.
+   */
+  shortfallProbability: z.number().min(0).max(1).nullable(),
+  /**
+   * The composite of the nine drivers, in [0, 1]. Higher is worse.
+   *
+   * It **ranks** and it **bands**; it is not a probability and is never presented
+   * as one, because it is a sum of weighted log-odds across reasons that are not
+   * independent. Its only job is to put a list in an order and its drivers to say
+   * why that order is what it is.
+   */
+  riskIndex: z.number().min(0).max(1),
   band: riskBandSchema,
   /**
    * The evidence behind the score. Each driver is listed with its signed
@@ -141,6 +211,22 @@ export const riskScoreSchema = z.strictObject({
       }),
     )
     .min(1),
+  /**
+   * The measured inputs the drivers were computed from.
+   *
+   * Stored with the score so that a disputed number can be re-derived from what
+   * the platform actually saw, rather than from what it holds now. A score whose
+   * inputs were not kept cannot be told apart from a guess after the fact.
+   */
+  facts: z.array(z.strictObject({ name: z.string().trim().min(1), value: z.number() })),
+  /**
+   * Every input the score wanted and could not get.
+   *
+   * Non-empty does not invalidate the score; it tells a reader which parts of
+   * it rest on less than a full picture, and it is what makes the `unknown` band
+   * explainable rather than mysterious.
+   */
+  missing: z.array(z.string().trim().min(1)),
   synthetic: syntheticSchema,
   provenance: provenanceSchema,
 });
@@ -178,9 +264,43 @@ export const epidemicEventSchema = z.strictObject({
 
 export type EpidemicEvent = z.infer<typeof epidemicEventSchema>;
 
-export const ALERT_STATES = ['open', 'acknowledged', 'snoozed', 'escalated', 'resolved'] as const;
+/**
+ * Where an alert is in its life.
+ *
+ * `raised` is the unattended state; nothing else is a state a human chose. The
+ * set is ordered the way an alert moves through it, and the legal transitions
+ * live in `logic/alert` rather than being inferred from this list.
+ */
+export const ALERT_STATES = [
+  'raised',
+  'acknowledged',
+  'action_proposed',
+  'snoozed',
+  'escalated',
+  'resolved',
+] as const;
 export const alertStateSchema = z.enum(ALERT_STATES);
 export type AlertState = z.infer<typeof alertStateSchema>;
+
+/**
+ * One move an alert made, and who made it.
+ *
+ * Kept as an append-only list on the alert itself rather than as a mutable
+ * `state` field alone. A field records where an alert is; a history records
+ * that somebody decided to put it there, which is the thing an audit asks about
+ * and the thing a "resolved" alert cannot be told apart from without.
+ */
+export const alertTransitionSchema = z.strictObject({
+  from: alertStateSchema,
+  to: alertStateSchema,
+  /** Who acted. A fixture identity today, an authenticated one later. */
+  actor: z.string().trim().min(1),
+  actorRole: roleSchema,
+  at: instantSchema,
+  reason: z.string().trim().min(1),
+});
+
+export type AlertTransition = z.infer<typeof alertTransitionSchema>;
 
 export const ALERT_SEVERITIES = ['watch', 'high', 'critical'] as const;
 export const alertSeveritySchema = z.enum(ALERT_SEVERITIES);
@@ -207,6 +327,26 @@ export const alertSchema = z
      * raise a second alert while the first is open.
      */
     dedupeKey: z.string().trim().min(1),
+    /**
+     * The structured facts the alert was raised on.
+     *
+     * Phase 5 writes prose from this list and nothing else, so a narrative
+     * cannot contain a number the alert does not carry. It is the same shape as
+     * a forecast's features for that reason: one idea, one implementation.
+     */
+    facts: z.array(z.strictObject({ name: z.string().trim().min(1), value: z.number() })),
+    /** The driver contributions behind the alert, largest first. */
+    drivers: z
+      .array(
+        z.strictObject({
+          driver: riskDriverSchema,
+          contribution: z.number(),
+          detail: z.string().trim().min(1),
+        }),
+      )
+      .min(1),
+    /** Every move the alert made, oldest first. Empty while nobody has acted. */
+    history: z.array(alertTransitionSchema),
     acknowledgedBy: z.string().trim().min(1).nullable(),
     acknowledgedByRole: roleSchema.nullable(),
     acknowledgedAt: instantSchema.nullable(),
@@ -220,13 +360,17 @@ export const alertSchema = z
   })
   .refine(
     (alert) =>
-      alert.state === 'open' ||
+      alert.state === 'raised' ||
       alert.state === 'snoozed' ||
       (alert.acknowledgedBy !== null && alert.acknowledgedAt !== null),
     {
       message: 'an alert cannot be acknowledged or resolved without recording who did it',
       path: ['acknowledgedBy'],
     },
-  );
+  )
+  .refine((alert) => alert.facts.length > 0, {
+    message: 'an alert must carry the evidence it was raised on',
+    path: ['facts'],
+  });
 
 export type Alert = z.infer<typeof alertSchema>;

@@ -21,6 +21,7 @@ export default defineConfig({
       '@civora/i18n': packageEntry('i18n'),
       '@civora/interop': packageEntry('interop'),
       '@civora/optimizer': packageEntry('optimizer'),
+      '@civora/simulator': fileURLToPath(new URL('./apps/simulator/src/index.ts', import.meta.url)),
     },
   },
   test: {

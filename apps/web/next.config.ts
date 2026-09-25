@@ -5,7 +5,7 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   // Workspace packages are consumed as TypeScript source, so a change in a
   // package is picked up without a separate build step.
-  transpilePackages: ['@civora/domain'],
+  transpilePackages: ['@civora/domain', '@civora/simulator'],
   // Emitted for the container image. The tracing root is inferred from the
   // workspace lockfile, which keeps the runtime bundle to what the server
   // actually imports.

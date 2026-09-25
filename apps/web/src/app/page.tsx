@@ -1,3 +1,5 @@
+import Link from 'next/link';
+
 import { getEnv } from '@/env';
 import { MODULES } from '@/lib/modules';
 import { APP_VERSION } from '@/lib/version';
@@ -27,6 +29,14 @@ export default async function HomePage() {
           A federated platform for health resource and supply-chain planning across the primary
           health centre network.
         </p>
+        <nav aria-label="Platform sections" className="mt-1 flex gap-4 text-sm">
+          <span aria-current="page" className="text-slate-400">
+            Overview
+          </span>
+          <Link className="text-sky-400 underline-offset-4 hover:underline" href="/dataset">
+            Dataset inspector
+          </Link>
+        </nav>
       </header>
 
       <section
@@ -34,16 +44,21 @@ export default async function HomePage() {
         className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-6"
       >
         <h2 id="status-heading" className="text-lg font-semibold text-amber-200">
-          Foundation build — not yet a working prototype
+          Foundation build — the dataset exists, the platform does not yet
         </h2>
         <p className="mt-2 text-amber-100/90">
-          This application currently contains the repository foundation and nothing else: no
-          facility data, no forecasts, no advisories and no transfers. Every module below is planned
-          and unimplemented.
+          What exists today is the repository foundation and one simulated national dataset: a
+          facility network, a stock ledger and its consumption history, generated from a published
+          seed and browsable in the{' '}
+          <Link className="underline underline-offset-4" href="/dataset">
+            dataset inspector
+          </Link>
+          . No forecast, no advisory and no transfer has been produced from it, and every module
+          below is planned and unimplemented.
         </p>
         <p className="mt-2 text-sm text-amber-100/70">
-          All data the platform will show is simulated. Nothing here is a real stock position and
-          this is not a deployed federation.
+          All data the platform shows is simulated. Nothing here is a real stock position and this
+          is not a deployed federation.
         </p>
       </section>
 
@@ -94,9 +109,12 @@ export default async function HomePage() {
 
       <footer className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-slate-800 pt-6 text-sm text-slate-500">
         <span>Version {APP_VERSION}</span>
-        <a className="text-sky-400 underline-offset-4 hover:underline" href="/healthz">
+        <Link className="text-sky-400 underline-offset-4 hover:underline" href="/dataset">
+          Dataset inspector
+        </Link>
+        <Link className="text-sky-400 underline-offset-4 hover:underline" href="/healthz">
           Health check
-        </a>
+        </Link>
         <span>Licensed under Apache-2.0</span>
       </footer>
     </main>

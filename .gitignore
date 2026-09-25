@@ -35,6 +35,11 @@ pubsub-debug.log
 emulator-data/
 .runtimeconfig.json
 
+# --- Generated datasets ---------------------------------------------------------
+# `pnpm db:seed --export` writes here. Regenerable from a published seed, and far
+# too large to belong in the history of a repository.
+.data/
+
 # --- Logs ---------------------------------------------------------------------
 *.log
 npm-debug.log*

@@ -8,6 +8,8 @@
  * Each job is an ordinary function with its dependencies passed in, so a job
  * can be run from a test or a shell one-off as easily as from a schedule.
  *
- * Not implemented yet. Jobs arrive with the modules that produce their inputs.
+ * One job exists so far: `seed.ts`, the dataset generator behind `pnpm db:seed`,
+ * which is a one-off rather than a schedule. The recurring jobs arrive with the
+ * modules that produce their inputs.
  */
 export {};

@@ -39,6 +39,12 @@ state warehouse, a cold-chain failure, a district expiry cliff — are asserted 
 produce the effects they are named for, alongside two negative controls that are
 asserted to produce nothing at all.
 
+`pnpm db:seed` generates that dataset and stores it through the persistence port,
+and running it again stores the same documents under the same identifiers. What
+the dataset is, how much of it is real rather than generated, and which sources
+it set out to use but could not obtain are all on the **dataset inspector** at
+<http://localhost:3000/dataset>.
+
 ## Quickstart
 
 Requires **Node 22 or newer** and **pnpm 10**. No cloud account, no credentials,
@@ -119,6 +125,7 @@ pnpm typecheck    # tsc --noEmit across every package and app
 pnpm test         # Vitest: unit and contract tests
 pnpm build        # production build of the web application
 pnpm e2e          # Playwright against the built application
+pnpm db:seed      # generate the demonstration dataset and store it
 pnpm verify       # lint, typecheck, test and build in order
 ```
 

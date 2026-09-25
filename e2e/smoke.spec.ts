@@ -5,8 +5,8 @@ test.describe('the foundation build', () => {
     await page.goto('/');
 
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Civora');
-    await expect(page.getByText('Foundation build — not yet a working prototype')).toBeVisible();
-    await expect(page.getByText(/All data the platform will show is simulated/)).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Foundation build/ })).toBeVisible();
+    await expect(page.getByText(/All data the platform shows is simulated/)).toBeVisible();
 
     // The five modules are named, and every one of them is declared unfinished
     // rather than implied to work.

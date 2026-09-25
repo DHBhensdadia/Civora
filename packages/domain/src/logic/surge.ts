@@ -460,14 +460,29 @@ export function detectSurge(series: SyndromeSeries, options: SurgeOptions = {}):
     );
   }
 
-  // The growth rate is **reported, not gated**, and that distinction is
+  // The *direction* is gated and the *magnitude* is not, and that distinction is
   // deliberate. A district's epidemic may treble over two months or double every
   // week, and the platform has no business deciding that a trebling is not worth
   // an alert because it happened slowly — slow and large is the ordinary shape of
   // a seasonal outbreak, and it is exactly what a district store needs warning
-  // about. What is gated is the *evidence*: a run long enough to measure, and an
-  // excess over the pattern large enough to act on. Both numbers are returned
-  // either way, so a reader can apply a stricter test than this one.
+  // about. What is gated is the evidence — a run long enough to measure and an
+  // excess over the pattern large enough to act on — plus this one thing: the
+  // cases have to be *rising*. A level that stepped up and is now falling is a
+  // change in what a clinic is recording, not an outbreak in progress, and the
+  // negative-control scenario is what found it: on a quiet year the accumulating
+  // test crossed on a rash series that was declining by 4.5% a day, and an alert
+  // raised on that is exactly the false positive this whole test exists to catch.
+  // Both numbers are returned either way, so a reader can apply a stricter test
+  // than this one.
+  if (growthRate <= 0) {
+    reasons.push(
+      `the run is not rising: case counts are falling by ${(Math.abs(growthRate) * 100).toFixed(
+        1,
+      )}% a day over its first ${String(growthWindow.length)} days, so the change that was
+      detected has already turned over`,
+    );
+  }
+
   const detected = reasons.length === 0;
 
   return {
@@ -511,6 +526,7 @@ export const epidemicEventOf = (input: EpidemicEventInput): EpidemicEvent | null
 
   return {
     id: `epi:${input.facilityId}:${detection.syndrome}:${detection.detectedOn}`,
+    facilityId: input.facilityId,
     regionId: input.regionId,
     districtId: input.districtId,
     syndrome: detection.syndrome,

@@ -24,6 +24,8 @@ const healthy = (overrides: Partial<RiskFacts> = {}): RiskFacts => ({
   asOf: '2026-06-30',
   horizonDays: 14,
   shortfallProbability: 0.04,
+  // A month of cover against an eight-day wait: nothing to worry about.
+  shortfallWindowDays: 8,
   daysOfStock: 45,
   onHand: 900,
   inTransit: 0,
@@ -146,14 +148,21 @@ describe('scoring a facility’s risk', () => {
   it('raises a facility that has stopped reporting to unknown, not to green', () => {
     // The failure this exists to prevent: a shelf count from a fortnight ago
     // rendered as a clean bill of health.
-    const silent = scoreRisk(
-      healthy({ daysSinceReading: STALE_AFTER_DAYS + 10, reportingGapDays: 12 }),
-    );
+    const silentFacts = healthy({ daysSinceReading: STALE_AFTER_DAYS + 10, reportingGapDays: 12 });
+    const silent = scoreRisk(silentFacts);
 
     expect(silent.band).toBe('unknown');
-    expect(silent.riskIndex).toBeGreaterThan(scoreRisk(healthy()).riskIndex);
     expect(silent.drivers[0]?.detail).toContain('nothing has arrived');
     expect(silent.missing).toEqual([]);
+
+    // The gap raises what the score says about the silence, and deliberately does
+    // not move the index: the index describes a shelf, and nobody has seen this
+    // one. Blindness is carried by the band, which is what a list sorts on and
+    // what puts this pair at the top beside the critical ones.
+    expect(contributionFor(silentFacts, 'reportingGap')).toBeGreaterThan(
+      contributionFor(healthy(), 'reportingGap'),
+    );
+    expect(silent.riskIndex).toBe(scoreRisk(healthy()).riskIndex);
   });
 
   it('still says unknown when cover could not be measured at all', () => {
@@ -181,6 +190,36 @@ describe('scoring a facility’s risk', () => {
     );
 
     expect(staleAndCritical.band).toBe('critical');
+  });
+
+  it('bands on the shelf and not on what the item and the district are like', () => {
+    // The generated world measured this directly: across a quiet year, a monsoon
+    // surge and an expiry cliff, the context drivers were identical to two decimal
+    // places. A band that moved with them would be reporting the catalogue and the
+    // network rather than the state of anybody's shelf.
+    const plain = scoreRisk(healthy({ shortfallProbability: 0.7, daysOfStock: 2 }));
+    const elaborate = scoreRisk(
+      healthy({
+        shortfallProbability: 0.7,
+        daysOfStock: 2,
+        essentiality: 'essential',
+        catchmentPopulation: 400000,
+        footfallTrend: 1.5,
+        leadTimeDays: 18,
+        coldChain: true,
+        coldChainBreachDays: 1,
+      }),
+    );
+
+    expect(elaborate.riskIndex).toBe(plain.riskIndex);
+    expect(elaborate.band).toBe(plain.band);
+    // Still on the score, for the officer deciding whether to move stock.
+    expect(elaborate.drivers).not.toEqual(plain.drivers);
+  });
+
+  it('lets a shelf driver decide the band', () => {
+    expect(scoreRisk(healthy({ shortfallProbability: 0.9, daysOfStock: 1 })).band).toBe('critical');
+    expect(scoreRisk(healthy({ shortfallProbability: 0.01, daysOfStock: 90 })).band).toBe('low');
   });
 
   it('records the inputs it used and the ones it could not get', () => {

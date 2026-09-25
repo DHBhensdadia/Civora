@@ -138,9 +138,18 @@ export type Forecast = z.infer<typeof forecastSchema>;
  * named, documented and given a place in the interface.
  */
 export const RISK_DRIVERS = [
-  /** Forecast probability that demand outruns stock inside the horizon. */
+  /**
+   * Forecast probability that demand outruns stock before a delivery can arrive.
+   *
+   * Measured over the facility's own replenishment window rather than the whole
+   * forecast horizon: a facility that can restock in five days does not have to
+   * survive a fortnight on its shelf, and scoring it as though it did marks every
+   * well-run facility as critical.
+   */
   'shortfallProbability',
-  /** Cover on hand plus in transit, measured in days of forecast demand. */
+  /**
+   * Cover on hand plus in transit, measured in days of forecast demand and
+   * compared with the wait for a delivery. */
   'daysOfStock',
   /** Length and variability of the replenishment lead time. */
   'leadTime',
@@ -180,12 +189,15 @@ export const riskScoreSchema = z.strictObject({
   asOf: dateSchema,
   horizonDays: z.int().positive(),
   /**
-   * What the forecast says: the chance demand outruns stock inside the horizon.
+   * What the forecast says: the chance demand outruns stock before a delivery can
+   * arrive.
    *
-   * The *measured* number, straight off the forecast's own quantiles, and null
-   * when there was no forecast to read it from. Kept apart from `riskIndex`
-   * deliberately: a card that showed a composite where a probability belongs
-   * would state one number and explain it with another.
+   * The *measured* number, straight off the forecast's own quantiles over the
+   * facility's replenishment window, and null when there was no forecast to read
+   * it from. Kept apart from `riskIndex` deliberately: a card that showed a
+   * composite where a probability belongs would state one number and explain it
+   * with another. The window it was measured over is on the score's `facts` as
+   * `shortfallWindowDays`, so the number is never quotable without its window.
    */
   shortfallProbability: z.number().min(0).max(1).nullable(),
   /**
@@ -246,6 +258,14 @@ export type SurgeMethod = z.infer<typeof surgeMethodSchema>;
  */
 export const epidemicEventSchema = z.strictObject({
   id: recordIdSchema,
+  /**
+   * The facility whose own syndromic series produced the signal.
+   *
+   * Named rather than left inside the identifier, because the facility is where
+   * the cases are and who has to act: an officer told that a district is surging
+   * still has to work out which of its facilities to send stock to.
+   */
+  facilityId: facilityIdSchema,
   regionId: regionIdSchema,
   /** Null when the signal only resolves to the region. */
   districtId: districtIdSchema.nullable(),

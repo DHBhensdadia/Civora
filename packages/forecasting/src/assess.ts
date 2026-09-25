@@ -3,6 +3,7 @@ import {
   applyDeduplication,
   dedupeKeyOf,
   demandLiftFor,
+  replenishmentWindowDays,
   scoreRisk,
 } from '@civora/domain';
 import type {
@@ -255,11 +256,18 @@ export function assess(input: AssessmentInput): Assessment {
 
   const available = input.onHand + input.inTransit;
   const throughHorizonP50 = cumulative(forecast.p50);
-  const throughHorizonP90 = cumulative(forecast.p90);
+
+  // The question the probability answers is whether demand outruns stock *before
+  // a delivery can arrive*, not whether it outruns stock over the whole horizon —
+  // a facility that can restock in five days does not have to survive a
+  // fortnight on the shelf, and scoring it as if it did flags every well-run
+  // facility in the country. The window comes from the facility's own observed
+  // lead time and travels onto the score, so a reader can see what was measured.
+  const shortfallWindowDays = replenishmentWindowDays(input.leadTimeDays, input.horizonDays);
   const shortfallProbability = probabilityOfShortfall(
     available,
-    throughHorizonP50,
-    throughHorizonP90,
+    cumulative(forecast.p50.slice(0, shortfallWindowDays)),
+    cumulative(forecast.p90.slice(0, shortfallWindowDays)),
   );
 
   const demandRate = throughHorizonP50 / Math.max(1, input.horizonDays);
@@ -271,6 +279,7 @@ export function assess(input: AssessmentInput): Assessment {
     asOf: input.asOf,
     horizonDays: input.horizonDays,
     shortfallProbability,
+    shortfallWindowDays,
     daysOfStock,
     onHand: input.onHand,
     inTransit: input.inTransit,

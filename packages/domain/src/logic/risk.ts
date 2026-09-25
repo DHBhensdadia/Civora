@@ -36,7 +36,7 @@ import type {
  * log-odds and the offset below was chosen so that a facility with a month of
  * cover, no surge and current reporting lands low.
  *
- * The total produces an **index**, not a probability. The two are carried
+ * The shelf drivers produce an **index**, not a probability. The two are carried
  * separately on a score and must not be conflated: `riskIndex` is what the nine
  * weights add up to and is only ever used to order a list and pick a band, while
  * `shortfallProbability` is the forecast's own measured number, passed through
@@ -66,19 +66,66 @@ export const DRIVER_WEIGHTS: Readonly<Record<RiskDriver, number>> = {
 };
 
 /**
- * Shifts the summed log-odds so an unremarkable facility reads low rather than even.
+ * The drivers that describe the shelf today, and the ones that describe the item
+ * and the district.
+ *
+ * Only the first group decides the band. The split is not a preference; it is a
+ * measurement, and the generated world is what produced it. Run the same pipeline
+ * over three scenarios — a quiet year, a monsoon surge and a district expiry
+ * cliff — and the second group is *identical to two decimal places in all three*:
+ * every item in the catalogue is essential (mean contribution 1.76 of a possible
+ * 1.8), every district serves a similar population (0.40), resupply takes about a
+ * week everywhere (0.36), cold chain is off for most items (0.02). Their sum is
+ * near-constant across pairs and exactly constant across worlds, so a band that
+ * included them would be reporting the catalogue and the network rather than the
+ * state of anybody's shelf. On the quiet world they were carrying a third of all
+ * pairs over the `high` threshold, which is the false alarm the negative control
+ * exists to catch.
+ *
+ * They stay on the score, with their contributions and their sentences, because
+ * an officer deciding whether to move stock needs to know the item is essential
+ * and has no substitute. They are context, and context does not raise an alarm.
+ *
+ * `reportingGap` sits in the second group for the same measured reason (0.57 in
+ * all three scenarios): the world's facilities report every few days whether or
+ * not anything is wrong. Its alarming case is not graded at all — a facility past
+ * `STALE_AFTER_DAYS` is banded `unknown` outright, which is a rule and not a
+ * weight.
+ */
+export const SHELF_DRIVERS: readonly RiskDriver[] = [
+  'shortfallProbability',
+  'daysOfStock',
+  'surgeSignal',
+  'expiryPressure',
+];
+
+export const CONTEXT_DRIVERS: readonly RiskDriver[] = [
+  'criticality',
+  'populationAtRisk',
+  'leadTime',
+  'reportingGap',
+  'coldChain',
+];
+
+/**
+ * Shifts the summed shelf log-odds so an unremarkable facility reads low rather
+ * than even.
  *
  * Needed because several drivers carry weight for reasons that are true of every
  * facility — an item is on the essential list, a delivery takes eight days. Left
  * unshifted, those add up to a mid-range score for a shelf nobody has any
  * reason to worry about, and a surface that calls everything a moderate risk has
- * told an officer nothing. The value is the total those unremarkable settings
- * accumulate (about 1.4) plus the 2.2 that puts an ordinary facility in the
- * lowest band, and it is one constant so that changing it is a one-line
- * experiment. It calibrates the **index**; it never touches the measured
- * probability, which comes from the forecast and is passed straight through.
+ * told an officer nothing. The value is what the four shelf drivers accumulate
+ * across a world with nothing wrong in it — measured at about 0.4 before the
+ * in-transit and window corrections and −0.2 after them, since the surplus term
+ * is what a well-stocked pair earns — plus the 2.2 that places an ordinary pair
+ * near one in ten. It is one constant so that changing it is a one-line
+ * experiment, and it is re-derived from the negative-control profile whenever the
+ * drivers change rather than adjusted until a count looks right. It calibrates
+ * the **index**; it never touches the measured probability, which comes from the
+ * forecast and is passed straight through.
  */
-const LOG_ODDS_OFFSET = 3.6;
+const LOG_ODDS_OFFSET = 2;
 
 /** Index at or above which a band is critical however poor the data is. */
 const CRITICAL_FLOOR = 0.7;
@@ -92,6 +139,31 @@ const CRITICAL_FLOOR = 0.7;
  * something nobody has looked at.
  */
 export const STALE_AFTER_DAYS = 3;
+
+/**
+ * Days a facility must be able to survive on what it already has.
+ *
+ * A lead time of a day or two is not a licence to hold nothing, so the window has
+ * a floor. Above the floor it is the facility's own observed lead time, because
+ * that is the wait between deciding to order and the stock landing.
+ */
+export const MINIMUM_REPLENISHMENT_DAYS = 7;
+
+/**
+ * The window a shortfall is measured over: until a delivery can arrive.
+ *
+ * Deliberately not the forecast horizon. Asking whether demand outruns stock over
+ * a fortnight when a delivery takes five days describes a facility that never
+ * reorders, and the negative-control scenario is what exposed it: on a world with
+ * nothing wrong in it, facilities holding eight days of cover against a five-day
+ * lead time were being scored at a hundred per cent chance of running out. The
+ * question being answered was "will this run dry if nobody ever reorders".
+ *
+ * The window is capped at the horizon because the forecast carries no further
+ * quantiles, and it never falls below the floor above.
+ */
+export const replenishmentWindowDays = (leadTimeDays: number, horizonDays: number): number =>
+  Math.max(1, Math.min(horizonDays, Math.max(MINIMUM_REPLENISHMENT_DAYS, Math.ceil(leadTimeDays))));
 
 /** Index thresholds between bands. `unknown` is decided separately. */
 const BAND_THRESHOLDS: readonly (readonly [number, RiskBand])[] = [
@@ -121,8 +193,10 @@ export interface RiskFacts {
   readonly itemId: ItemId;
   readonly asOf: DateOnly;
   readonly horizonDays: number;
-  /** Probability that forecast demand exceeds stock inside the horizon. */
+  /** Probability that forecast demand exceeds stock before a delivery can arrive. */
   readonly shortfallProbability: number | null;
+  /** Days the probability above was measured over. */
+  readonly shortfallWindowDays: number;
   /** Days of cover from the forecast, or null when no rate could be derived. */
   readonly daysOfStock: number | null;
   readonly onHand: number;
@@ -137,8 +211,14 @@ export interface RiskFacts {
   /** Recent footfall over the prior period. Above one means attendances are rising. */
   readonly footfallTrend: number | null;
   readonly surge: SurgeFact | null;
-  /** Days until the nearest batch expires, and how much sits in it. */
+  /**
+   * Days until the nearest batch expires, and how much sits in it.
+   *
+   * Negative when the nearest batch is already past its date, which is a finding
+   * in its own right rather than a near miss.
+   */
   readonly daysToNearestExpiry: number | null;
+  /** Units in batches that expire inside the horizon, or have already expired. */
   readonly nearExpiryUnits: number;
   /** Days since the platform last heard anything from this facility at all. */
   readonly daysSinceReading: number | null;
@@ -184,16 +264,17 @@ const readingFor = (driver: RiskDriver, facts: RiskFacts): DriverReading => {
       const probability = clamp(facts.shortfallProbability, 0, 1);
       return {
         contribution: DRIVER_WEIGHTS.shortfallProbability * probability,
-        detail: `the forecast puts the chance of demand outrunning stock inside ${String(
-          facts.horizonDays,
-        )} days at ${(probability * 100).toFixed(1)}%`,
+        detail: `the forecast puts the chance of demand outrunning stock before a delivery can reach it, over the next ${String(
+          facts.shortfallWindowDays,
+        )} days, at ${(probability * 100).toFixed(1)}%`,
       };
     }
 
     case 'daysOfStock': {
-      // Measured against the longer of the lead time and the horizon: cover that
-      // does not outlast the wait for a delivery is not cover.
-      const need = Math.max(facts.leadTimeDays, facts.horizonDays);
+      // Measured against the wait for a delivery, not the forecast horizon: a
+      // facility holding a fortnight of stock against a five-day lead time is not
+      // short of anything, and calling it so is what the negative control caught.
+      const need = facts.shortfallWindowDays;
       if (facts.daysOfStock === null) {
         return {
           contribution: 0,
@@ -208,7 +289,7 @@ const readingFor = (driver: RiskDriver, facts: RiskFacts): DriverReading => {
         contribution: DRIVER_WEIGHTS.daysOfStock * (severity - surplus),
         detail: `${cover.toFixed(
           1,
-        )} days of cover against the ${String(need)} days it takes to be resupplied`,
+        )} days of cover against the ${String(need)} days before a delivery can arrive`,
       };
     }
 
@@ -275,6 +356,21 @@ const readingFor = (driver: RiskDriver, facts: RiskFacts): DriverReading => {
           detail: 'no batch is close enough to expiry to matter inside the horizon',
         };
       }
+      // Stock whose batch is already past its date is reported as what it is:
+      // expired, and not something a shelf can be counted on for. Folding it into
+      // "expires in N days" would have the platform print a negative number of
+      // days and hide the more serious finding behind it.
+      if (facts.daysToNearestExpiry <= 0) {
+        return {
+          contribution: DRIVER_WEIGHTS.expiryPressure,
+          detail: `${facts.nearExpiryUnits.toFixed(
+            0,
+          )} units sit in a batch that expired ${Math.abs(facts.daysToNearestExpiry).toFixed(
+            0,
+          )} days ago, so they cannot cover anything`,
+        };
+      }
+
       const severity = clamp(
         (facts.horizonDays - facts.daysToNearestExpiry) / facts.horizonDays,
         0,
@@ -338,6 +434,7 @@ const factsOf = (facts: RiskFacts): { name: string; value: number }[] => {
   const entries: [string, number | null][] = [
     ['horizonDays', facts.horizonDays],
     ['shortfallProbability', facts.shortfallProbability],
+    ['shortfallWindowDays', facts.shortfallWindowDays],
     ['daysOfStock', facts.daysOfStock],
     ['onHand', facts.onHand],
     ['inTransit', facts.inTransit],
@@ -404,8 +501,12 @@ export function scoreRisk(facts: RiskFacts): RiskScore {
     };
   });
 
-  const total = drivers.reduce((sum, driver) => sum + driver.contribution, 0);
-  const riskIndex = round(clamp(logistic(total - LOG_ODDS_OFFSET), 0, 1), 4);
+  // The band is decided by what was measured about the shelf, not by what the
+  // item and the district are like everywhere (see SHELF_DRIVERS).
+  const shelfTotal = drivers
+    .filter((driver) => SHELF_DRIVERS.includes(driver.driver))
+    .reduce((sum, driver) => sum + driver.contribution, 0);
+  const riskIndex = round(clamp(logistic(shelfTotal - LOG_ODDS_OFFSET), 0, 1), 4);
 
   // Passed through, not derived: when the forecast measured a probability, that
   // is the number a reader acts on, and when it did not, the score says so
@@ -446,6 +547,17 @@ export function bandFor(riskIndex: number): RiskBand {
 }
 
 /**
+ * The window a score's probability was measured over.
+ *
+ * Read off the score's own facts rather than recomputed, so a sentence written
+ * about a score states the window that score used even if the driver's floor or
+ * a facility's lead time changes afterwards. Falls back to the horizon for a
+ * score written before the window was recorded.
+ */
+export const shortfallWindowOf = (score: RiskScore): number =>
+  score.facts.find((fact) => fact.name === 'shortfallWindowDays')?.value ?? score.horizonDays;
+
+/**
  * Just enough of a score's facts to write an alert subject line.
  *
  * Quoting the measured probability when there is one, and the index and band
@@ -460,8 +572,10 @@ export const describeScore = (score: RiskScore): string => {
       ? `risk index ${score.riskIndex.toFixed(2)} on the ${score.band} band over ${String(
           score.horizonDays,
         )} days`
-      : `${(score.shortfallProbability * 100).toFixed(0)}% chance of running out within ${String(
-          score.horizonDays,
-        )} days`;
+      : `${(score.shortfallProbability * 100).toFixed(
+          0,
+        )}% chance of running out before a delivery can arrive (${String(
+          shortfallWindowOf(score),
+        )} days)`;
   return `${likelihood}${worst === undefined ? '' : ` — ${worst.detail}`}`;
 };

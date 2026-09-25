@@ -57,6 +57,17 @@ export type { AdvisoryAttempt } from './advisory';
 
 export { allowedNumeralsOf, grounded, groundingProblems, numeralsIn } from './grounding';
 
+export {
+  generateRationale,
+  generateRationales,
+  rationaleFactsOf,
+  rationaleRequestFor,
+  rationaleSchemaFor,
+  rationaleTextsOf,
+  writeRationale,
+} from './rationale';
+export type { RationaleAttempt, TransferRationaleInput } from './rationale';
+
 export { correctionTextOf, factsTextOf, interactionRequestFor } from './request';
 export type { ModelContent, ModelInteractionRequest, ModelUsage } from './request';
 

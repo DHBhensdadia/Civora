@@ -13,6 +13,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Notice, Panel, formatCount } from '@/components/ui';
 import { enqueue } from '@/lib/outbox';
 import type { OutboxItem } from '@/lib/outbox';
+import { warmOfflineShell } from '@/lib/shell-cache';
+import type { ShellStatus } from '@/lib/shell-cache';
 import { useOutbox } from '@/lib/use-outbox';
 
 /**
@@ -61,6 +63,37 @@ const RECORD_KINDS: readonly {
 ];
 
 const LEDGER_KINDS: readonly LedgerEntryKind[] = ['receipt', 'issue', 'adjust', 'expiry'];
+
+/**
+ * What the interface says about the stored screen.
+ *
+ * Stated as three separate facts rather than one badge, because "offline ready"
+ * would be true of the queue and false of the screen in exactly the situation
+ * that matters.
+ */
+const SHELL_STATUS_TEXT: Readonly<Record<ShellStatus, string>> = {
+  unsupported: 'This browser will not keep the screen offline; the queue still holds captures',
+  cached: 'Screen saved on this device — it opens with no connection',
+  unavailable: 'Screen not saved for offline use — opening it will need a connection',
+};
+
+/**
+ * Whether the platform's own lists have been read.
+ *
+ * The screen can be stored on the device; the facility list cannot, because a
+ * list of facilities is a statement about the world and the platform is the only
+ * thing entitled to make it. So a reopening with no connection can show the
+ * queue and the form but cannot offer a facility to record against, and it says
+ * exactly that instead of offering a stale choice.
+ */
+type ContextStatus = 'reading' | 'ready' | 'unreachable';
+
+const CONTEXT_STATUS_TEXT: Readonly<Record<ContextStatus, string>> = {
+  reading: "Reading the platform's facility list",
+  ready: 'Facility list read from the platform',
+  unreachable:
+    'The platform could not be reached, so its facility list is unavailable and nothing can be queued until it is',
+};
 
 /**
  * The form's own state.
@@ -175,6 +208,24 @@ export default function CapturePage() {
   const [busy, setBusy] = useState(false);
 
   const outbox = useOutbox();
+  const [shell, setShell] = useState<ShellStatus>('unsupported');
+  const [contextStatus, setContextStatus] = useState<ContextStatus>('reading');
+
+  // Keeping the screen itself is a separate promise from keeping the queue: see
+  // `lib/shell-cache.ts`. Its outcome is reported rather than assumed, because a
+  // facility that is told it can work offline and then cannot is worse served
+  // than one that was told the truth.
+  useEffect(() => {
+    let cancelled = false;
+    void warmOfflineShell().then((status) => {
+      if (!cancelled) {
+        setShell(status);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const setField = useCallback(<K extends keyof FormFields>(name: K, value: FormFields[K]) => {
     setFields((current) => ({ ...current, [name]: value }));
@@ -184,18 +235,29 @@ export default function CapturePage() {
     let cancelled = false;
 
     const load = async (): Promise<void> => {
-      const [sessionResponse, catalogueResponse] = await Promise.all([
-        fetch('/api/session'),
-        fetch('/api/catalogue'),
-      ]);
-      const session = (await sessionResponse.json()) as SessionPayload;
-      const catalogueBody = (await catalogueResponse.json()) as { items: readonly CatalogueItem[] };
-      if (cancelled) {
-        return;
+      try {
+        const [sessionResponse, catalogueResponse] = await Promise.all([
+          fetch('/api/session'),
+          fetch('/api/catalogue'),
+        ]);
+        const session = (await sessionResponse.json()) as SessionPayload;
+        const catalogueBody = (await catalogueResponse.json()) as {
+          items: readonly CatalogueItem[];
+        };
+        if (cancelled) {
+          return;
+        }
+        setIdentity(session);
+        setDistrictId(session.openingDistrictId);
+        setCatalogue(catalogueBody.items);
+        setContextStatus('ready');
+      } catch {
+        // A screen read off the device with the platform unreachable is the
+        // normal state of affairs at the end of a bad line, not a crash.
+        if (!cancelled) {
+          setContextStatus('unreachable');
+        }
       }
-      setIdentity(session);
-      setDistrictId(session.openingDistrictId);
-      setCatalogue(catalogueBody.items);
     };
 
     void load();
@@ -211,17 +273,26 @@ export default function CapturePage() {
 
     let cancelled = false;
     const load = async (): Promise<void> => {
-      const response = await fetch(`/api/visibility?districtId=${encodeURIComponent(districtId)}`);
-      const body = (await response.json()) as VisibilityPayload;
-      if (cancelled) {
-        return;
+      try {
+        const response = await fetch(
+          `/api/visibility?districtId=${encodeURIComponent(districtId)}`,
+        );
+        const body = (await response.json()) as VisibilityPayload;
+        if (cancelled) {
+          return;
+        }
+        setVisibility(body);
+        setFacilityId((current) =>
+          current !== '' && body.facilities.some((facility) => facility.id === current)
+            ? current
+            : (body.facilities[0]?.id ?? ''),
+        );
+        setContextStatus('ready');
+      } catch {
+        if (!cancelled) {
+          setContextStatus('unreachable');
+        }
       }
-      setVisibility(body);
-      setFacilityId((current) =>
-        current !== '' && body.facilities.some((facility) => facility.id === current)
-          ? current
-          : (body.facilities[0]?.id ?? ''),
-      );
     };
 
     void load();
@@ -479,6 +550,12 @@ export default function CapturePage() {
             {outbox.ready
               ? `${formatCount(outbox.pending)} ${outbox.pending === 1 ? 'change' : 'changes'} pending`
               : 'reading the queue'}
+          </p>
+          <p className="self-end text-sm text-slate-500" data-testid="shell-state">
+            {SHELL_STATUS_TEXT[shell]}
+          </p>
+          <p className="self-end text-sm text-slate-500" data-testid="context-state">
+            {CONTEXT_STATUS_TEXT[contextStatus]}
           </p>
         </div>
       </Panel>

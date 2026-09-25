@@ -3,13 +3,13 @@
 A federated AI platform for health resource and supply-chain planning across a
 national primary health centre network.
 
-> **Status: domain and data foundation.** This repository currently contains the
-> workspace foundation, the architecture's boundary ports, the local development
-> platform, the domain model, and a deterministic simulator that generates a
-> national facility network and its consumption and reporting history. It does
-> **not** yet contain a working prototype: there is no forecasting, no advisory
-> generation and no transfer planning. Nothing below is claimed to work beyond
-> what the test suite exercises, and no module is marked as implemented.
+> **Status: sensing plane.** The platform can now capture stock, beds,
+> attendance and footfall at a facility **offline**, accept it idempotently and
+> scoped to the facility that sent it, and show a district officer what the
+> district can see — including the facilities it cannot. Forecasting, early
+> warning, redistribution and federation are **not** implemented. Nothing below
+> is claimed to work beyond what the test suite exercises; the modules that do
+> not exist say so on the overview page.
 
 ---
 
@@ -44,6 +44,14 @@ and running it again stores the same documents under the same identifiers. What
 the dataset is, how much of it is real rather than generated, and which sources
 it set out to use but could not obtain are all on the **dataset inspector** at
 <http://localhost:3000/dataset>.
+
+The **capture surface** at <http://localhost:3000/capture> queues what a facility
+records on the device and delivers it when the platform can be reached, and the
+**visibility surface** at <http://localhost:3000/visibility> reads the resulting
+stock positions, bed pressure and reporting gaps. Turn the network off in the
+browser and capture anyway: that is the path the platform is built around, and
+`docs/ARCHITECTURE.md` states each rule it rests on and the file that enforces
+it.
 
 ## Quickstart
 
@@ -133,6 +141,8 @@ CI runs the same gates in the same order, plus a container build.
 
 ## Documentation
 
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — the layers, the capture path,
+  the ingest and tenancy rules, and where each is enforced.
 - [`docs/DATA_PROVENANCE.md`](docs/DATA_PROVENANCE.md) — every dataset, its
   licence, and what is simulated.
 - [`CONTRIBUTING.md`](CONTRIBUTING.md) — how to work in this repository.

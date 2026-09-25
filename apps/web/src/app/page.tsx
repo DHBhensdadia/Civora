@@ -1,0 +1,104 @@
+import { getEnv } from '@/env';
+import { MODULES } from '@/lib/modules';
+import { APP_VERSION } from '@/lib/version';
+import { getProviders } from '@/providers';
+
+export const dynamic = 'force-dynamic';
+
+export default async function HomePage() {
+  const env = getEnv();
+  const providers = getProviders();
+  const data = await providers.data.health();
+
+  const adapters = [
+    { port: 'Data', kind: providers.data.kind },
+    { port: 'Identity', kind: providers.auth.kind },
+    { port: 'Reasoning', kind: providers.reasoning.kind },
+  ];
+
+  return (
+    <main className="mx-auto flex max-w-4xl flex-col gap-10 px-6 py-16">
+      <header className="flex flex-col gap-3">
+        <p className="text-sm font-medium tracking-widest text-sky-400 uppercase">
+          Health supply-chain resilience
+        </p>
+        <h1 className="text-4xl font-semibold tracking-tight">{env.appName}</h1>
+        <p className="max-w-2xl text-lg text-slate-300">
+          A federated platform for health resource and supply-chain planning across the primary
+          health centre network.
+        </p>
+      </header>
+
+      <section
+        aria-labelledby="status-heading"
+        className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-6"
+      >
+        <h2 id="status-heading" className="text-lg font-semibold text-amber-200">
+          Foundation build — not yet a working prototype
+        </h2>
+        <p className="mt-2 text-amber-100/90">
+          This application currently contains the repository foundation and nothing else: no
+          facility data, no forecasts, no advisories and no transfers. Every module below is planned
+          and unimplemented.
+        </p>
+        <p className="mt-2 text-sm text-amber-100/70">
+          All data the platform will show is simulated. Nothing here is a real stock position and
+          this is not a deployed federation.
+        </p>
+      </section>
+
+      <section aria-labelledby="adapters-heading" className="flex flex-col gap-3">
+        <h2 id="adapters-heading" className="text-lg font-semibold">
+          Active adapters
+        </h2>
+        <p className="text-slate-400">
+          Every external boundary is a port. With no cloud credentials configured the process runs
+          against local adapters, which is how the platform stays testable and demoable offline.
+        </p>
+        <ul className="grid gap-2 sm:grid-cols-3">
+          {adapters.map((adapter) => (
+            <li
+              key={adapter.port}
+              className="rounded-lg border border-slate-800 bg-slate-900/60 px-4 py-3"
+            >
+              <p className="text-xs tracking-wider text-slate-400 uppercase">{adapter.port}</p>
+              <p className="font-mono text-sm text-sky-300">{adapter.kind}</p>
+            </li>
+          ))}
+        </ul>
+        <p className="text-sm text-slate-500">
+          Data adapter health: {data.ok ? 'reachable' : 'unreachable'}
+          {data.detail === undefined ? '' : ` — ${data.detail}`}
+        </p>
+      </section>
+
+      <section aria-labelledby="modules-heading" className="flex flex-col gap-3">
+        <h2 id="modules-heading" className="text-lg font-semibold">
+          Modules
+        </h2>
+        <ul className="flex flex-col divide-y divide-slate-800 rounded-lg border border-slate-800">
+          {MODULES.map((module) => (
+            <li key={module.name} className="flex flex-col gap-1 px-5 py-4">
+              <div className="flex items-baseline justify-between gap-4">
+                <span className="font-medium">{module.name}</span>
+                <span className="font-mono text-xs text-slate-500">not implemented</span>
+              </div>
+              <p className="text-sm text-slate-400">
+                <span className="mr-2 text-slate-500 italic">{module.meaning}</span>
+                {module.responsibility}
+              </p>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <footer className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-slate-800 pt-6 text-sm text-slate-500">
+        <span>Version {APP_VERSION}</span>
+        <a className="text-sky-400 underline-offset-4 hover:underline" href="/healthz">
+          Health check
+        </a>
+        <span>Licensed under Apache-2.0</span>
+      </footer>
+    </main>
+  );
+}

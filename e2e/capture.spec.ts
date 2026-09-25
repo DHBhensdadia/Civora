@@ -141,6 +141,60 @@ test.describe('capture at a facility with no connection', () => {
     });
   });
 
+  test('records attendance by cadre and reads the compliance back off the district view', async ({
+    page,
+    request,
+  }) => {
+    // Its own district, so it cannot collide with the journeys acting on the
+    // others while the suite runs in parallel.
+    const districtId = await districtIdNamed(request, 'Patna');
+    const facility = await facilityOfTier(request, districtId, 'PHC');
+
+    await page.goto('/capture');
+    await page.getByLabel('District', { exact: true }).selectOption(districtId);
+    await page
+      .getByLabel('Facility', { exact: true })
+      .locator(`option[value="${facility.id}"]`)
+      .waitFor({ state: 'attached' });
+    await page.getByLabel('Facility', { exact: true }).selectOption(facility.id);
+
+    await page.getByRole('radio', { name: 'Attendance posts filled and present' }).check();
+    await page.getByLabel('Cadre', { exact: true }).selectOption('anm');
+    // `exact` because the record-kind radio's own label reads "Attendance posts
+    // filled and present, by cadre", which every one of these would match.
+    await page.getByLabel('Sanctioned posts', { exact: true }).fill('4');
+    await page.getByLabel('Posts filled', { exact: true }).fill('3');
+    await page.getByLabel('Present today', { exact: true }).fill('2');
+    await page.getByRole('button', { name: 'Queue capture' }).click();
+    await page.getByRole('button', { name: 'Retry now' }).click();
+
+    await expect(page.locator('[data-testid="outbox-item"][data-status="delivered"]')).toHaveCount(
+      1,
+      { timeout: 20_000 },
+    );
+
+    // Compliance is present against **filled** posts, not against sanctioned
+    // ones: a vacancy is a staffing problem, not an absence, and counting it as
+    // an absence would make every under-staffed facility look like a worse
+    // attender than it is.
+    const payload = await readVisibility(request, { districtId });
+    const stored = payload.facilities.find((candidate) => candidate.id === facility.id);
+    expect(stored?.reading.attendance).toEqual({
+      observedOn: today(),
+      sanctioned: 4,
+      filled: 3,
+      present: 2,
+      compliance: 2 / 3,
+    });
+
+    await page.goto('/visibility');
+    await page.getByLabel('District', { exact: true }).selectOption(districtId);
+    const row = page
+      .getByRole('region', { name: 'Facilities', exact: true })
+      .getByRole('row', { name: new RegExp(facility.name) });
+    await expect(row).toContainText('2/3');
+  });
+
   test('keeps a refused capture in the queue with the reason, rather than retrying it', async ({
     page,
     request,

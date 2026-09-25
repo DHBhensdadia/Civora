@@ -41,6 +41,13 @@ export interface FacilityView {
       readonly occupancy: number;
     } | null;
     readonly footfall: { readonly opd: number; readonly ipd: number } | null;
+    readonly attendance: {
+      readonly observedOn: string;
+      readonly sanctioned: number;
+      readonly filled: number;
+      readonly present: number;
+      readonly compliance: number | null;
+    } | null;
     readonly stock: {
       readonly itemsTracked: number;
       readonly itemsOutOfStock: number;

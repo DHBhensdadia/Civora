@@ -334,6 +334,9 @@ importers:
       '@civora/config':
         specifier: workspace:*
         version: link:../config
+      '@types/node':
+        specifier: 'catalog:'
+        version: 26.6.2
       typescript:
         specifier: 'catalog:'
         version: 6.0.3

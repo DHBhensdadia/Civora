@@ -19,6 +19,7 @@
   },
   "devDependencies": {
     "@civora/config": "workspace:*",
+    "@types/node": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
   }

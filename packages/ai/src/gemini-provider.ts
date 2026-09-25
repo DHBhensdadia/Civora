@@ -2,7 +2,13 @@ import { createHash } from 'node:crypto';
 import { setTimeout as delay } from 'node:timers/promises';
 
 import { ReasoningProviderError } from '@civora/domain';
-import type { ReasoningProvider, ReasoningRequest, ReasoningResponse } from '@civora/domain';
+import type {
+  ReasoningProvider,
+  ReasoningRequest,
+  ReasoningResponse,
+  ReasoningTaskTelemetry,
+  ReasoningTelemetry,
+} from '@civora/domain';
 
 import { correctionTextOf, interactionRequestFor } from './request';
 import type { ModelInteractionRequest, ModelUsage } from './request';
@@ -48,18 +54,23 @@ export interface InteractionClient {
   create(request: ModelInteractionRequest): Promise<ModelInteractionResult>;
 }
 
-/** What has actually been called, for the surface that has to show it. */
-export interface ReasoningTelemetry {
-  /** Requests answered, from cache or from the model. */
-  readonly calls: number;
-  /** Attempts made against the model, including the ones the schema rejected. */
-  readonly attempts: number;
-  readonly cacheHits: number;
-  readonly failures: number;
-  /** `null` when the surface reported no count — never a zero standing in for one. */
-  readonly totalInputTokens: number | null;
-  readonly totalOutputTokens: number | null;
-  readonly totalDurationMs: number;
+/**
+ * The running counts for one task.
+ *
+ * Kept per task rather than in one blob because the questions they answer are
+ * per task: which capability is costing the free tier, which one is failing, and
+ * whether a retry loop is quietly doubling a bill. The totals a surface shows are
+ * **summed from these at snapshot time**, so a total cannot drift away from the
+ * rows underneath it.
+ */
+interface TaskCounters {
+  calls: number;
+  attempts: number;
+  cacheHits: number;
+  failures: number;
+  totalInputTokens: number | null;
+  totalOutputTokens: number | null;
+  totalDurationMs: number;
 }
 
 export interface GeminiProviderOptions {
@@ -132,14 +143,8 @@ export class GeminiReasoningProvider implements ReasoningProvider {
   readonly #backoffMs: number;
   readonly #now: () => number;
   readonly #cache = new Map<string, CachedAnswer>();
-
-  #calls = 0;
-  #attempts = 0;
-  #cacheHits = 0;
-  #failures = 0;
-  #inputTokens: number | null = null;
-  #outputTokens: number | null = null;
-  #durationMs = 0;
+  /** Insertion order is first-seen order, which is the order a surface lists them. */
+  readonly #tasks = new Map<string, TaskCounters>();
 
   constructor(options: GeminiProviderOptions) {
     this.#client = options.client;
@@ -149,7 +154,8 @@ export class GeminiReasoningProvider implements ReasoningProvider {
   }
 
   async reason<T>(request: ReasoningRequest<T>): Promise<ReasoningResponse<T>> {
-    this.#calls += 1;
+    const counters = this.#countersFor(request.task);
+    counters.calls += 1;
 
     let payload: ModelInteractionRequest;
     try {
@@ -166,7 +172,7 @@ export class GeminiReasoningProvider implements ReasoningProvider {
     const key = cacheKeyOf(request.task, payload);
     const cached = this.#cache.get(key);
     if (cached !== undefined) {
-      this.#cacheHits += 1;
+      counters.cacheHits += 1;
       return {
         value: request.schema.parse(cached.value),
         provider: this.kind,
@@ -178,7 +184,7 @@ export class GeminiReasoningProvider implements ReasoningProvider {
     let problem = 'no attempt was made';
     for (let attempt = 1; attempt <= this.#maxAttempts; attempt += 1) {
       const started = this.#now();
-      this.#attempts += 1;
+      counters.attempts += 1;
 
       let result: ModelInteractionResult;
       try {
@@ -190,8 +196,8 @@ export class GeminiReasoningProvider implements ReasoningProvider {
               { ...payload, input: [...payload.input, correctionTextOf(problem)] },
         );
       } catch (error) {
-        this.#durationMs += this.#now() - started;
-        this.#failures += 1;
+        counters.totalDurationMs += this.#now() - started;
+        counters.failures += 1;
         problem = `the provider failed: ${error instanceof Error ? error.message : String(error)}`;
         if (attempt < this.#maxAttempts) {
           await delay(this.#backoffMs * 2 ** (attempt - 1));
@@ -199,8 +205,8 @@ export class GeminiReasoningProvider implements ReasoningProvider {
         continue;
       }
 
-      this.#durationMs += this.#now() - started;
-      this.#recordUsage(result.usage);
+      counters.totalDurationMs += this.#now() - started;
+      this.#recordUsage(counters, result.usage);
 
       problem = problemWith(result.output_text, request.schema);
       if (problem === '') {
@@ -209,7 +215,7 @@ export class GeminiReasoningProvider implements ReasoningProvider {
         return { value, provider: this.kind, model: this.#client.model, cacheHit: false };
       }
 
-      this.#failures += 1;
+      counters.failures += 1;
       if (attempt < this.#maxAttempts) {
         await delay(this.#backoffMs * 2 ** (attempt - 1));
       }
@@ -220,25 +226,84 @@ export class GeminiReasoningProvider implements ReasoningProvider {
     );
   }
 
-  /** A snapshot, not a live view: a caller reading it is not holding a moving number. */
+  /**
+   * A snapshot, not a live view: a caller reading it is not holding a moving number.
+   *
+   * The totals are summed here rather than kept alongside, so the number a surface
+   * puts in its headline and the rows it lists underneath always add up.
+   */
   telemetry(): ReasoningTelemetry {
+    const perTask: ReasoningTaskTelemetry[] = [...this.#tasks].map(([task, counters]) => ({
+      task,
+      ...counters,
+    }));
+
     return {
-      calls: this.#calls,
-      attempts: this.#attempts,
-      cacheHits: this.#cacheHits,
-      failures: this.#failures,
-      totalInputTokens: this.#inputTokens,
-      totalOutputTokens: this.#outputTokens,
-      totalDurationMs: this.#durationMs,
+      model: this.#client.model,
+      calls: sum(perTask, (task) => task.calls),
+      attempts: sum(perTask, (task) => task.attempts),
+      cacheHits: sum(perTask, (task) => task.cacheHits),
+      failures: sum(perTask, (task) => task.failures),
+      totalInputTokens: sumNullable(perTask, (task) => task.totalInputTokens),
+      totalOutputTokens: sumNullable(perTask, (task) => task.totalOutputTokens),
+      totalDurationMs: sum(perTask, (task) => task.totalDurationMs),
+      perTask,
     };
   }
 
-  #recordUsage(usage: ModelUsage | undefined): void {
+  #countersFor(task: string): TaskCounters {
+    const existing = this.#tasks.get(task);
+    if (existing !== undefined) {
+      return existing;
+    }
+
+    const counters: TaskCounters = {
+      calls: 0,
+      attempts: 0,
+      cacheHits: 0,
+      failures: 0,
+      totalInputTokens: null,
+      totalOutputTokens: null,
+      totalDurationMs: 0,
+    };
+    this.#tasks.set(task, counters);
+    return counters;
+  }
+
+  #recordUsage(counters: TaskCounters, usage: ModelUsage | undefined): void {
     if (usage?.total_input_tokens !== undefined) {
-      this.#inputTokens = (this.#inputTokens ?? 0) + usage.total_input_tokens;
+      counters.totalInputTokens = (counters.totalInputTokens ?? 0) + usage.total_input_tokens;
     }
     if (usage?.total_output_tokens !== undefined) {
-      this.#outputTokens = (this.#outputTokens ?? 0) + usage.total_output_tokens;
+      counters.totalOutputTokens = (counters.totalOutputTokens ?? 0) + usage.total_output_tokens;
     }
   }
+}
+
+/** A total a reader can check against the rows it covers. */
+function sum(
+  tasks: readonly ReasoningTaskTelemetry[],
+  of: (task: ReasoningTaskTelemetry) => number,
+): number {
+  return tasks.reduce((total, task) => total + of(task), 0);
+}
+
+/**
+ * The same sum over a count a provider may not have reported.
+ *
+ * It stays `null` until something reports a number, and it stays `null` if any
+ * task reported none: a partial total presented as a total is exactly the kind of
+ * plausible-looking figure this platform refuses to publish. An adapter that has
+ * been asked nothing has reported nothing either, which is why an empty set
+ * answers `null` rather than `0`.
+ */
+function sumNullable(
+  tasks: readonly ReasoningTaskTelemetry[],
+  of: (task: ReasoningTaskTelemetry) => number | null,
+): number | null {
+  if (tasks.length === 0 || tasks.some((task) => of(task) === null)) {
+    return null;
+  }
+
+  return tasks.reduce((total, task) => total + (of(task) ?? 0), 0);
 }

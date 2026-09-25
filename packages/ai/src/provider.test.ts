@@ -265,6 +265,8 @@ describe('the telemetry', () => {
 
     expect(second.cacheHit).toBe(true);
     expect(provider.telemetry()).toEqual({
+      // A model is named here because this adapter sends somewhere.
+      model: 'gemini-3.8-flash',
       calls: 2,
       attempts: 2,
       cacheHits: 1,
@@ -272,6 +274,18 @@ describe('the telemetry', () => {
       totalInputTokens: 900,
       totalOutputTokens: 40,
       totalDurationMs: 40,
+      perTask: [
+        {
+          task: 'stock-extraction',
+          calls: 2,
+          attempts: 2,
+          cacheHits: 1,
+          failures: 1,
+          totalInputTokens: 900,
+          totalOutputTokens: 40,
+          totalDurationMs: 40,
+        },
+      ],
     });
     // Two attempts to get one answer, and the second request cost nothing.
     expect(client.calls).toHaveLength(2);
@@ -287,6 +301,83 @@ describe('the telemetry', () => {
 
     expect(provider.telemetry().totalInputTokens).toBeNull();
     expect(provider.telemetry().totalOutputTokens).toBeNull();
+  });
+
+  it('has counted nothing at all before it is asked anything', () => {
+    const provider = new GeminiReasoningProvider({
+      client: stubClient([]),
+      backoffMs: 0,
+    });
+
+    // An empty panel and a panel of zeros are different claims, and this is the
+    // first one: nothing has been asked, so nothing has been reported.
+    expect(provider.telemetry()).toEqual({
+      model: 'gemini-3.8-flash',
+      calls: 0,
+      attempts: 0,
+      cacheHits: 0,
+      failures: 0,
+      totalInputTokens: null,
+      totalOutputTokens: null,
+      totalDurationMs: 0,
+      perTask: [],
+    });
+  });
+
+  it('attributes each task separately, and sums the totals from those rows', async () => {
+    // Two tasks: one answered on the first attempt with usage reported, one that
+    // fails. Which capability is costing quota is a per-task question, so the
+    // breakdown is where the answer has to be.
+    const client = stubClient([
+      {
+        output_text: '{"item":"ORS","quantity":3}',
+        usage: { total_input_tokens: 100, total_output_tokens: 10 },
+      },
+      new Error('the model is unavailable'),
+    ]);
+    // A clock that does not move, so the assertion is about attribution and not
+    // about how long a stub took to resolve.
+    const provider = new GeminiReasoningProvider({
+      client,
+      maxAttempts: 1,
+      backoffMs: 0,
+      now: () => 0,
+    });
+
+    await provider.reason(requestFor({ task: 'stock-extraction' }));
+    await expect(provider.reason(requestFor({ task: 'advisory-generation' }))).rejects.toThrow(
+      ReasoningProviderError,
+    );
+
+    const telemetry = provider.telemetry();
+    expect(telemetry.perTask).toEqual([
+      {
+        task: 'stock-extraction',
+        calls: 1,
+        attempts: 1,
+        cacheHits: 0,
+        failures: 0,
+        totalInputTokens: 100,
+        totalOutputTokens: 10,
+        totalDurationMs: 0,
+      },
+      {
+        task: 'advisory-generation',
+        calls: 1,
+        attempts: 1,
+        cacheHits: 0,
+        failures: 1,
+        totalInputTokens: null,
+        totalOutputTokens: null,
+        totalDurationMs: 0,
+      },
+    ]);
+    expect(telemetry.calls).toBe(2);
+    expect(telemetry.failures).toBe(1);
+    // One task reported no usage, so the total is unknown rather than partial:
+    // 100 would be a plausible number that is wrong about the model's cost.
+    expect(telemetry.totalInputTokens).toBeNull();
+    expect(telemetry.totalOutputTokens).toBeNull();
   });
 });
 

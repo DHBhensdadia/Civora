@@ -27,8 +27,10 @@ export type {
   GeminiProviderOptions,
   InteractionClient,
   ModelInteractionResult,
-  ReasoningTelemetry,
 } from './gemini-provider';
+// The telemetry shape belongs to the port, not to an adapter, because both
+// adapters report in it and a surface reads whichever one is configured.
+export type { ReasoningTaskTelemetry, ReasoningTelemetry } from '@civora/domain';
 
 export { createGeminiClient } from './gemini-client';
 export type { GeminiClientOptions } from './gemini-client';

@@ -144,6 +144,30 @@ async function expectReasoningProviderContract(provider: ReasoningProvider): Pro
       facts: [],
     }),
   ).rejects.toThrow(ReasoningProviderError);
+
+  // Telemetry is optional by design, but an adapter that reports it must report
+  // in the port's shape and must account for the calls it has actually taken: a
+  // panel is evidence only if the number on it came from the path that ran.
+  const telemetry = provider.telemetry?.();
+  if (telemetry !== undefined) {
+    expect(telemetry.calls).toBeGreaterThanOrEqual(2);
+    expect(telemetry.failures).toBeGreaterThanOrEqual(1);
+    // Every request was either refused or answered, and an answer either came off
+    // a recording or cost at least one attempt against the model.
+    expect(telemetry.cacheHits + telemetry.failures).toBeLessThanOrEqual(telemetry.calls);
+    expect(telemetry.calls - telemetry.failures).toBeLessThanOrEqual(
+      telemetry.cacheHits + telemetry.attempts,
+    );
+    expect(telemetry.totalDurationMs).toBeGreaterThanOrEqual(0);
+    for (const task of telemetry.perTask) {
+      expect(task.task.length).toBeGreaterThan(0);
+      expect(task.calls).toBeGreaterThanOrEqual(0);
+    }
+    expect(telemetry.perTask.reduce((total, task) => total + task.calls, 0)).toBe(telemetry.calls);
+    expect(telemetry.perTask.reduce((total, task) => total + task.failures, 0)).toBe(
+      telemetry.failures,
+    );
+  }
 }
 
 describe('local-first adapters satisfy their port contracts', () => {

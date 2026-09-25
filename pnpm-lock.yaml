@@ -138,6 +138,9 @@ importers:
       '@civora/i18n':
         specifier: workspace:*
         version: link:../../packages/i18n
+      '@civora/optimizer':
+        specifier: workspace:*
+        version: link:../../packages/optimizer
       '@civora/simulator':
         specifier: workspace:*
         version: link:../simulator
@@ -190,6 +193,9 @@ importers:
       '@civora/i18n':
         specifier: workspace:*
         version: link:../../packages/i18n
+      '@civora/optimizer':
+        specifier: workspace:*
+        version: link:../../packages/optimizer
       '@civora/simulator':
         specifier: workspace:*
         version: link:../simulator

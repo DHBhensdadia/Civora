@@ -24,6 +24,9 @@
  *    of four stated weightings and writes a rationale; the plan and every
  *    quantity are still the optimiser's, judged by the validator, with a
  *    deterministic fallback that is what runs when no provider is configured.
+ *  - `proposal` runs the whole pipeline over a world the caller supplies and
+ *    emits `TransferProposal` records — or, when the validator refuses the plan,
+ *    no records at all and the refusals instead.
  *
  * A language model may select a strategy and write a rationale. It never
  * originates a quantity: every number in a proposal comes from here.
@@ -33,5 +36,6 @@ export * from './feasibility';
 export * from './impact';
 export * from './planner';
 export * from './priorities';
+export * from './proposal';
 export * from './strategy';
 export * from './validator';

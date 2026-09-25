@@ -19,6 +19,7 @@
     "@civora/domain": "workspace:*",
     "@civora/forecasting": "workspace:*",
     "@civora/i18n": "workspace:*",
+    "@civora/optimizer": "workspace:*",
     "@civora/simulator": "workspace:*",
     "zod": "catalog:"
   },

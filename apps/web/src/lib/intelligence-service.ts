@@ -252,6 +252,19 @@ const maySee = (session: Session, facilityId: string, scope: ScopeLookup): boole
 };
 
 /**
+ * The scored population this process holds.
+ *
+ * The intelligence surface reads it through `readIntelligence`; the workbench
+ * reads it directly, because a plan needs the forecasts themselves — the two
+ * quantile paths — rather than the ranked rows derived from them. One scoring
+ * per process, so a figure a person acts on and a figure a plan was built from
+ * cannot come from different runs.
+ */
+export async function readScoredPopulation(): Promise<ScoredPopulation> {
+  return (await built()).population;
+}
+
+/**
  * The intelligence this session is entitled to read.
  *
  * Scoped like every other read in the platform, and by the same rule: a

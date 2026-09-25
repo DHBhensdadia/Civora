@@ -14,6 +14,7 @@ const SECTIONS = [
   { href: '/visibility', label: 'Visibility' },
   { href: '/intelligence', label: 'Intelligence' },
   { href: '/capture', label: 'Capture' },
+  { href: '/vision', label: 'Vision intake' },
   { href: '/dataset', label: 'Dataset inspector' },
 ] as const;
 

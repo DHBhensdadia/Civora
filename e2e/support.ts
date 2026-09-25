@@ -12,6 +12,8 @@ import type { APIRequestContext } from '@playwright/test';
 export interface CatalogueItem {
   readonly id: string;
   readonly name: string;
+  readonly form: string;
+  readonly strength: string;
   readonly unit: string;
   readonly coldChain: boolean;
 }
@@ -34,7 +36,16 @@ export interface FacilityView {
     readonly status: 'current' | 'stale' | 'never-heard';
     readonly newestReadingOn: string | null;
     readonly daysSinceReading: number | null;
-    readonly recentMovements: readonly { readonly id: string; readonly quantity: number }[];
+    readonly recentMovements: readonly {
+      readonly id: string;
+      readonly itemId: string;
+      readonly itemName: string;
+      readonly kind: string;
+      readonly quantity: number;
+      readonly occurredOn: string;
+      /** How the movement was captured: manual, vision, voice or simulation. */
+      readonly captureSource: string;
+    }[];
     readonly beds: {
       readonly total: number;
       readonly occupied: number;

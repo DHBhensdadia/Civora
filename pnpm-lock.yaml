@@ -129,6 +129,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@civora/ai':
+        specifier: workspace:*
+        version: link:../../packages/ai
       '@civora/domain':
         specifier: workspace:*
         version: link:../../packages/domain

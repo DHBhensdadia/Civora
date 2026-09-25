@@ -11,6 +11,7 @@
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
+    "@civora/ai": "workspace:*",
     "@civora/domain": "workspace:*",
     "@civora/simulator": "workspace:*",
     "next": "catalog:",

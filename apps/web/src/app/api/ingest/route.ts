@@ -1,20 +1,13 @@
 import {
-  CONFLICT_COLLECTION,
-  OBSERVATION_COLLECTIONS,
-  OBSERVATION_SCHEMAS,
   PLATFORM_STAMP,
-  RECEIPT_COLLECTION,
   assertCaptureTimePlausible,
   completeSubmission,
-  decideIngest,
-  ingestReceiptSchema,
   ingestRequestSchema,
-  subjectKeyOfRequest,
-  syncConflictSchema,
 } from '@civora/domain';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
+import { applySubmission } from '@/lib/ingest-boundary';
 import { getLiveStore } from '@/lib/live-store';
 import { SESSION_COOKIE, canSubmitForFacility, parseSession, scopeRefusalFor } from '@/lib/session';
 
@@ -117,42 +110,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     );
   }
 
-  const receipts = store.provider.collection(RECEIPT_COLLECTION, ingestReceiptSchema);
-  const observations = store.provider.collection(
-    OBSERVATION_COLLECTIONS[submission.type],
-    OBSERVATION_SCHEMAS[submission.type],
-  );
-  const subjectKey = subjectKeyOfRequest(submission);
-
-  const existingReceipt = await receipts.get(submission.idempotencyKey);
-  const existingRecord = await observations.get(subjectKey);
-
-  const decision = decideIngest({
-    request: submission,
-    receivedAt,
-    existingReceipt,
-    existingRecord,
-    stamp: PLATFORM_STAMP,
-    conflictId: `conflict-${subjectKey}-${submission.idempotencyKey}`,
-  });
-
-  if (decision.record !== null) {
-    await observations.set(subjectKey, decision.record);
-    // The projection reads what was observed, and the stamp is bookkeeping, so
-    // the submission carries everything the dashboard needs.
-    store.ledger.applyRequest(submission);
-  }
-
-  if (decision.conflict !== null) {
-    await store.provider
-      .collection(CONFLICT_COLLECTION, syncConflictSchema)
-      .set(decision.conflict.id, decision.conflict);
-  }
-
-  // Written last, so a failure before this point leaves a submission that a
-  // retry can still process, and a failure after it leaves a submission that a
-  // retry is answered from the receipt.
-  await receipts.set(submission.idempotencyKey, decision.receipt);
+  // The write itself is shared with every other path that stores an
+  // observation, so a record can be captured by one surface and replayed by
+  // another without either owning its own copy of the sequence.
+  const { subjectKey, decision } = await applySubmission(store, submission, receivedAt);
 
   return NextResponse.json(
     {

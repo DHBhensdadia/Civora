@@ -48,6 +48,8 @@ export type ReviewReason = (typeof REVIEW_REASONS)[number];
 
 /** A line that can be written, with the identity and the day it is written as. */
 export interface AcceptedIntakeLine {
+  /** Position in the extraction, so a decision can name the line it is about. */
+  readonly index: number;
   readonly line: StockExtractionLine;
   /** The catalogue entry the written name resolved to, unambiguously. */
   readonly item: Item;
@@ -57,6 +59,7 @@ export interface AcceptedIntakeLine {
 
 /** A line a person has to decide about. */
 export interface ReviewedIntakeLine {
+  readonly index: number;
   readonly line: StockExtractionLine;
   readonly reasons: readonly ReviewReason[];
   /** The catalogue entries the name could have meant, when it was ambiguous. */
@@ -68,8 +71,8 @@ export interface ExtractionPartition {
   readonly review: readonly ReviewedIntakeLine[];
 }
 
-export interface ExtractionIntakeInput {
-  readonly extraction: StockExtraction;
+export interface LineDecisionInput {
+  readonly line: StockExtractionLine;
   readonly catalogue: readonly Item[];
   /**
    * The day the movement belongs to.
@@ -81,30 +84,56 @@ export interface ExtractionIntakeInput {
   readonly occurredOn: DateOnly;
   /** Overridable so that a comparison can be made at two thresholds. */
   readonly threshold?: number;
+  /**
+   * An identity a person chose while reviewing the line.
+   *
+   * Set only by the review queue, and it is not a guess being smuggled back in:
+   * a person looking at the page and at the catalogue is the authority for what
+   * the line means, which is precisely why the queue exists. The rest of the
+   * rules below still apply to the line afterwards.
+   */
+  readonly chosenItemId?: string | undefined;
+}
+
+/** What one line's fate is, and why. */
+export interface LineDecision {
+  /** Empty means the line can be written. */
+  readonly reasons: readonly ReviewReason[];
+  /** The identity the line resolved to, or null when it resolved to none. */
+  readonly item: Item | null;
+  /** The entries the name could have meant, when it was ambiguous. */
+  readonly candidates: readonly Item[];
 }
 
 /**
- * Route every line of an extraction to the ledger or to review.
+ * Decide one line: can it be written, and if not, why not.
  *
- * All reasons are collected rather than the first one, because a person fixing
- * a line wants to know everything that is wrong with it, and a queue that
- * revealed a second problem after the first was fixed would be fixed twice.
+ * One function rather than two, because the review queue and the intake path
+ * have to agree about what "acceptable" means: a queue that accepted a line the
+ * ledger's own rules reject would be a queue that lies. All reasons are
+ * collected rather than the first, because a person fixing a line wants to know
+ * everything that is wrong with it.
  */
-export function partitionExtraction(input: ExtractionIntakeInput): ExtractionPartition {
+export function decideLine(input: LineDecisionInput): LineDecision {
   const threshold = input.threshold ?? EXTRACTION_REVIEW_THRESHOLD;
-  const accepted: AcceptedIntakeLine[] = [];
-  const review: ReviewedIntakeLine[] = [];
+  const reasons: ReviewReason[] = [];
 
-  for (const line of input.extraction.lines) {
-    const reasons: ReviewReason[] = [];
-    let item: Item | undefined;
-    let candidates: readonly Item[] = [];
+  if (input.line.confidence < threshold) {
+    reasons.push('low-confidence');
+  }
 
-    if (line.confidence < threshold) {
-      reasons.push('low-confidence');
-    }
+  let item: Item | null = null;
+  let candidates: readonly Item[] = [];
 
-    const match = matchItemByName(line.itemName, input.catalogue);
+  const chosen =
+    input.chosenItemId === undefined
+      ? undefined
+      : input.catalogue.find((candidate) => candidate.id === input.chosenItemId);
+
+  if (chosen !== undefined) {
+    item = chosen;
+  } else {
+    const match = matchItemByName(input.line.itemName, input.catalogue);
     if (match.kind === 'matched') {
       item = match.item;
     } else if (match.kind === 'ambiguous') {
@@ -113,23 +142,47 @@ export function partitionExtraction(input: ExtractionIntakeInput): ExtractionPar
     } else {
       reasons.push('item-unmatched');
     }
+  }
 
-    if (line.batchId === null) {
-      reasons.push('batch-not-read');
-    }
-    if (line.expiresOn === null) {
-      reasons.push('expiry-not-read');
-    } else if (line.expiresOn <= input.occurredOn) {
-      // The ledger requires a batch's expiry to be after the day it moved, which
-      // is right for a delivery and gets in the way of a register that recorded
-      // an expired batch. Somebody has to say which day that belongs to.
-      reasons.push('expiry-not-after-register');
-    }
+  if (input.line.batchId === null) {
+    reasons.push('batch-not-read');
+  }
+  if (input.line.expiresOn === null) {
+    reasons.push('expiry-not-read');
+  } else if (input.line.expiresOn <= input.occurredOn) {
+    // The ledger requires a batch's expiry to be after the day it moved, which
+    // is right for a delivery and gets in the way of a register that recorded an
+    // expired batch. Somebody has to say which day that belongs to.
+    reasons.push('expiry-not-after-register');
+  }
 
-    if (reasons.length === 0 && item !== undefined) {
-      accepted.push({ line, item, occurredOn: input.occurredOn });
+  return { reasons, item, candidates };
+}
+
+export interface ExtractionIntakeInput {
+  readonly extraction: StockExtraction;
+  readonly catalogue: readonly Item[];
+  readonly occurredOn: DateOnly;
+  readonly threshold?: number;
+}
+
+/** Route every line of an extraction to the ledger, or to review. */
+export function partitionExtraction(input: ExtractionIntakeInput): ExtractionPartition {
+  const accepted: AcceptedIntakeLine[] = [];
+  const review: ReviewedIntakeLine[] = [];
+
+  for (const [index, line] of input.extraction.lines.entries()) {
+    const decision = decideLine({
+      line,
+      catalogue: input.catalogue,
+      occurredOn: input.occurredOn,
+      ...(input.threshold === undefined ? {} : { threshold: input.threshold }),
+    });
+
+    if (decision.reasons.length === 0 && decision.item !== null) {
+      accepted.push({ index, line, item: decision.item, occurredOn: input.occurredOn });
     } else {
-      review.push({ line, reasons, candidates });
+      review.push({ index, line, reasons: decision.reasons, candidates: decision.candidates });
     }
   }
 

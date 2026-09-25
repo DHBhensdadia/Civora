@@ -1,3 +1,4 @@
+import { GeminiReasoningProvider, createGeminiClient } from '@civora/ai';
 import {
   CivoraError,
   FixtureAuthProvider,
@@ -6,7 +7,7 @@ import {
 } from '@civora/domain';
 import type { AuthProvider, DataProvider, ReasoningProvider } from '@civora/domain';
 
-import { getEnv } from './env';
+import { EnvValidationError, getEnv } from './env';
 import type { Env } from './env';
 
 /** The adapters this process is running against. */
@@ -52,11 +53,28 @@ function createAuthProvider(env: Env): AuthProvider {
 function createReasoningProvider(env: Env): ReasoningProvider {
   switch (env.reasoningProvider) {
     case 'fixture':
+      // Replays recorded responses. With no recordings in this build it refuses
+      // every request rather than inventing an answer, which is what keeps a
+      // surface from appearing to work while no model is behind it.
       return new FixtureReasoningProvider();
-    case 'gemini':
-      throw new ProviderNotAvailableError(
-        'the cloud reasoning adapter is not part of this build; select CIVORA_REASONING_PROVIDER=fixture',
-      );
+    case 'gemini': {
+      const { geminiApiKey, geminiModel } = env;
+      // Environment validation already refuses to start without both of these
+      // when this adapter is selected; the check is here because the type does
+      // not carry that guarantee and a keyless client would fail at the first
+      // call instead of at start-up.
+      if (geminiApiKey === undefined || geminiModel === undefined) {
+        throw new EnvValidationError([
+          {
+            variable: 'GEMINI_API_KEY',
+            message: 'required when CIVORA_REASONING_PROVIDER is "gemini"',
+          },
+        ]);
+      }
+      return new GeminiReasoningProvider({
+        client: createGeminiClient({ apiKey: geminiApiKey, model: geminiModel }),
+      });
+    }
     default:
       return assertNever(env.reasoningProvider);
   }

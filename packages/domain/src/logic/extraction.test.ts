@@ -6,7 +6,7 @@ import { EXTRACTION_REVIEW_THRESHOLD, stockExtractionSchema } from '../model/ext
 import type { StockExtraction, StockExtractionLine } from '../model/extraction';
 import { ingestReceiptSchema, ingestRequestSchema } from '../model/ingest';
 import { completeSubmission, decideIngest, PLATFORM_STAMP } from './ingest';
-import { partitionExtraction, visionIngestRequestFor } from './extraction';
+import { decideLine, partitionExtraction, visionIngestRequestFor } from './extraction';
 import { anItem, FACILITY_A } from '../testing/factories';
 
 /**
@@ -170,6 +170,36 @@ describe('routing a reading to the ledger or to review', () => {
     const { accepted } = partition([good], { threshold: 0.99 });
 
     expect(accepted).toEqual([]);
+  });
+
+  it('takes an identity a person chose in place of the name it could not resolve', () => {
+    // The review queue's accept path runs the same rule, with the choice a
+    // person made in front of it. The other rules still apply: choosing an item
+    // does not make a line without a batch writable.
+    const line = aLine({ itemName: 'Amoxicillin', batchId: null });
+    const decision = decideLine({
+      line,
+      catalogue: CATALOGUE,
+      occurredOn: '2026-09-24',
+      chosenItemId: 'item-amoxicillin-250',
+    });
+
+    expect(decision.item?.id).toBe('item-amoxicillin-250');
+    expect(decision.reasons).toEqual(['batch-not-read']);
+  });
+
+  it('ignores a chosen identity that is not in the catalogue', () => {
+    const decision = decideLine({
+      line: aLine(),
+      catalogue: CATALOGUE,
+      occurredOn: '2026-09-24',
+      chosenItemId: 'item-invented',
+    });
+
+    // Falls back to the name match rather than trusting an identifier it cannot
+    // find, which keeps a client from writing against an item that does not exist.
+    expect(decision.item?.genericName).toBe('Paracetamol');
+    expect(decision.reasons).toEqual([]);
   });
 });
 

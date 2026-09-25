@@ -363,11 +363,9 @@ const readingFor = (driver: RiskDriver, facts: RiskFacts): DriverReading => {
       if (facts.daysToNearestExpiry <= 0) {
         return {
           contribution: DRIVER_WEIGHTS.expiryPressure,
-          detail: `${facts.nearExpiryUnits.toFixed(
-            0,
-          )} units sit in a batch that expired ${Math.abs(facts.daysToNearestExpiry).toFixed(
-            0,
-          )} days ago, so they cannot cover anything`,
+          detail: `${facts.nearExpiryUnits.toFixed(0)} units sit in a batch that expired ${Math.abs(
+            facts.daysToNearestExpiry,
+          ).toFixed(0)} days ago, so they cannot cover anything`,
         };
       }
 

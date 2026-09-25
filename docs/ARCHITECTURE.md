@@ -205,7 +205,53 @@ window is left **open** rather than given an end it did not have.
 
 ---
 
-## 5. Honesty boundaries
+## 5. What the platform expects, and what it asks of somebody
+
+The analytical path runs in one place and is imported by two callers:
+`apps/simulator/src/intelligence.ts` takes a generated world and returns
+forecasts, scores and alerts, and both `pnpm worker:score` and the intelligence
+surface call it. A second implementation on the web side would be the easiest way
+for a card and a report to disagree about the same dataset.
+
+```
+syndromic signals → de-noised baseline → CUSUM → growth rate
+   ↓ (item treats the syndrome)
+ledger → demand series → censored-demand correction → forecast (p50, p90)
+   ↓                              ↓
+   └── surge lift ────────────────┴→ nine drivers → band → alert
+```
+
+**Censored demand is corrected before anything is fitted**, and the count and the
+method travel on every forecast (`packages/domain/src/logic/censoring.ts`,
+`packages/forecasting/src/impute.ts`). The measurement of what that correction is
+worth is generated, not asserted: `pnpm forecast:backtest` writes
+`docs/EVALUATION.md`, which runs the engine twice over the same origins — once
+corrected, once not — and publishes the populations where it helps and the
+population where it does not.
+
+**The band is decided by what was measured about the shelf.**
+`SHELF_DRIVERS` (shortfall probability, cover, surge, expiry) carry the index;
+the other five drivers are reported with their contributions and their sentences
+as context, because measurement on three generated worlds showed them identical to
+two decimal places across all three — every catalogue item is essential, every
+district serves a similar population, resupply takes about a week everywhere. A
+band that moved with those would report the catalogue rather than anybody's shelf.
+
+**A probability is never shown without its window.** `shortfallProbability` is
+the forecast's own measured number over the facility's replenishment window (its
+observed lead time, floored at a week and capped at the horizon), and
+`shortfallWindowDays` travels with it on the score's facts. `riskIndex` is the
+composite: it orders a list and picks a band, and it is not a probability.
+
+**An alert is a condition, not a notification.** Its identity is the facility,
+the item and the set of contributing reasons, so a daily re-run does not raise the
+same alert again; its history is append-only and carries the actor, the role, the
+time and the reason for every move; and a move the transition table does not allow
+is refused rather than clamped (`packages/domain/src/logic/alert.ts`).
+
+---
+
+## 6. Honesty boundaries
 
 Stated here so they cannot drift into a claim:
 
@@ -218,5 +264,18 @@ Stated here so they cannot drift into a claim:
   deployment, and no differential-privacy mechanism is running.
 - The visibility surface **polls**; the local adapter has no change feed. The
   interface says so rather than implying a live subscription.
-- Nothing is forecast, risk-scored or redistributed. No advisory or transfer has
-  ever been produced from this data.
+- **Forecasts, risk scores and alerts are real computations over generated data.**
+  They are produced by the code in this repository, reproducible from a published
+  seed, and measured in `docs/EVALUATION.md`. What they are _not_ is a statement
+  about any real facility: every series is generated.
+- **Nothing is redistributed.** No transfer has ever been recommended or made,
+  and no optimiser has been run (Phase 6).
+- **The Cloud backend has never been executed.** The `bqml` adapter is unit-tested
+  against fixtures and the report records the live path as unexecuted, because
+  there are no Google Cloud credentials in this environment.
+- **The negative controls are tested, not asserted.** `apps/simulator/src/intelligence.test.ts`
+  runs the whole pipeline over the generated scenarios with nothing wrong in them
+  and asserts what it finds: no surge, nothing lifted, six alerts out of 789 pairs,
+  698 of them in the low band. It is not zero, and the tests say which pairs cross
+  and why — a shelf holding less than the wait for its next delivery is a pair to
+  alert on, not a false positive to tune away.

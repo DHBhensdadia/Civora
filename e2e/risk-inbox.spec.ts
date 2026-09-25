@@ -267,7 +267,10 @@ test.describe('the alert lifecycle', () => {
     // `escalated` *can* propose an action, so picking any open alert would make
     // this assertion depend on which alert the run happened to leave behind.
     const open = payload.alerts.find((candidate) => candidate.state === 'raised');
-    expect(open, 'the demonstration profile is expected to raise more than one alert').toBeDefined();
+    expect(
+      open,
+      'the demonstration profile is expected to raise more than one alert',
+    ).toBeDefined();
     if (open === undefined) {
       return;
     }

@@ -1,22 +1,9 @@
-import { z } from 'zod';
+import type { Role } from '../model/identity';
 
-/**
- * Roles the platform recognises.
- *
- * Declared once, here, and inferred into a TypeScript union so that a role can
- * never be spelled differently in two places.
- */
-export const ROLES = [
-  'phc_staff',
-  'district_officer',
-  'state_officer',
-  'national',
-  'auditor',
-] as const;
-
-export const roleSchema = z.enum(ROLES);
-
-export type Role = z.infer<typeof roleSchema>;
+// Roles are a domain concept, so they are declared in the model and re-exported
+// here for the convenience of callers that only touch the identity boundary.
+export { ROLES, roleSchema } from '../model/identity';
+export type { Role } from '../model/identity';
 
 /**
  * The administrative scope a principal may act within.

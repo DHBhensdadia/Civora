@@ -2,12 +2,26 @@
  * `@civora/domain` — schemas, boundary ports and the local-first adapters.
  *
  * Everything in this package is pure TypeScript with no environment
- * assumptions: no clock reads, no network, no filesystem. That is what lets the
- * platform be tested and demoed without credentials, and what keeps the
- * forecasting and planning code that arrives later unit-testable without mocks.
+ * assumptions: no clock reads, no network, no filesystem. That is what keeps the
+ * domain testable without mocks and what lets the platform be developed and
+ * demoed with no cloud credentials.
+ *
+ * The model is the single source of truth for every shape in the platform.
+ * TypeScript types are inferred from the schemas, never written beside them.
  */
 
 export * from './errors';
+
+export * from './model';
+
+export * from './logic/censoring';
+export * from './logic/dates';
+export * from './logic/inventory';
+export * from './logic/keys';
+export * from './logic/ledger';
+export * from './logic/network';
+export * from './logic/reporting';
+export * from './logic/snapshot';
 
 export * from './ports/data-provider';
 export * from './ports/auth-provider';

@@ -25,6 +25,32 @@ export type ItemMatch =
   | { readonly kind: 'unmatched' };
 
 /**
+ * Resolve a written name, with a person's choice taking precedence.
+ *
+ * One function so that the two callers that have to decide an identity — an
+ * extraction line and a spoken update — cannot disagree about what a choice
+ * means. A chosen identifier that is not in the catalogue is ignored rather than
+ * trusted, so a client cannot write against an item that does not exist; the name
+ * match then decides.
+ */
+export function resolveItem(input: {
+  readonly writtenName: string;
+  readonly catalogue: readonly Item[];
+  readonly chosenItemId?: string | undefined;
+}): ItemMatch {
+  const chosen =
+    input.chosenItemId === undefined
+      ? undefined
+      : input.catalogue.find((item) => item.id === input.chosenItemId);
+
+  if (chosen !== undefined) {
+    return { kind: 'matched', item: chosen };
+  }
+
+  return matchItemByName(input.writtenName, input.catalogue);
+}
+
+/**
  * Reduce a written name to comparable words.
  *
  * Case, punctuation, brackets and spacing are removed rather than guessed

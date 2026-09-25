@@ -30,6 +30,7 @@ export * from './logic/reporting';
 export * from './logic/risk';
 export * from './logic/snapshot';
 export * from './logic/surge';
+export * from './logic/voice';
 
 export * from './ports/data-provider';
 export * from './ports/auth-provider';

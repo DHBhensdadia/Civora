@@ -13,14 +13,16 @@ import { z } from 'zod';
  * The shape is evidence, not assumption. The installed SDK accepts
  * `model`, `input`, `system_instruction`, `response_format` and `store` at the
  * top level of `interactions.create`, and its media blocks are typed per
- * modality — an image arrives as base64 in `data` beside its MIME type, which is
- * what a photograph taken on a phone already is by the time it reaches a server.
+ * modality — an image or a recording arrives as base64 in `data` beside its MIME
+ * type, which is what a photograph or a voice note taken on a phone already is by
+ * the time it reaches a server.
  */
 
 /** One content block, in the shape the `interactions` surface accepts. */
 export type ModelContent =
   | { readonly type: 'text'; readonly text: string }
-  | { readonly type: 'image'; readonly data: string; readonly mime_type: string };
+  | { readonly type: 'image'; readonly data: string; readonly mime_type: string }
+  | { readonly type: 'audio'; readonly data: string; readonly mime_type: string };
 
 /**
  * Token counts, as the surface reports them.
@@ -93,6 +95,12 @@ export function interactionRequestFor<T>(
   const input: ModelContent[] = [{ type: 'text', text: factsTextOf(request.facts) }];
   for (const image of request.images ?? []) {
     input.push({ type: 'image', data: image.data, mime_type: image.mimeType });
+  }
+  // A recording travels as its own block for the same reason a photograph does:
+  // the model is given what the person actually produced, not a transcript the
+  // platform made of it first.
+  for (const recording of request.audio ?? []) {
+    input.push({ type: 'audio', data: recording.data, mime_type: recording.mimeType });
   }
 
   return {

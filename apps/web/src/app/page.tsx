@@ -57,6 +57,20 @@ export default async function HomePage() {
           .
         </p>
         <p className="mt-2 text-amber-100/90">
+          Paper is still how most of it is recorded, so a register can be{' '}
+          <Link className="underline underline-offset-4" href="/vision">
+            photographed
+          </Link>{' '}
+          and a stock, bed or attendance update can be{' '}
+          <Link className="underline underline-offset-4" href="/voice">
+            spoken
+          </Link>
+          . Neither becomes a record on the platform&rsquo;s own judgement: a reading is checked
+          against the catalogue and the ledger&rsquo;s rules, a spoken update is shown back to the
+          person who spoke it, and what cannot be settled waits for a human instead of being
+          guessed.
+        </p>
+        <p className="mt-2 text-amber-100/90">
           Forecasts and risk scores are computed from that same generated world, and a district
           officer can work the ranked list and the alert inbox on the{' '}
           <Link className="underline underline-offset-4" href="/intelligence">

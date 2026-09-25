@@ -3,10 +3,11 @@ import Link from 'next/link';
 /**
  * The platform's navigation.
  *
- * Five destinations, and the first is honest about being a status page rather
- * than a dashboard. The order is the order a person meets the platform: what it
- * is running on, what the facilities have reported, what the platform concludes
- * and asks of somebody, what a facility records, and what all of it came from.
+ * The first destination is honest about being a status page rather than a
+ * dashboard. The order is the order a person meets the platform: what it is
+ * running on, what the facilities have reported, what the platform concludes and
+ * asks of somebody, what a facility records — typed, photographed, spoken — and
+ * what all of it came from.
  */
 
 const SECTIONS = [
@@ -15,6 +16,7 @@ const SECTIONS = [
   { href: '/intelligence', label: 'Intelligence' },
   { href: '/capture', label: 'Capture' },
   { href: '/vision', label: 'Vision intake' },
+  { href: '/voice', label: 'Voice intake' },
   { href: '/dataset', label: 'Dataset inspector' },
 ] as const;
 

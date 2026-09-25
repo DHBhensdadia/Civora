@@ -110,6 +110,7 @@ describe('the request a prompt builds', () => {
     expect(request.facts).toEqual([{ key: 'daysOfStock', value: 4 }]);
     expect(advisoryPrompt.request().facts).toEqual([]);
     expect(advisoryPrompt.request().images).toEqual([]);
+    expect(advisoryPrompt.request().audio).toEqual([]);
   });
 
   it('keeps per-call parameters out of the fact block', () => {
@@ -155,6 +156,38 @@ describe('the request a prompt builds', () => {
       data: 'ZmFrZQ==',
       mime_type: 'image/jpeg',
     });
+  });
+
+  it('passes a recording through as its own block, which is how voice intake is asked', () => {
+    // The platform does not transcribe first: the recording is what the person
+    // produced, and a drug name is often clearer in how it was said than in a
+    // transcript of it. So the bytes travel beside the instruction, exactly as a
+    // photograph does, and the model is asked to answer with the command schema.
+    const payload = interactionRequestFor(
+      voiceCommandPrompt.request({ audio: [{ mimeType: 'audio/ogg', data: 'ZmFrZQ==' }] }),
+      'gemini-3.8-flash',
+    );
+
+    expect(payload.input).toEqual([
+      { type: 'text', text: factsTextOf([]) },
+      { type: 'audio', data: 'ZmFrZQ==', mime_type: 'audio/ogg' },
+    ]);
+    expect(payload.system_instruction).toBe(voiceCommandPrompt.instructions);
+  });
+
+  it('keeps an image and a recording apart, because they travel in different blocks', () => {
+    const payload = interactionRequestFor(
+      voiceCommandPrompt.request({
+        images: [{ mimeType: 'image/jpeg', data: 'aW1hZ2U=' }],
+        audio: [{ mimeType: 'audio/ogg', data: 'YXVkaW8=' }],
+      }),
+      'gemini-3.8-flash',
+    );
+
+    expect(payload.input.slice(1)).toEqual([
+      { type: 'image', data: 'aW1hZ2U=', mime_type: 'image/jpeg' },
+      { type: 'audio', data: 'YXVkaW8=', mime_type: 'audio/ogg' },
+    ]);
   });
 });
 

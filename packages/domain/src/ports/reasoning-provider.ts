@@ -18,6 +18,20 @@ export interface ImageInput {
   readonly data: string;
 }
 
+/**
+ * A recording supplied for transcription, base64-encoded.
+ *
+ * Audio is a first-class input rather than something the platform transcribes
+ * first: the people who record stock are ANMs and ASHA workers speaking one of
+ * twenty-two scheduled languages, and a speech-to-text step in front of the model
+ * would throw away the acoustic evidence the model can use — a drug name is often
+ * clearer in how it was said than in a transcript of it.
+ */
+export interface AudioInput {
+  readonly mimeType: string;
+  readonly data: string;
+}
+
 /** A request for structured reasoning. */
 export interface ReasoningRequest<T> {
   /**
@@ -32,6 +46,7 @@ export interface ReasoningRequest<T> {
   /** The only admissible source of quantities in narrative output. */
   readonly facts: readonly Fact[];
   readonly images?: readonly ImageInput[];
+  readonly audio?: readonly AudioInput[];
 }
 
 /** A structured reasoning result. */

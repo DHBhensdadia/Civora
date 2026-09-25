@@ -150,6 +150,15 @@ export const voiceCaptureCommandSchema = z
     /** The item as the speaker named it; matched to the catalogue afterwards. */
     itemName: z.string().trim().min(1).nullable(),
     quantity: z.int().positive().nullable(),
+    /**
+     * The batch and expiry, when the speaker read them off the pack.
+     *
+     * A receipt states the lot it arrived in — the ledger demands it — so a
+     * goods-received update that omits them is held for a person rather than
+     * written. Both are null for every other intent.
+     */
+    batchId: batchIdSchema.nullable(),
+    expiresOn: dateSchema.nullable(),
     /** Only meaningful for an adjustment, where its direction cannot be inferred. */
     adjustmentDirection: adjustmentDirectionSchema.nullable(),
     cadre: cadreSchema.nullable(),
@@ -176,6 +185,15 @@ export const voiceCaptureCommandSchema = z
     {
       message: 'a stock update must carry the item and the quantity that were spoken',
       path: ['quantity'],
+    },
+  )
+  .refine(
+    (command) =>
+      command.intent === 'stock_receipt' ||
+      (command.batchId === null && command.expiresOn === null),
+    {
+      message: 'only a receipt names a batch, because only arriving stock has one',
+      path: ['batchId'],
     },
   )
   .refine((command) => command.intent !== 'unknown' || command.quantity === null, {

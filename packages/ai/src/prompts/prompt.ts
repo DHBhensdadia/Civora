@@ -1,4 +1,4 @@
-import type { Fact, ImageInput, ReasoningRequest } from '@civora/domain';
+import type { AudioInput, Fact, ImageInput, ReasoningRequest } from '@civora/domain';
 import type { ZodType } from 'zod';
 
 /**
@@ -50,6 +50,14 @@ export interface PromptInput {
   readonly facts?: readonly Fact[] | undefined;
   /** Images to read, base64-encoded with their MIME type. */
   readonly images?: readonly ImageInput[] | undefined;
+  /**
+   * Recordings to listen to, base64-encoded with their MIME type.
+   *
+   * Kept separate from `images` rather than merged into one media list, because
+   * the two travel in different blocks on the wire and a caller that mixed them
+   * up would be asking a vision model to hear something.
+   */
+  readonly audio?: readonly AudioInput[] | undefined;
   /**
    * Task parameters — the language to write in, the driver being explained, the
    * pair a transfer is between.
@@ -110,6 +118,7 @@ export function definePrompt<T>(spec: PromptSpec<T>): Prompt<T> {
         schema: spec.schema,
         facts: input.facts ?? [],
         images: input.images ?? [],
+        audio: input.audio ?? [],
       };
     },
   };

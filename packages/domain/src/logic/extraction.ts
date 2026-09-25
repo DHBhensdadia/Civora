@@ -6,7 +6,7 @@ import { ingestRequestSchema } from '../model/ingest';
 import type { IngestRequest } from '../model/ingest';
 import { completeSubmission, PLATFORM_STAMP } from './ingest';
 import type { IngestStamp } from './ingest';
-import { matchItemByName } from './match';
+import { resolveItem } from './match';
 
 /**
  * What happens to a photograph between the model reading it and the ledger
@@ -125,23 +125,18 @@ export function decideLine(input: LineDecisionInput): LineDecision {
   let item: Item | null = null;
   let candidates: readonly Item[] = [];
 
-  const chosen =
-    input.chosenItemId === undefined
-      ? undefined
-      : input.catalogue.find((candidate) => candidate.id === input.chosenItemId);
-
-  if (chosen !== undefined) {
-    item = chosen;
+  const match = resolveItem({
+    writtenName: input.line.itemName,
+    catalogue: input.catalogue,
+    ...(input.chosenItemId === undefined ? {} : { chosenItemId: input.chosenItemId }),
+  });
+  if (match.kind === 'matched') {
+    item = match.item;
+  } else if (match.kind === 'ambiguous') {
+    reasons.push('item-ambiguous');
+    candidates = match.candidates;
   } else {
-    const match = matchItemByName(input.line.itemName, input.catalogue);
-    if (match.kind === 'matched') {
-      item = match.item;
-    } else if (match.kind === 'ambiguous') {
-      reasons.push('item-ambiguous');
-      candidates = match.candidates;
-    } else {
-      reasons.push('item-unmatched');
-    }
+    reasons.push('item-unmatched');
   }
 
   if (input.line.batchId === null) {

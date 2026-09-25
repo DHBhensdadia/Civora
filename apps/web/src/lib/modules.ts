@@ -20,7 +20,7 @@ export const MODULES: readonly ModuleDescriptor[] = [
     meaning: 'visibility',
     responsibility: 'What is in stock, where it is, and how stale the answer is.',
     status:
-      'sensing plane implemented — offline capture, idempotent ingest, district visibility with reporting gaps',
+      'sensing plane implemented — offline capture, idempotent ingest, photographed and spoken updates a person confirms, district visibility with reporting gaps',
   },
   {
     name: 'Poorvadarshan',

@@ -43,6 +43,8 @@ const rawVoice = (overrides: Record<string, unknown> = {}): Record<string, unkno
   transcript: 'paracetamol cheshees gobe aale',
   itemName: 'Paracetamol',
   quantity: 60,
+  batchId: 'B-2291',
+  expiresOn: '2027-06-30',
   adjustmentDirection: null,
   cadre: null,
   bedsTotal: null,
@@ -125,8 +127,20 @@ describe('a voice capture command', () => {
     expect(accepts(voiceCaptureCommandSchema.safeParse(rawVoice({ itemName: null })))).toBe(false);
   });
 
+  it('lets only a receipt name a batch, because only arriving stock has one', () => {
+    expect(accepts(voiceCaptureCommandSchema.safeParse(rawVoice({ batchId: null })))).toBe(true);
+    expect(
+      accepts(
+        voiceCaptureCommandSchema.safeParse({
+          ...rawVoice({ intent: 'stock_issue' }),
+          batchId: 'B-2291',
+        }),
+      ),
+    ).toBe(false);
+  });
+
   it('requires an adjustment to say which way the stock moved', () => {
-    const adjustment = rawVoice({ intent: 'stock_adjustment' });
+    const adjustment = rawVoice({ intent: 'stock_adjustment', batchId: null, expiresOn: null });
     expect(accepts(voiceCaptureCommandSchema.safeParse(adjustment))).toBe(false);
     expect(
       accepts(
@@ -136,7 +150,13 @@ describe('a voice capture command', () => {
   });
 
   it('requires a bed update to carry both counts', () => {
-    const bedUpdate = rawVoice({ intent: 'bed_status', itemName: null, quantity: null });
+    const bedUpdate = rawVoice({
+      intent: 'bed_status',
+      itemName: null,
+      quantity: null,
+      batchId: null,
+      expiresOn: null,
+    });
     expect(accepts(voiceCaptureCommandSchema.safeParse(bedUpdate))).toBe(false);
     expect(
       accepts(voiceCaptureCommandSchema.safeParse({ ...bedUpdate, bedsTotal: 6, bedsOccupied: 5 })),
@@ -147,7 +167,13 @@ describe('a voice capture command', () => {
   });
 
   it('requires an attendance update to name its cadre and its posts', () => {
-    const attendance = rawVoice({ intent: 'staff_attendance', itemName: null, quantity: null });
+    const attendance = rawVoice({
+      intent: 'staff_attendance',
+      itemName: null,
+      quantity: null,
+      batchId: null,
+      expiresOn: null,
+    });
     expect(accepts(voiceCaptureCommandSchema.safeParse(attendance))).toBe(false);
     expect(
       accepts(
@@ -184,6 +210,8 @@ describe('a voice capture command', () => {
             intent: 'unknown',
             itemName: null,
             quantity: null,
+            batchId: null,
+            expiresOn: null,
             ambiguities: ['not a stock update'],
           }),
         ),

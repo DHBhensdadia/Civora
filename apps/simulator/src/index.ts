@@ -21,8 +21,12 @@
 
 import type { FacilityId } from '@civora/domain';
 
+import { buildNetwork } from './network';
 import type { Network, NetworkOptions } from './network';
-import type { SimulationOptions } from './simulation';
+import { simulateNetwork } from './simulation';
+import type { Simulation, SimulationOptions } from './simulation';
+import { summariseDataset } from './summary';
+import type { DatasetSummary } from './summary';
 
 export * from './anchors/catalogue';
 export * from './anchors/geography';
@@ -32,6 +36,7 @@ export * from './network';
 export * from './rng';
 export * from './scenarios';
 export * from './simulation';
+export * from './summary';
 
 /**
  * The seed the shipped demonstration dataset is generated from.
@@ -107,4 +112,52 @@ export const historySample = (network: Network, perRegion: number): readonly Fac
   }
 
   return sample;
+};
+
+/**
+ * Facilities per region the shipped demonstration dataset generates a history
+ * for.
+ *
+ * Two, so the sample spans two facility tiers in every state rather than the
+ * single tier a one-per-region sample happens to select. Coverage and depth are
+ * separate choices: the network states the whole country, and this says how much
+ * of each region has a past.
+ */
+export const DEMO_HISTORY_FACILITIES_PER_REGION = 2;
+
+/** The demonstration dataset, generated and counted in one call. */
+export interface DemoDataset {
+  readonly network: Network;
+  readonly simulation: Simulation;
+  readonly summary: DatasetSummary;
+  readonly facilityIds: readonly FacilityId[];
+  /** Wall clock for generating the history and counting it, in milliseconds. */
+  readonly generatedInMs: number;
+}
+
+/**
+ * Generate the dataset the demonstration runs on, and describe it.
+ *
+ * One entry point rather than three calls, so the page that browses the dataset
+ * and the command that seeds it cannot disagree about which dataset they mean.
+ * The network is built whole — every state, district and facility the profile
+ * covers — while the history is generated for the sample, which is the split
+ * the summary reports.
+ */
+export const buildDemoDataset = (
+  facilitiesPerRegion: number = DEMO_HISTORY_FACILITIES_PER_REGION,
+): DemoDataset => {
+  const startedAt = Date.now();
+  const network = buildNetwork(DEMO_NETWORK_OPTIONS);
+  const facilityIds = historySample(network, facilitiesPerRegion);
+  const simulation = simulateNetwork(network, { ...DEMO_SIMULATION_OPTIONS, facilityIds });
+  const summary = summariseDataset(network, simulation);
+
+  return {
+    network,
+    simulation,
+    summary,
+    facilityIds,
+    generatedInMs: Date.now() - startedAt,
+  };
 };

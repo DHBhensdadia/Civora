@@ -75,7 +75,26 @@ returned, and on an interval while anything is waiting. Three decisions matter:
 - **A failure to reach the platform is not a failure of the capture.** The item
   stays pending with its attempt count and last error, and the schedule backs off.
 
-### 2.2 The boundary
+### 2.2 The stored screen
+
+The outbox covers a request that fails; it does not cover a browser that was
+closed and reopened where there is no connection, because the screen itself then
+fails to load and the queue is unreachable. `apps/web/public/sw.js` is
+registered by the capture page (`apps/web/src/lib/shell-cache.ts`), which sends
+it the list of assets the page actually loaded — content-hashed chunk names are
+not knowable in advance — and reports back how many were stored. Two rules hold:
+
+- **Nothing under `/api/` is stored or served by the worker.** A stock position
+  read ten minutes ago is not a stock position, and an offline read must fail as
+  _unknown_ rather than succeed with a stale figure.
+- **The network wins wherever it exists.** The stored copy is a fallback for a
+  request that could not be made, never a substitute for making it.
+
+The screen is stored; the platform's facility list is not. A reopening with no
+connection therefore shows the queue and the form but cannot offer a facility to
+record against, and it says so rather than offering a remembered choice.
+
+### 2.3 The boundary
 
 Four steps, in this order, in `apps/web/src/app/api/ingest/route.ts`:
 

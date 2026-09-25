@@ -51,7 +51,11 @@ records on the device and delivers it when the platform can be reached, and the
 stock positions, bed pressure and reporting gaps. Turn the network off in the
 browser and capture anyway: that is the path the platform is built around, and
 `docs/ARCHITECTURE.md` states each rule it rests on and the file that enforces
-it.
+it. The capture screen is also stored on the device once it has been opened, so
+it reopens with no connection at all — the form, the queue and what each holds —
+while the platform's own facility list is deliberately not stored, because a
+list of facilities is a statement about the world that only the platform is
+entitled to make.
 
 ## Quickstart
 

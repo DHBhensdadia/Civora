@@ -107,6 +107,31 @@ function buildPrincipals(
     );
   }
 
+  // One state officer per region the demonstration can show something in: a
+  // region with no district holding history would be a scope whose every read is
+  // empty, which teaches a reader nothing about the role.
+  const regionsWithHistory = new Set(
+    historyFacilities
+      .map((facilityId) => facilityById.get(facilityId))
+      .map((facility) =>
+        facility === undefined ? undefined : districtById.get(facility.districtId),
+      )
+      .map((district) => district?.regionId)
+      .filter((regionId): regionId is NonNullable<typeof regionId> => regionId !== undefined),
+  );
+
+  for (const [regionId, region] of [...regionById]
+    .filter(([id]) => regionsWithHistory.has(id))
+    .sort(([left], [right]) => ascending(left, right))) {
+    principals.push({
+      id: `state_officer:${regionId}`,
+      role: 'state_officer',
+      scopeId: regionId,
+      label: `State officer — ${region.name}`,
+      place: region.name,
+    });
+  }
+
   for (const [districtId, place] of [...districtsWithHistory].sort(([left], [right]) =>
     ascending(left, right),
   )) {
@@ -130,6 +155,17 @@ function buildPrincipals(
       place: facility.name,
     });
   }
+
+  // The auditor is not scoped to a place: it reads every district and writes to
+  // none, which is why its offered surfaces are the reads and its refusals are
+  // the writes rather than a scope.
+  principals.push({
+    id: 'auditor',
+    role: 'auditor',
+    scopeId: null,
+    label: 'Auditor — read-only',
+    place: 'Every district, no writes',
+  });
 
   return principals;
 }

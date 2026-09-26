@@ -1,7 +1,9 @@
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
+import { cookies } from 'next/headers';
 
 import { SiteNav } from '@/components/site-nav';
+import { SESSION_COOKIE, parseSession } from '@/lib/session';
 
 import './globals.css';
 
@@ -11,7 +13,18 @@ export const metadata: Metadata = {
     'A federated AI platform for health resource and supply-chain planning across the primary health centre network.',
 };
 
-export default function RootLayout({ children }: { readonly children: ReactNode }) {
+/**
+ * The shell every surface is drawn in.
+ *
+ * The header reads the session here rather than in each page, because the
+ * navigation is a property of the shell: a surface cannot be offered to a role
+ * the header would not name. The read is the same `parseSession` the API routes
+ * call, and a request with no cookie is the national control room — which is
+ * what makes the demonstration work with nothing signed in.
+ */
+export default async function RootLayout({ children }: { readonly children: ReactNode }) {
+  const session = parseSession((await cookies()).get(SESSION_COOKIE)?.value);
+
   return (
     <html lang="en">
       <body className="min-h-screen bg-slate-950 text-slate-100 antialiased">
@@ -20,7 +33,7 @@ export default function RootLayout({ children }: { readonly children: ReactNode 
             <span className="font-mono text-sm tracking-wide text-slate-400">
               Civora · health supply-chain resilience
             </span>
-            <SiteNav />
+            <SiteNav session={session} />
           </div>
         </header>
         {children}

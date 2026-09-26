@@ -11,6 +11,7 @@ import {
   parseSession,
   scopeRefusalFor,
 } from '@/lib/session';
+import { tierLabelOf } from '@/lib/tiers';
 
 /**
  * What one district looks like right now.
@@ -122,7 +123,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         id: facility.id,
         name: facility.name,
         tier: facility.tier,
-        tierLabel: TIER_LABELS[facility.tier] ?? facility.tier,
+        tierLabel: tierLabelOf(facility.tier),
         blockName: blockNameOf.get(facility.blockId) ?? facility.blockId,
         connectivity: facility.connectivity,
         catchmentPopulation: facility.catchmentPopulation,
@@ -240,11 +241,4 @@ const STATUS_RANK: Readonly<Record<FacilityReading['status'], number>> = {
   'never-heard': 0,
   stale: 1,
   current: 2,
-};
-
-const TIER_LABELS: Readonly<Record<string, string>> = {
-  SHC: 'Sub Health Centre',
-  AAM: 'Ayushman Arogya Mandir',
-  PHC: 'Primary Health Centre',
-  CHC: 'Community Health Centre',
 };

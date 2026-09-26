@@ -83,6 +83,15 @@ export const NAV_SECTIONS: readonly NavSection[] = [
     roles: ['state_officer', 'national', 'auditor'],
   },
   {
+    href: '/import',
+    label: 'Import',
+    purpose:
+      'Read a file from a system the ministry already runs — an HMIS return or the administrative directory — after checking what it would write.',
+    // A district officer and above: an import writes rows the platform did not
+    // hear from the level it reports at, and it is not the auditor's to make.
+    roles: ['district_officer', 'state_officer', 'national'],
+  },
+  {
     href: '/audit',
     label: 'Audit trail',
     purpose:

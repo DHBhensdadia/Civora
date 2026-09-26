@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 import {
   batchIdSchema,
+  dateSchema,
   facilityIdSchema,
   instantSchema,
   itemIdSchema,
@@ -132,6 +133,50 @@ export const federationRoundSchema = z.strictObject({
 });
 
 export type FederationRound = z.infer<typeof federationRoundSchema>;
+
+/**
+ * The formats the platform is built to read from an incumbent system.
+ *
+ * Declared here rather than in the web application because the audit chain, the
+ * imported records' provenance and the import register all name them, and three
+ * vocabularies for the same four strings would drift.
+ */
+export const IMPORT_FORMATS = ['hmis-csv', 'lgd-json', 'nlem-json'] as const;
+export const importFormatSchema = z.enum(IMPORT_FORMATS);
+export type ImportFormat = z.infer<typeof importFormatSchema>;
+
+/**
+ * One file the platform accepted, as the register keeps it.
+ *
+ * The record exists so a row in the ledger can be traced to the file it arrived
+ * in without keeping the file: the digest identifies the bytes, the counts say
+ * what happened to the rows, and the person and moment say who is answerable.
+ * The file's own identity is carried where the file states it (an extract's
+ * `sourceId`, title and retrieval date) and left null where it does not.
+ */
+export const importRecordSchema = z.strictObject({
+  id: recordIdSchema,
+  format: importFormatSchema,
+  /** The file's name as the uploader gave it, which is evidence rather than identity. */
+  fileName: z.string().trim().min(1),
+  /** Digest of the file's bytes, which is the identity a second upload matches. */
+  digest: z.string().trim().min(1),
+  sourceId: z.string().trim().min(1).nullable(),
+  title: z.string().trim().min(1).nullable(),
+  retrievedOn: dateSchema.nullable(),
+  /** Rows the file carried, rows written, and rows the platform already held. */
+  rowsRead: z.int().nonnegative(),
+  rowsWritten: z.int().nonnegative(),
+  rowsAlreadyHeld: z.int().nonnegative(),
+  rowsRejected: z.int().nonnegative(),
+  actorUid: z.string().trim().min(1),
+  actorRole: roleSchema,
+  acceptedAt: instantSchema,
+  synthetic: syntheticSchema,
+  provenance: provenanceSchema,
+});
+
+export type ImportRecord = z.infer<typeof importRecordSchema>;
 
 /**
  * What an audit event can be about.

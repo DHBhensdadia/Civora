@@ -55,6 +55,7 @@ export const AUDIT_ACTIONS = [
   'alert-action-proposed',
   'transfer-proposal-approved',
   'transfer-proposal-rejected',
+  'import-accepted',
   'federation-rounds-computed',
 ] as const;
 
@@ -146,6 +147,13 @@ export const CONSEQUENTIAL_ACTIONS: readonly ConsequentialAction[] = [
     subjectType: 'transfer_proposal',
     writers: ['apps/web/src/lib/redistribution-service.ts'],
     detail: 'a person refused a transfer, and the refusal is part of the record',
+  },
+  {
+    action: 'import-accepted',
+    subjectType: 'import',
+    writers: ['apps/web/src/lib/import-service.ts'],
+    detail:
+      'a file from a system the ministry already runs was accepted, and its rows reached the ledger with the source they arrived from — the entry names the file by digest, the rows it wrote and, where the file states them, the source it came from',
   },
   {
     action: 'federation-rounds-computed',

@@ -130,6 +130,19 @@ export function canReadDistrict(session: Session, districtId: string, scope: Sco
 export const canReadAuditChain = (session: Session): boolean =>
   session.role === 'auditor' || session.role === 'national';
 
+/**
+ * Whether a session may import a file from an incumbent system.
+ *
+ * A district officer and above: an import writes another system's counts into
+ * the ledger, which is a level of authority above recording what one's own
+ * facility counted, and below nobody. It is not the auditor's, because the
+ * auditor writes nothing.
+ */
+export const canImport = (session: Session): boolean =>
+  session.role === 'district_officer' ||
+  session.role === 'state_officer' ||
+  session.role === 'national';
+
 /** Why a session may not act, in a sentence a client can show a user. */
 export const scopeRefusalFor = (session: Session, level: string): string =>
   session.role === 'auditor'

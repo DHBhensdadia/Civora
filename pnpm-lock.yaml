@@ -162,6 +162,9 @@ importers:
       '@civora/i18n':
         specifier: workspace:*
         version: link:../../packages/i18n
+      '@civora/interop':
+        specifier: workspace:*
+        version: link:../../packages/interop
       '@civora/optimizer':
         specifier: workspace:*
         version: link:../../packages/optimizer

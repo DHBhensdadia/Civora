@@ -1,0 +1,7 @@
+facility_code,month,item_code,movement,quantity,batch_no,expiry
+SIM-BIHAR-GAYA-B1-CHC-03,2026-08,nlem-2-1-5-paracetamol,I,412,,
+SIM-BIHAR-GAYA-B1-CHC-03,2026-08,nlem-2-1-5-paracetamol,R,900,IMP-2026-08-A,2027-06-30
+SIM-BIHAR-GAYA-B1-CHC-03,2026-08,nlem-2-1-3-ibuprofen,I,180,,
+SIM-BIHAR-GAYA-B1-PHC-02,2026-08,nlem-2-1-5-paracetamol,I,96,,
+SIM-BIHAR-GAYA-B1-PHC-02,2026-08,nlem-2-1-2-diclofenac,I,54,,
+SIM-BIHAR-GAYA-B1-PHC-02,2026-08,nlem-2-1-4-mefenamic-acid,R,240,IMP-2026-08-B,2027-03-31

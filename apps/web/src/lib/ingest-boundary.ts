@@ -14,6 +14,7 @@ import type {
   FacilityId,
   IngestDecision,
   IngestRequest,
+  IngestStamp,
   ItemId,
 } from '@civora/domain';
 
@@ -123,12 +124,30 @@ export interface AppliedSubmission {
   readonly decision: IngestDecision;
 }
 
+export interface ApplyOptions {
+  /**
+   * The platform's own stamp for what it stores. Defaults to the capture
+   * surface's; an import passes one naming the file it came from, so a reader of
+   * the record can tell a nurse's capture from a ministry extract.
+   */
+  readonly stamp?: IngestStamp | undefined;
+  /**
+   * Decide without writing: no record, no receipt, no conflict, no chain entry.
+   *
+   * Here rather than in a second function so that a dry run and the write it
+   * previews cannot disagree about anything — the decision is the same code, and
+   * the only difference is whether its consequences are performed.
+   */
+  readonly dryRun?: boolean | undefined;
+}
+
 export async function applySubmission(
   store: LiveStore,
   submission: IngestRequest,
   receivedAt: string,
   /** Who is submitting. Used for the audit entry, never for the ingest decision. */
   actor: AuditActor,
+  options: ApplyOptions = {},
 ): Promise<AppliedSubmission> {
   const receipts = store.provider.collection(RECEIPT_COLLECTION, ingestReceiptSchema);
   const observations = store.provider.collection(
@@ -142,9 +161,13 @@ export async function applySubmission(
     receivedAt,
     existingReceipt: await receipts.get(submission.idempotencyKey),
     existingRecord: await observations.get(subjectKey),
-    stamp: PLATFORM_STAMP,
+    stamp: options.stamp ?? PLATFORM_STAMP,
     conflictId: `conflict-${subjectKey}-${submission.idempotencyKey}`,
   });
+
+  if (options.dryRun === true) {
+    return { subjectKey, decision };
+  }
 
   if (decision.record !== null) {
     const consequential = consequentialOf(submission);

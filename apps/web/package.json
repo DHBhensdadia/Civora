@@ -16,6 +16,7 @@
     "@civora/federated": "workspace:*",
     "@civora/geo": "workspace:*",
     "@civora/i18n": "workspace:*",
+    "@civora/interop": "workspace:*",
     "@civora/optimizer": "workspace:*",
     "@civora/simulator": "workspace:*",
     "next": "catalog:",

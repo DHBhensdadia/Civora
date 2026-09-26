@@ -159,7 +159,7 @@ const captureTarget = async (request: APIRequestContext): Promise<CaptureTarget>
 
   expect(staff, 'the demonstration offers no facility identity').toBeDefined();
   expect(item, 'the catalogue is empty').toBeDefined();
-  if (staff === undefined || staff.scopeId === null || item === undefined) {
+  if (staff?.scopeId == null || item === undefined) {
     throw new Error('the demonstration offers nothing to capture against');
   }
   return {

@@ -92,3 +92,27 @@ export const transferRationaleSchema = z.strictObject({
 });
 
 export type TransferRationale = z.infer<typeof transferRationaleSchema>;
+
+/**
+ * A summary of one federated round — and what that round cannot support.
+ *
+ * The round's figures are the coordinator's and the accountant's; the writer's
+ * only product is prose about them, and every numeral it uses must appear in the
+ * round facts or the grounding rule refuses the draft. `limitations` is required
+ * to be non-empty for the same reason a rationale's `conditions` is: a narrative
+ * that cannot say what it does not establish reads as a claim that a federation
+ * is deployed across organisations, which is the single overclaim ADR 0006
+ * forbids by name.
+ */
+export const roundNarrativeSchema = z.strictObject({
+  /** One line naming the round and what moved. */
+  headline: z.string().trim().min(1),
+  /** Two or three sentences about the round, in the facts' own terms. */
+  summary: z.string().trim().min(1),
+  /** What this round does not establish. At least one, deliberately. */
+  limitations: z.array(z.string().trim().min(1)).min(1),
+  /** The names of the facts the narrative rests on. */
+  citations: z.array(z.string().trim().min(1)).min(1),
+});
+
+export type RoundNarrative = z.infer<typeof roundNarrativeSchema>;

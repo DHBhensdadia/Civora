@@ -1,6 +1,7 @@
 import type {
   AdvisoryDraft,
   DriverExplanation,
+  RoundNarrative,
   StockExtraction,
   TransferRationale,
   VoiceCaptureCommand,
@@ -8,6 +9,7 @@ import type {
 
 import { advisoryPrompt } from './advisory';
 import { driverExplanationPrompt } from './driver-explanation';
+import { federationNarrativePrompt } from './federation-narrative';
 import { stockExtractionPrompt } from './stock-extraction';
 import { transferRationalePrompt } from './transfer-rationale';
 import { voiceCommandPrompt } from './voice-command';
@@ -16,7 +18,7 @@ import type { Prompt } from './prompt';
 /**
  * The prompt corpus.
  *
- * Five tasks, each a file with a system instruction and an explicit output
+ * Six tasks, each a file with a system instruction and an explicit output
  * schema. They are gathered here so that the set is inspectable in one place —
  * what the platform asks a model to do should be a short list readable at a
  * glance, not something discovered by searching for string literals.
@@ -27,6 +29,7 @@ export type { Prompt, PromptInput, PromptParameter, PromptSpec } from './prompt'
 
 export { advisoryPrompt } from './advisory';
 export { driverExplanationPrompt } from './driver-explanation';
+export { federationNarrativePrompt } from './federation-narrative';
 export { stockExtractionPrompt } from './stock-extraction';
 export { transferRationalePrompt } from './transfer-rationale';
 export { voiceCommandPrompt } from './voice-command';
@@ -44,7 +47,8 @@ export type RegisteredPrompt =
   | Prompt<VoiceCaptureCommand>
   | Prompt<AdvisoryDraft>
   | Prompt<DriverExplanation>
-  | Prompt<TransferRationale>;
+  | Prompt<TransferRationale>
+  | Prompt<RoundNarrative>;
 
 /** Every prompt asset, in the order the phase file lists them. */
 export const PROMPTS: readonly RegisteredPrompt[] = [
@@ -53,6 +57,7 @@ export const PROMPTS: readonly RegisteredPrompt[] = [
   advisoryPrompt,
   driverExplanationPrompt,
   transferRationalePrompt,
+  federationNarrativePrompt,
 ];
 
 /** The prompt registered under a composed `task@version` identifier, if any. */

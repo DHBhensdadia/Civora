@@ -68,6 +68,17 @@ export {
 } from './rationale';
 export type { RationaleAttempt, TransferRationaleInput } from './rationale';
 
+export {
+  generateRoundNarrative,
+  generateRoundNarratives,
+  narrativeFactsOf,
+  narrativeRequestFor,
+  narrativeSchemaFor,
+  narrativeTextsOf,
+  writeRoundNarrative,
+} from './federation-narrative';
+export type { NarrativeAttempt, RoundNarrativeInput } from './federation-narrative';
+
 export { correctionTextOf, factsTextOf, interactionRequestFor } from './request';
 export type { ModelContent, ModelInteractionRequest, ModelUsage } from './request';
 
@@ -76,6 +87,7 @@ export {
   contextTextOf,
   definePrompt,
   driverExplanationPrompt,
+  federationNarrativePrompt,
   JSON_ONLY,
   NO_INVENTED_NUMBERS,
   PROMPTS,

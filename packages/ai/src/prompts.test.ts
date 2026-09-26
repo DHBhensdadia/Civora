@@ -1,6 +1,7 @@
 import {
   advisoryDraftSchema,
   driverExplanationSchema,
+  roundNarrativeSchema,
   stockExtractionSchema,
   transferRationaleSchema,
   voiceCaptureCommandSchema,
@@ -13,6 +14,7 @@ import {
   advisoryPrompt,
   definePrompt,
   driverExplanationPrompt,
+  federationNarrativePrompt,
   promptById,
   stockExtractionPrompt,
   transferRationalePrompt,
@@ -41,6 +43,7 @@ const ALL = [
   advisoryPrompt,
   driverExplanationPrompt,
   transferRationalePrompt,
+  federationNarrativePrompt,
 ] as const;
 
 /** The JSON schema a prompt's own schema is bridged into. */
@@ -49,8 +52,8 @@ function bridged<T>(prompt: Prompt<T>): Record<string, unknown> {
 }
 
 describe('the prompt corpus', () => {
-  it('asks five tasks, each versioned, and each filed under task@version', () => {
-    expect(PROMPTS).toHaveLength(5);
+  it('asks six tasks, each versioned, and each filed under task@version', () => {
+    expect(PROMPTS).toHaveLength(6);
 
     for (const prompt of ALL) {
       expect(prompt.id).toBe(`${prompt.task}@${String(prompt.version)}`);
@@ -66,6 +69,7 @@ describe('the prompt corpus', () => {
     expect([...ids].sort()).toEqual([
       'advisory-generation@1',
       'driver-explanation@1',
+      'federation-narrative@1',
       'stock-extraction@1',
       'transfer-rationale@1',
       'voice-command-parsing@1',
@@ -102,6 +106,7 @@ describe('the request a prompt builds', () => {
     expect(advisoryPrompt.schema).toBe(advisoryDraftSchema);
     expect(driverExplanationPrompt.schema).toBe(driverExplanationSchema);
     expect(transferRationalePrompt.schema).toBe(transferRationaleSchema);
+    expect(federationNarrativePrompt.schema).toBe(roundNarrativeSchema);
   });
 
   it('carries the facts it was given, and nothing when it was given none', () => {

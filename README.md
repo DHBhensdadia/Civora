@@ -119,6 +119,29 @@ parts are real.
 deterministic engines. A language model may explain a decision in the user's
 language; it never authors a quantity that reaches the record.
 
+**Localisation is partial, and the partiality is stated.** Two flows are
+translated into English, Hindi, Marathi, Bengali and Tamil: **the
+medicine-capture form** — its facility, item, movement, quantity, batch, expiry
+and reason fields, its queue and refusal messages — and **the alert inbox** —
+severity, state, raised-on date, the reason field and the five move buttons.
+`@civora/i18n` holds the bundles, a bundle missing a phrase fails the build, and
+dates, counts and percentages are rendered by the language's own locale rather
+than by string replacement, so Hindi renders Devanagari numerals (asserted in
+`e2e/i18n.spec.ts`). **The remaining hard-coded surfaces, named rather than
+implied:** the navigation; the capture page's own framing prose and its other
+four record kinds (adjustment, bed status, staff attendance, syndromic counts);
+the visibility surface; the control tower and its drill-down; the redistribution
+workbench; the federation console; the dataset inspector; the vision and voice
+review screens; the advisory panel; the provenance page; and the ranked risk
+catalogue with every driver sentence beside it. **Generated prose is whatever a
+model wrote**, and an alert that holds no body in the language a reader is
+reading says so rather than showing another language's words in its place —
+`bodyIn` in `packages/i18n` is the rule, the advisory panel is where it is
+visible, and the alert inbox's read-aloud control is that refusal in audio: a
+body is spoken only in the language the record carries it in, with the voice
+asked for in the registry's plain speech tag (`hi-IN`, never
+`hi-IN-u-nu-deva`, which matches no installed voice).
+
 ## Google AI
 
 Google AI is the reasoning layer, behind the `ReasoningProvider` port defined in

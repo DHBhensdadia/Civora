@@ -11,14 +11,14 @@ The page is `/command`; the same read is served as JSON at `/api/command`.
 Every figure on the tower is read from a computation an earlier phase already
 owns, and this document exists so that claim can be checked rather than believed.
 
-| Figure on the tower | Where it was computed | Why it is not recomputed here |
-| ------------------- | --------------------- | ----------------------------- |
-| Facility status (`current`, `stale`, `never-heard`), items out of stock, items below critical cover, bed occupancy, reporting gaps | `LedgerService` — the projection Phase 3 replays from the ledger | A second reading of the ledger would make two answers to "what does this facility look like" |
-| Risk bands, drivers, shortfall windows, alert thresholds | `scoredPopulationFor` — Phase 4's risk engine, through `readScoredPopulation` | A pair's band on the map and its band on the intelligence surface are the same number or the map is wrong |
-| Open alerts and their severities | Phase 4's alert set, held by `intelligence-service` | — |
-| Districts, facilities, coordinates, tiers | The seeded network (Phase 2's generator) | — |
-| The movements behind an item | `LedgerService.evidenceFor` — the ledger entries themselves, with batch and expiry | Evidence is the point of the last drill-down step; a summary would not be evidence |
-| Map classes and placement | `@civora/geo` — equal-interval classes over the values, projected from facility coordinates | One class list feeds the fills and the legend, so they cannot disagree |
+| Figure on the tower                                                                                                                | Where it was computed                                                                       | Why it is not recomputed here                                                                             |
+| ---------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| Facility status (`current`, `stale`, `never-heard`), items out of stock, items below critical cover, bed occupancy, reporting gaps | `LedgerService` — the projection Phase 3 replays from the ledger                            | A second reading of the ledger would make two answers to "what does this facility look like"              |
+| Risk bands, drivers, shortfall windows, alert thresholds                                                                           | `scoredPopulationFor` — Phase 4's risk engine, through `readScoredPopulation`               | A pair's band on the map and its band on the intelligence surface are the same number or the map is wrong |
+| Open alerts and their severities                                                                                                   | Phase 4's alert set, held by `intelligence-service`                                         | —                                                                                                         |
+| Districts, facilities, coordinates, tiers                                                                                          | The seeded network (Phase 2's generator)                                                    | —                                                                                                         |
+| The movements behind an item                                                                                                       | `LedgerService.evidenceFor` — the ledger entries themselves, with batch and expiry          | Evidence is the point of the last drill-down step; a summary would not be evidence                        |
+| Map classes and placement                                                                                                          | `@civora/geo` — equal-interval classes over the values, projected from facility coordinates | One class list feeds the fills and the legend, so they cannot disagree                                    |
 
 Nothing on the page calls a model, and nothing calls an external service. The
 map is drawn from the platform's own coordinates because no Maps key is
@@ -31,12 +31,12 @@ replay of ninety days of its own ledger. Measured on the production standalone
 server (`node scripts/serve-standalone.mjs`, one process, `curl` from the same
 machine), before the memo was added and after:
 
-| Request | Before | After |
-| ------- | ------ | ----- |
-| `/command` first read of a process | 4.14 s | 2.34 s |
-| `/command` second read | — | 0.017 s |
-| `/api/command` first read of that route | 4.24 s | 2.34 s |
-| `/api/command` second read | — | 0.015 s |
+| Request                                 | Before | After   |
+| --------------------------------------- | ------ | ------- |
+| `/command` first read of a process      | 4.14 s | 2.34 s  |
+| `/command` second read                  | —      | 0.017 s |
+| `/api/command` first read of that route | 4.24 s | 2.34 s  |
+| `/api/command` second read              | —      | 0.015 s |
 
 Two changes produced the difference, and they are different kinds of change:
 
@@ -52,7 +52,7 @@ Two changes produced the difference, and they are different kinds of change:
    and it is stated as one.
 
 The remaining cost is not the tower's: **each route bundle in the standalone
-build holds its own in-memory projections**, so the first read of *any* surface
+build holds its own in-memory projections**, so the first read of _any_ surface
 pays for building the demonstration world. Measured on the same server:
 `/provenance` (which only builds the store) 1.82 s cold and 0.008 s warm;
 `/api/visibility` (which builds the store and one district's readings) 2.00 s

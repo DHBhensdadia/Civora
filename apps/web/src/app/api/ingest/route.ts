@@ -9,6 +9,7 @@ import type { NextRequest } from 'next/server';
 
 import { applySubmission } from '@/lib/ingest-boundary';
 import { getLiveStore } from '@/lib/live-store';
+import { actorOf } from '@/lib/audit-service';
 import { SESSION_COOKIE, canSubmitForFacility, parseSession, scopeRefusalFor } from '@/lib/session';
 
 /**
@@ -113,7 +114,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   // The write itself is shared with every other path that stores an
   // observation, so a record can be captured by one surface and replayed by
   // another without either owning its own copy of the sequence.
-  const { subjectKey, decision } = await applySubmission(store, submission, receivedAt);
+  const { subjectKey, decision } = await applySubmission(
+    store,
+    submission,
+    receivedAt,
+    actorOf(session),
+  );
 
   return NextResponse.json(
     {

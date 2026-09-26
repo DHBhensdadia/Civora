@@ -1,6 +1,7 @@
-import { IllegalTransition, isOpen, transitionAlert } from '@civora/domain';
+import { IllegalTransition, isAlertMoveTarget, isOpen, transitionAlert } from '@civora/domain';
 import type {
   Alert,
+  AlertMoveTarget,
   AlertSeverity,
   AlertState,
   EpidemicEvent,
@@ -11,9 +12,28 @@ import type {
 import { scoredPopulationFor } from '@civora/simulator';
 import type { ScoredPopulation } from '@civora/simulator';
 
+import { actorOf, recordAuditEvent } from './audit-service';
+import type { AuditAction } from './audit-service';
 import { getLiveStore } from './live-store';
 import { canReadDistrict } from './session';
 import type { ScopeLookup, Session } from './session';
+
+/**
+ * The consequential action one alert state *is*.
+ *
+ * An alert state and the decision that put it there are the same fact told two
+ * ways: the reader of the alert sees "escalated", the reader of the chain sees
+ * "somebody escalated it, with this reason, at this moment". `raised` is absent
+ * because nothing chose it — an alert is raised by the platform's own
+ * recomputation, which the registry does not record.
+ */
+const ALERT_MOVE_ACTIONS: Readonly<Record<AlertMoveTarget, AuditAction>> = {
+  acknowledged: 'alert-acknowledged',
+  action_proposed: 'alert-action-proposed',
+  snoozed: 'alert-snoozed',
+  escalated: 'alert-escalated',
+  resolved: 'alert-resolved',
+};
 
 /**
  * What the platform concludes, over the demonstration dataset.
@@ -395,5 +415,20 @@ export async function moveAlert(session: Session, move: AlertMove): Promise<Aler
   }
 
   state.alerts.set(moved.id, moved);
+
+  // The move is the consequential act, and the chain records the one that
+  // happened: a move *to* `escalated` is an escalation. The state a move landed in
+  // and the action name are the same fact, which is why the table is written out
+  // and typed exhaustively rather than derived from a string.
+  if (isAlertMoveTarget(moved.state)) {
+    await recordAuditEvent({
+      actor: actorOf(session),
+      action: ALERT_MOVE_ACTIONS[moved.state],
+      subjectType: 'alert',
+      subjectId: moved.id,
+      reason: move.reason.trim(),
+    });
+  }
+
   return moved;
 }

@@ -15,6 +15,7 @@ import type {
   StockExtractionLine,
 } from '@civora/domain';
 
+import { actorOf } from './audit-service';
 import { applySubmission } from './ingest-boundary';
 import { getLiveStore } from './live-store';
 import type { LiveStore } from './live-store';
@@ -129,6 +130,8 @@ const candidateOf = (item: {
 
 interface WriteContext {
   readonly store: LiveStore;
+  /** Who accepted the line. The audit entry names them; the decision does not. */
+  readonly session: Session;
   readonly batchId: string;
   readonly facilityId: FacilityId;
   readonly occurredOn: DateOnly;
@@ -160,7 +163,12 @@ async function writeLine(
     idempotencyKey: `key-${context.batchId}-${String(context.index)}`,
   });
 
-  const { decision } = await applySubmission(context.store, submission, context.receivedAt);
+  const { decision } = await applySubmission(
+    context.store,
+    submission,
+    context.receivedAt,
+    actorOf(context.session),
+  );
   if (decision.outcome === 'conflict') {
     throw new VisionRefused(409, decision.detail);
   }
@@ -234,6 +242,7 @@ export async function recordExtraction(input: RecordExtractionInput): Promise<Vi
     const receipt = await writeLine(
       {
         store,
+        session: input.session,
         batchId: id,
         facilityId: input.facilityId,
         occurredOn: input.occurredOn,
@@ -365,6 +374,7 @@ export async function decideVisionLine(input: DecideLineInput): Promise<VisionBa
   const receipt = await writeLine(
     {
       store,
+      session: input.session,
       batchId: batch.id,
       facilityId: batch.facilityId,
       occurredOn: batch.occurredOn,

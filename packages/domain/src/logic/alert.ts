@@ -1,3 +1,4 @@
+import { ALERT_STATES } from '../model';
 import type {
   Alert,
   AlertSeverity,
@@ -44,6 +45,23 @@ export const ALERT_TRANSITIONS: Readonly<Record<AlertState, readonly AlertState[
   escalated: ['acknowledged', 'action_proposed', 'resolved'],
   resolved: [],
 };
+
+/**
+ * The states an alert can be *moved* to.
+ *
+ * `raised` is where an alert arrives — the platform's own recomputation puts it
+ * there and nobody chooses it. The states a move can land in therefore have to be
+ * nameable on their own: the audit chain records what a move *is* ("escalated"),
+ * and that name has to correspond to a state a person can actually choose. The
+ * test beside this file asserts the declared set and the table's destinations are
+ * the same set.
+ */
+export const ALERT_MOVE_TARGETS = ALERT_STATES.filter((state) => state !== 'raised');
+
+export type AlertMoveTarget = Exclude<AlertState, 'raised'>;
+
+export const isAlertMoveTarget = (state: AlertState): state is AlertMoveTarget =>
+  state !== 'raised';
 
 /**
  * Contribution above which a driver is treated as part of the condition.

@@ -422,12 +422,14 @@ describe('the audit chain', () => {
 
   it('appends rather than rewrites, and notices a removed entry', async () => {
     const before = await readAuditEvents();
+    // A registered action that is not a proposal decision: the point of the
+    // append is that an unrelated entry grows the chain without becoming a
+    // decision about anything.
     const recorded = await recordAuditEvent({
-      actorUid: 'Auditor fixture',
-      actorRole: 'auditor',
-      action: 'chain-exercised',
-      subjectType: 'transfer_proposal',
-      subjectId: 'not-a-real-proposal',
+      actor: { uid: 'Auditor fixture', role: 'auditor' },
+      action: 'alert-acknowledged',
+      subjectType: 'alert',
+      subjectId: 'alert-fixture-never-moved',
       reason: null,
     });
     const after = await readAuditEvents();
@@ -447,7 +449,7 @@ describe('the audit chain', () => {
 
     // The extra event is not a decision about a proposal, so no proposal's
     // decision state is affected by it.
-    expect((await readDecisions()).get('not-a-real-proposal')).toBeUndefined();
+    expect((await readDecisions()).get('alert-fixture-never-moved')).toBeUndefined();
   });
 });
 

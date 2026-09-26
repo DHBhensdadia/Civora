@@ -15,7 +15,7 @@ import type {
 
 import { planWorld } from '@civora/simulator';
 
-import { readAuditEvents, recordAuditEvent, verifyAuditChain } from './audit-service';
+import { actorOf, readAuditEvents, recordAuditEvent, verifyAuditChain } from './audit-service';
 import type { AuditChainReport } from './audit-service';
 import { readScoredPopulation } from './intelligence-service';
 import { getLiveStore } from './live-store';
@@ -671,8 +671,7 @@ export async function decideTransferProposal(
   const at = new Date().toISOString();
   const reason = input.reason.trim();
   const event = await recordAuditEvent({
-    actorUid: session.label,
-    actorRole: session.role,
+    actor: actorOf(session),
     action: input.decision === 'approved' ? APPROVE_ACTION : REJECT_ACTION,
     subjectType: 'transfer_proposal',
     subjectId: proposal.id,

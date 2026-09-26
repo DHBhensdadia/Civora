@@ -133,13 +133,26 @@ export const federationRoundSchema = z.strictObject({
 
 export type FederationRound = z.infer<typeof federationRoundSchema>;
 
+/**
+ * What an audit event can be about.
+ *
+ * The first five are exactly `OBSERVATION_TYPES`, because an event about a
+ * captured record names the record's own type rather than a generic "capture" —
+ * a reviewer filtering the chain by `bed_status` gets the bed reports and
+ * nothing else.
+ */
 export const AUDIT_SUBJECT_TYPES = [
   'stock_ledger_entry',
+  'bed_status',
+  'staff_attendance',
+  'footfall_observation',
+  'syndromic_signal',
   'transfer_proposal',
   'alert',
   'facility',
   'item',
   'federation_round',
+  'import',
 ] as const;
 
 export const auditSubjectTypeSchema = z.enum(AUDIT_SUBJECT_TYPES);

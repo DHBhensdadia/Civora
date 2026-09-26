@@ -14,6 +14,7 @@ import type {
   VoiceProblem,
 } from '@civora/domain';
 
+import { actorOf } from './audit-service';
 import { applySubmission } from './ingest-boundary';
 import { getLiveStore } from './live-store';
 import type { LiveStore } from './live-store';
@@ -312,7 +313,12 @@ export async function confirmVoiceCommand(input: ConfirmVoiceCommandInput): Prom
     idempotencyKey: `key-${proposal.id}`,
   });
 
-  const { decision } = await applySubmission(store, submission, proposal.receivedAt);
+  const { decision } = await applySubmission(
+    store,
+    submission,
+    proposal.receivedAt,
+    actorOf(input.session),
+  );
   if (decision.outcome === 'conflict') {
     throw new VoiceRefused(409, decision.detail);
   }

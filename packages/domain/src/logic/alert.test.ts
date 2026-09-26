@@ -3,11 +3,13 @@ import { describe, expect, it } from 'vitest';
 import type { Alert, RiskScore } from '../model';
 import {
   ALERT_DRIVER_THRESHOLD,
+  ALERT_MOVE_TARGETS,
   ALERT_TRANSITIONS,
   IllegalTransition,
   alertFor,
   applyDeduplication,
   dedupeKeyOf,
+  isAlertMoveTarget,
   isOpen,
   openAlertMatching,
   severityForBand,
@@ -219,6 +221,20 @@ describe('the alert lifecycle', () => {
         expect(reachable.has(state)).toBe(true);
       }
     }
+  });
+
+  it('declares exactly the states the table lets a move land in', () => {
+    const destinations = new Set(Object.values(ALERT_TRANSITIONS).flat());
+
+    // The audit chain names the action a move *is* from the state it landed in,
+    // and that mapping has to be total over the states a person can choose. This
+    // is the assertion that keeps the two from drifting: a new destination added
+    // to the table without being declared here fails, and so does a declared
+    // destination nothing can reach.
+    expect([...ALERT_MOVE_TARGETS].sort()).toEqual([...destinations].sort());
+    expect(destinations.has('raised')).toBe(false);
+    expect(isAlertMoveTarget('raised')).toBe(false);
+    expect(ALERT_MOVE_TARGETS.filter(isAlertMoveTarget).length).toBe(ALERT_MOVE_TARGETS.length);
   });
 });
 

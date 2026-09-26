@@ -28,6 +28,8 @@ import type {
 export type { FederationPartition };
 
 import { getEnv } from '@/env';
+import { recordAuditEvent } from './audit-service';
+import type { AuditActor } from './audit-service';
 
 /**
  * Samvad's console: the rounds, the ledger, the price of the guarantee, and the
@@ -289,7 +291,7 @@ const curvePointsOf = (sweep: FederationSweep): readonly FederationCurvePoint[] 
     beatsMean: point.finalLoss === null ? null : point.finalLoss < 1,
   }));
 
-async function build(): Promise<FederationConsole> {
+async function build(actor: AuditActor): Promise<FederationConsole> {
   const startedAt = Date.now();
   const dataset = buildDemoDataset(
     DEMO_HISTORY_FACILITIES_PER_REGION,
@@ -341,6 +343,20 @@ async function build(): Promise<FederationConsole> {
     epsilons: CONSOLE_CURVE_TARGETS,
   });
   const runsMs = Date.now() - runsStartedAt;
+
+  // The rounds are the platform's arithmetic, but a session *caused* them and they
+  // spend a privacy budget, so the chain records who asked and what was taken. It
+  // is written where the rounds are actually taken, which is why a second reader
+  // of a memoised console appends nothing: no further budget was spent.
+  await recordAuditEvent({
+    actor,
+    action: 'federation-rounds-computed',
+    subjectType: 'federation_round',
+    subjectId: `${roundSeed}#${String(CONSOLE_ROUNDS)}@e${String(CONSOLE_EPSILON_TARGET)}`,
+    reason: `the console's runs: the comparison, the priced run at ε=${String(
+      CONSOLE_EPSILON_TARGET,
+    )} and the curve at ${CONSOLE_CURVE_TARGETS.join(', ')}`,
+  });
 
   // 5. The round narrative, through the provider port. With no key configured
   //    every round refuses, and the refusal is the shipped state: no fixture is
@@ -485,9 +501,12 @@ let pending: Promise<FederationConsole> | undefined;
  * Nine runs over a 94,680-row partition cost seconds, and every reader of the
  * same process is looking at the same world, the same seed and the same rounds —
  * so the alternative, recomputing per request, would buy nothing and make two
- * readers' figures differ.
+ * readers' figures differ. The actor is the session whose request caused the
+ * first computation: it is the one the chain names, and later readers of the same
+ * computed payload cause no round and no entry.
  */
-export const readFederationConsole = (): Promise<FederationConsole> => (pending ??= build());
+export const readFederationConsole = (actor: AuditActor): Promise<FederationConsole> =>
+  (pending ??= build(actor));
 
 /** The defaults the console's runs inherit, so the page can state them. */
 export const CONSOLE_DEFAULTS = {

@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@civora/domain": "workspace:*",
+    "@civora/federated": "workspace:*",
     "@civora/forecasting": "workspace:*",
     "@civora/interop": "workspace:*",
     "@civora/optimizer": "workspace:*"

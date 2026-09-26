@@ -104,6 +104,9 @@ importers:
       '@civora/domain':
         specifier: workspace:*
         version: link:../../packages/domain
+      '@civora/federated':
+        specifier: workspace:*
+        version: link:../../packages/federated
       '@civora/forecasting':
         specifier: workspace:*
         version: link:../../packages/forecasting
@@ -138,6 +141,9 @@ importers:
       '@civora/domain':
         specifier: workspace:*
         version: link:../../packages/domain
+      '@civora/federated':
+        specifier: workspace:*
+        version: link:../../packages/federated
       '@civora/i18n':
         specifier: workspace:*
         version: link:../../packages/i18n
@@ -190,6 +196,9 @@ importers:
       '@civora/domain':
         specifier: workspace:*
         version: link:../../packages/domain
+      '@civora/federated':
+        specifier: workspace:*
+        version: link:../../packages/federated
       '@civora/forecasting':
         specifier: workspace:*
         version: link:../../packages/forecasting
@@ -279,6 +288,13 @@ importers:
         version: 5.0.1(@opentelemetry/api@1.9.1)(@types/node@26.6.2)(vite@8.3.1(@types/node@26.6.2)(jiti@2.7.0)(yaml@2.9.1))
 
   packages/federated:
+    dependencies:
+      '@civora/domain':
+        specifier: workspace:*
+        version: link:../domain
+      '@civora/forecasting':
+        specifier: workspace:*
+        version: link:../forecasting
     devDependencies:
       '@civora/config':
         specifier: workspace:*
@@ -286,6 +302,9 @@ importers:
       typescript:
         specifier: 'catalog:'
         version: 6.0.3
+      vitest:
+        specifier: 'catalog:'
+        version: 5.0.1(@opentelemetry/api@1.9.1)(@types/node@26.6.2)(vite@8.3.1(@types/node@26.6.2)(jiti@2.7.0)(yaml@2.9.1))
 
   packages/forecasting:
     dependencies:

@@ -46,6 +46,7 @@ export * from './anchors/geography';
 export * from './anchors/sources';
 export * from './behaviour';
 export * from './dataset-series';
+export * from './federation';
 export * from './intelligence';
 export * from './network';
 export * from './projection';

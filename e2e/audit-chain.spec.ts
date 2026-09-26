@@ -401,8 +401,21 @@ test.describe('the audit chain', () => {
     await expect(page.getByTestId('audit-count')).toContainText('chain of');
     await expect(page.getByTestId('audit-report')).toHaveAttribute('data-valid', 'true');
 
-    const shown = await page.getByTestId('audit-count').innerText();
-    expect(countIn(shown, MATCHING)).toBeLessThan(countIn(shown, CHAIN_OF));
+    // The page loads unfiltered and fetches again when the filter is applied, so a
+    // count read straight after the click can be the *first* read's answer — where
+    // `matching` and `chain of` are the same number because nothing was filtered
+    // yet. Waiting for the two counts to disagree is waiting for the answer the
+    // journey is about, and it is deterministic: the chain only grows, and the API
+    // read above already saw an entry that is not a capture.
+    await expect
+      .poll(
+        async () => {
+          const text = await page.getByTestId('audit-count').innerText();
+          return countIn(text, MATCHING) < countIn(text, CHAIN_OF);
+        },
+        { timeout: 15_000 },
+      )
+      .toBe(true);
   });
 
   test('says a quiet week was quiet, rather than showing an empty page', async ({

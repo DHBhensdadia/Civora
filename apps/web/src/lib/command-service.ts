@@ -11,6 +11,7 @@ import type {
 } from '@civora/domain';
 
 import { getEnv } from '@/env';
+import { countEvent } from './counters';
 import { readScoredPopulation } from './intelligence-service';
 import { getLiveStore } from './live-store';
 import { canReadDistrict, scopeRefusalFor } from './session';
@@ -205,8 +206,14 @@ async function scan(session: Session): Promise<Scanned> {
   const cached = scans.get(key);
 
   if (cached?.revision === revision) {
+    // Counted, because the memo's effect is otherwise a claim: `/api/metrics`
+    // reports the cold scans against the ones the memo answered, which is the
+    // figure the performance note in `docs/control-tower.md` is about.
+    countEvent('tower.scan.warm');
     return await cached.value;
   }
+
+  countEvent('tower.scan.cold');
 
   // One entry per scope, replaced when a record arrives: a memo table that grew
   // per write would be a leak wearing a cache's clothes, and one that ignored

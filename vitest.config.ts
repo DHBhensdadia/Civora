@@ -17,6 +17,12 @@ const subpathEntry = (name: string, subpath: string): string =>
 export default defineConfig({
   resolve: {
     alias: {
+      // The web application's own alias, declared as `apps/web/tsconfig.json`
+      // declares it: `@/lib/x` for `apps/web/src/lib/x`. It is here rather than in
+      // each test because a service that reads the process's adapters is still a
+      // service, and a test that could not import it would end up asserting the
+      // shape of a copy.
+      '@/': fileURLToPath(new URL('./apps/web/src/', import.meta.url)),
       '@civora/ai/eval': subpathEntry('ai', 'eval'),
       '@civora/ai': packageEntry('ai'),
       // Declared before `@civora/domain`, because a plain alias matches by

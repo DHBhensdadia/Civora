@@ -157,8 +157,14 @@ test.describe('the advisory set', () => {
     const absent = advisories.offered.filter(
       (offered) => !advisories.languages.includes(offered.code),
     );
+    // Scoped to the panel: the language picker in the header offers the same
+    // labels, so a page-wide text locator would match the picker's own option
+    // first and assert the wrong surface.
+    const panel = page.getByRole('region', {
+      name: 'Advisory bodies, written ahead of the burst',
+    });
     for (const language of absent) {
-      await expect(page.getByText(language.label).first()).toBeVisible();
+      await expect(panel.getByText(language.label).first()).toBeVisible();
     }
   });
 

@@ -176,7 +176,10 @@ test.describe('the alert lifecycle', () => {
 
     const entry = page.getByTestId(`alert-${alert.id}`);
     await expect(entry).toBeVisible();
-    await expect(entry.getByText(alert.severity, { exact: true })).toBeVisible();
+    // The surface labels a severity in the reader's language, English included,
+    // so the assertion names the label rather than the domain's identifier.
+    const severityLabel = alert.severity.charAt(0).toUpperCase() + alert.severity.slice(1);
+    await expect(entry.getByText(severityLabel, { exact: true })).toBeVisible();
 
     // A move with no reason is refused rather than recorded: an alert whose
     // history says somebody moved it for no stated reason is not auditable.

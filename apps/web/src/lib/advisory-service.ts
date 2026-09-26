@@ -6,6 +6,7 @@ import { LANGUAGES, languageLabelOf, languageOf } from '@civora/i18n';
 import { getProviders } from '@/providers';
 import { readIntelligence, storeAlert } from './intelligence-service';
 import { getLiveStore } from './live-store';
+import { PRESENTATION_REFUSAL } from './presentation';
 import type { Session } from './session';
 
 /**
@@ -88,6 +89,14 @@ export interface AdvisorySet {
   readonly regenerated: boolean;
   readonly generatedAt: string;
   readonly generatedInMs: number;
+  /** True when the read was taken in presentation mode. */
+  readonly presentationMode: boolean;
+  /**
+   * Why this read did not write, when the caller asked for a regeneration in
+   * presentation mode. Null the rest of the time, including on the ordinary read
+   * that does the writing.
+   */
+  readonly presentationRefusal: string | null;
 }
 
 interface Attempted {
@@ -136,7 +145,10 @@ function viewOfLanguage(
  */
 export async function readAdvisorySet(
   session: Session,
-  options: { readonly regenerate?: boolean | undefined } = {},
+  options: {
+    readonly regenerate?: boolean | undefined;
+    readonly presentation?: boolean | undefined;
+  } = {},
 ): Promise<AdvisorySet> {
   const startedAt = Date.now();
   const intelligence = await readIntelligence(session);
@@ -146,7 +158,11 @@ export async function readAdvisorySet(
   // would be two languages to a reader comparing them.
   const languages = advisoryLanguagesOf(intelligence.alerts);
   const provider = getProviders().reasoning;
-  const regenerate = options.regenerate === true;
+  // In presentation mode the set is **read**, never re-asked: that is the whole
+  // of the mode, and it is refused in a sentence rather than silently obeyed so
+  // that a demonstrator can see which promise the platform is keeping.
+  const presentation = options.presentation === true;
+  const regenerate = options.regenerate === true && !presentation;
   let didWork = false;
 
   const facilityName = (facilityId: string): string =>
@@ -221,5 +237,7 @@ export async function readAdvisorySet(
     regenerated: didWork,
     generatedAt,
     generatedInMs: generationMs,
+    presentationMode: presentation,
+    presentationRefusal: presentation && options.regenerate === true ? PRESENTATION_REFUSAL : null,
   };
 }

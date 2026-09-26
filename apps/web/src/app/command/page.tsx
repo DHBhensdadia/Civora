@@ -15,6 +15,7 @@ import {
 import type { CommandTier } from '@/lib/command-service';
 import { accessTo } from '@/lib/guard';
 import { getLiveStore } from '@/lib/live-store';
+import { PRESENTATION_COOKIE, PRESENTATION_NOTE, presentationModeFrom } from '@/lib/presentation';
 import { provenanceFor } from '@/lib/provenance';
 import { SESSION_COOKIE, parseSession } from '@/lib/session';
 
@@ -64,7 +65,9 @@ export default async function CommandPage({
   readonly searchParams: Promise<Record<string, Param>>;
 }) {
   const params = await searchParams;
-  const session = parseSession((await cookies()).get(SESSION_COOKIE)?.value);
+  const jar = await cookies();
+  const session = parseSession(jar.get(SESSION_COOKIE)?.value);
+  const presentation = presentationModeFrom(jar.get(PRESENTATION_COOKIE)?.value);
   const access = accessTo(session, '/command');
 
   if (!access.allowed) {
@@ -131,6 +134,17 @@ export default async function CommandPage({
           {scopeSentence}
         </p>
       </header>
+
+      {presentation ? (
+        <Notice id="command-presentation" tone="info" title="Presentation mode">
+          <p data-testid="presentation-note">{PRESENTATION_NOTE}</p>
+          <p>
+            Everything on this page is read from the process's own projections; nothing here opens a
+            connection. Clearing the <code>civora-presentation</code> cookie returns the platform to
+            its ordinary behaviour.
+          </p>
+        </Notice>
+      ) : null}
 
       <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard

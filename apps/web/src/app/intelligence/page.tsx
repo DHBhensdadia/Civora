@@ -1,5 +1,7 @@
 'use client';
 
+import { formatDate, messageFor, messageKeys } from '@civora/i18n';
+import type { MessageKey } from '@civora/i18n';
 import { useCallback, useEffect, useState } from 'react';
 
 import { CountList, Notice, Panel, StatCard, formatCount } from '@/components/ui';
@@ -137,6 +139,10 @@ interface AdvisoryPayload {
   readonly regenerated: boolean;
   readonly generatedAt: string;
   readonly generatedInMs: number;
+  /** True when the read was taken in presentation mode. */
+  readonly presentationMode: boolean;
+  /** Why a regeneration was refused, when presentation mode refused one. */
+  readonly presentationRefusal: string | null;
   readonly alerts: readonly {
     readonly alertId: string;
     readonly facilityName: string;
@@ -190,21 +196,56 @@ const BAND_CLASSES: Readonly<Record<IntelligenceRow['band'], string>> = {
   unknown: 'border-slate-500/40 bg-slate-500/10 text-slate-200',
 };
 
-const STATE_LABELS: Readonly<Record<string, string>> = {
-  raised: 'Raised',
-  acknowledged: 'Acknowledged',
-  action_proposed: 'Action proposed',
-  snoozed: 'Snoozed',
-  escalated: 'Escalated',
-  resolved: 'Resolved',
+/**
+ * What an alert's state is called, in the reader's language.
+ *
+ * The states are the domain's own identifiers; the bundle names each of them, and
+ * a state this build does not know is shown as itself rather than as a neighbour,
+ * because a wrong word on an alert is how somebody acts on the wrong one.
+ */
+const STATE_KEYS: Readonly<Record<string, MessageKey>> = {
+  raised: 'alert.state.raised',
+  open: 'alert.state.open',
+  acknowledged: 'alert.state.acknowledged',
+  action_proposed: 'alert.state.action_proposed',
+  snoozed: 'alert.state.snoozed',
+  escalated: 'alert.state.escalated',
+  resolved: 'alert.state.resolved',
 };
 
-const MOVES: readonly { readonly to: string; readonly label: string }[] = [
-  { to: 'acknowledged', label: 'Acknowledge' },
-  { to: 'escalated', label: 'Escalate' },
-  { to: 'action_proposed', label: 'Propose action' },
-  { to: 'snoozed', label: 'Snooze' },
-  { to: 'resolved', label: 'Resolve' },
+const stateLabel = (state: string, language: string): string => {
+  const key = STATE_KEYS[state];
+  return key === undefined ? state : messageFor(language, key);
+};
+
+const severityLabel = (severity: string, language: string): string => {
+  const key = `alert.severity.${severity}` as MessageKey;
+  return messageKeys.includes(key) ? messageFor(language, key) : severity;
+};
+
+/**
+ * What to say about an advisory read, in the order the answers matter.
+ *
+ * A presentation-mode refusal comes first because it is the one case where a
+ * reader pressed a control and the platform declined to act: that has to be said
+ * rather than replaced by a summary of a regeneration that did not happen.
+ */
+const advisoryResultFor = (payload: AdvisoryPayload, regenerate: boolean): string | null => {
+  if (payload.presentationRefusal !== null) {
+    return payload.presentationRefusal;
+  }
+  if (!regenerate) {
+    return null;
+  }
+  return `Asked the writer again for ${String(payload.attempted)} language(s) across ${String(payload.alerts.length)} alert(s): ${String(payload.written)} written, ${String(payload.refused)} refused.`;
+};
+
+const movesFor = (language: string): readonly { readonly to: string; readonly label: string }[] => [
+  { to: 'acknowledged', label: messageFor(language, 'alert.acknowledge') },
+  { to: 'escalated', label: messageFor(language, 'alert.escalate') },
+  { to: 'action_proposed', label: messageFor(language, 'alert.propose') },
+  { to: 'snoozed', label: messageFor(language, 'alert.snooze') },
+  { to: 'resolved', label: messageFor(language, 'alert.resolve') },
 ];
 
 const percent = (value: number): string => `${(value * 100).toFixed(0)}%`;
@@ -240,15 +281,25 @@ export default function IntelligencePage() {
   const [advisoryResult, setAdvisoryResult] = useState<string | null>(null);
   const [advisoryBusy, setAdvisoryBusy] = useState(false);
   const [telemetry, setTelemetry] = useState<TelemetryPayload | null>(null);
+  const [language, setLanguage] = useState<string>('en');
 
   const load = useCallback(async (): Promise<void> => {
     try {
-      const response = await fetch('/api/intelligence');
+      // The interface language rides along with the inbox read rather than being
+      // polled: it changes when a person changes it, and that reloads the page.
+      const [response, languageResponse] = await Promise.all([
+        fetch('/api/intelligence'),
+        fetch('/api/language'),
+      ]);
       if (!response.ok) {
         setError(`the platform answered ${String(response.status)}`);
         return;
       }
       setPayload((await response.json()) as IntelligencePayload);
+      if (languageResponse.ok) {
+        const chosen = (await languageResponse.json()) as { language?: string };
+        setLanguage(chosen.language ?? 'en');
+      }
       setError(null);
       setUpdatedAt(new Date().toLocaleTimeString());
     } catch (cause) {
@@ -282,11 +333,9 @@ export default function IntelligencePage() {
       }
       const payload = (await response.json()) as AdvisoryPayload;
       setAdvisories(payload);
-      setAdvisoryResult(
-        regenerate
-          ? `Asked the writer again for ${String(payload.attempted)} language(s) across ${String(payload.alerts.length)} alert(s): ${String(payload.written)} written, ${String(payload.refused)} refused.`
-          : null,
-      );
+      // A refusal is a result: in presentation mode the answer is the sentence
+      // saying which promise the platform is keeping, not a silent no-op.
+      setAdvisoryResult(advisoryResultFor(payload, regenerate));
     } finally {
       setAdvisoryBusy(false);
     }
@@ -467,13 +516,13 @@ export default function IntelligencePage() {
               >
                 <div className="flex flex-wrap items-center gap-2 text-xs">
                   <span className="rounded border border-rose-500/40 bg-rose-500/10 px-2 py-0.5 text-rose-200">
-                    {alert.severity}
+                    {severityLabel(alert.severity, language)}
                   </span>
                   <span className="rounded border border-slate-700 px-2 py-0.5 text-slate-300">
-                    {STATE_LABELS[alert.state] ?? alert.state}
+                    {stateLabel(alert.state, language)}
                   </span>
                   <span className="text-slate-500">
-                    raised {alert.raisedOn} · condition {alert.dedupeKey}
+                    {formatDate(alert.raisedOn, language)} · condition {alert.dedupeKey}
                   </span>
                 </div>
 
@@ -492,7 +541,7 @@ export default function IntelligencePage() {
 
                 <div className="mt-3 flex flex-wrap items-center gap-2">
                   <label className="flex items-center gap-2 text-xs text-slate-400">
-                    Reason
+                    {messageFor(language, 'alert.reason')}
                     <input
                       aria-label={`Reason for ${alert.itemId}`}
                       className="w-64 rounded border border-slate-700 bg-slate-950 px-2 py-1 text-sm text-slate-200"
@@ -502,7 +551,7 @@ export default function IntelligencePage() {
                       value={reasons[alert.id] ?? ''}
                     />
                   </label>
-                  {MOVES.map((move_) => (
+                  {movesFor(language).map((move_) => (
                     <button
                       key={move_.to}
                       aria-label={`${move_.label} ${alert.itemId}`}
@@ -536,6 +585,12 @@ export default function IntelligencePage() {
           </p>
         ) : (
           <div className="flex flex-col gap-4">
+            {advisories.presentationMode ? (
+              <p data-testid="advisory-presentation" className="text-sm text-sky-200">
+                Presentation mode: the set was prepared ahead of the demonstration, and a click here
+                will not start a model call.
+              </p>
+            ) : null}
             <div
               className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded border border-slate-800 bg-slate-900/60 px-3 py-2 text-sm text-slate-300"
               data-testid="advisory-summary"
@@ -594,8 +649,11 @@ export default function IntelligencePage() {
                 >
                   <p className="text-sm text-slate-200">
                     {alert.facilityName} · {alert.itemName} ·{' '}
-                    <span className="text-rose-200">{alert.severity}</span> · raised{' '}
-                    {alert.raisedOn}
+                    <span className="text-rose-200">
+                      {' '}
+                      {severityLabel(alert.severity, language)}
+                    </span>{' '}
+                    · raised {formatDate(alert.raisedOn, language)}
                   </p>
 
                   <ul className="mt-2 flex flex-col gap-2">

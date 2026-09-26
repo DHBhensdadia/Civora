@@ -3,6 +3,7 @@ import type { NextRequest } from 'next/server';
 import { z } from 'zod';
 
 import { readAdvisorySet } from '@/lib/advisory-service';
+import { PRESENTATION_COOKIE, presentationModeFrom } from '@/lib/presentation';
 import { SESSION_COOKIE, parseSession } from '@/lib/session';
 
 /**
@@ -28,9 +29,10 @@ const regenerateSchema = z.strictObject({ regenerate: z.literal(true) });
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const session = parseSession(request.cookies.get(SESSION_COOKIE)?.value);
+  const presentation = presentationModeFrom(request.cookies.get(PRESENTATION_COOKIE)?.value);
 
   return NextResponse.json({
-    ...(await readAdvisorySet(session)),
+    ...(await readAdvisorySet(session, { presentation })),
     // The bodies are prose about a generated alert; the alert itself is
     // simulated, and saying so here as well is what keeps a reader from taking
     // the numbers inside a body for a real facility's position.
@@ -40,6 +42,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   const session = parseSession(request.cookies.get(SESSION_COOKIE)?.value);
+  const presentation = presentationModeFrom(request.cookies.get(PRESENTATION_COOKIE)?.value);
 
   let body: unknown;
   try {
@@ -65,7 +68,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   }
 
   return NextResponse.json({
-    ...(await readAdvisorySet(session, { regenerate: true })),
+    ...(await readAdvisorySet(session, { regenerate: true, presentation })),
     simulated: true,
   });
 }

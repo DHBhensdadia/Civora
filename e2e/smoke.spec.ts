@@ -8,9 +8,9 @@ test.describe('the foundation build', () => {
     await expect(page.getByRole('heading', { name: /proposes redistribution/ })).toBeVisible();
     await expect(page.getByText(/All data the platform shows is simulated/)).toBeVisible();
 
-    // The five modules are named, each with a status, and the one that does not
-    // exist says so rather than being implied to work by its proximity to the
-    // ones that do.
+    // The five modules are named, each with a status — and the count is asserted,
+    // not just the presence of one label, so a capability cannot be claimed by
+    // quietly dropping a module or its status from the list.
     for (const module of ['Drishti', 'Poorvadarshan', 'Chetavani', 'Setu', 'Samvad']) {
       await expect(page.getByText(module, { exact: true })).toBeVisible();
     }
@@ -18,9 +18,11 @@ test.describe('the foundation build', () => {
     await expect(page.getByText(/forecasting implemented/)).toBeVisible();
     await expect(page.getByText(/early warning implemented/)).toBeVisible();
     await expect(page.getByText(/redistribution implemented/)).toBeVisible();
-    // Exactly the one unwritten module says so: the page cannot quietly start
-    // claiming a capability by dropping the label from the ones that have one.
-    await expect(page.getByText('not implemented')).toHaveCount(1);
+    await expect(page.getByText(/federation implemented/)).toBeVisible();
+    await expect(page.getByText(/implemented —/)).toHaveCount(5);
+    // And no module is left describing itself as unwritten: the substrate that is
+    // not built is named as the substrate, in the federation status itself.
+    await expect(page.getByText('not implemented')).toHaveCount(0);
   });
 
   test('reports the adapters it is running against', async ({ page }) => {

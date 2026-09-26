@@ -103,7 +103,14 @@ test.describe('the redistribution workbench', () => {
 
     // Reachable from the navigation, like every other surface.
     await page.goto('/');
-    await expect(page.getByRole('link', { name: 'Redistribution', exact: true })).toBeVisible();
+    // Scoped to the navigation rather than to the page: the surface is also linked
+    // from the footer, and an unscoped locator would be ambiguous — which is a
+    // broken assertion, not a broken navigation.
+    await expect(
+      page
+        .getByRole('navigation', { name: 'Platform sections' })
+        .getByRole('link', { name: 'Redistribution', exact: true }),
+    ).toBeVisible();
 
     await openWorkbench(page);
 

@@ -23,6 +23,16 @@ export const envSchema = z.object({
   firebaseProjectId: z.string().trim().min(1).optional(),
   geminiApiKey: z.string().trim().min(1).optional(),
   geminiModel: z.string().trim().min(1).optional(),
+  /**
+   * The Google Maps Platform key, when a deployment has one.
+   *
+   * Absence is a **supported configuration** rather than a missing requirement:
+   * `@civora/geo` prefers Google Maps when this is set and otherwise returns the
+   * schematic renderer with a sentence naming this variable. Validating it as
+   * required would make the platform refuse to boot without a billing account,
+   * which is the opposite of the local-first rule.
+   */
+  mapsApiKey: z.string().trim().min(1).optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;
@@ -57,6 +67,7 @@ const VARIABLE_NAMES: Readonly<Record<keyof Env, string>> = {
   firebaseProjectId: 'NEXT_PUBLIC_FIREBASE_PROJECT_ID',
   geminiApiKey: 'GEMINI_API_KEY',
   geminiModel: 'GEMINI_MODEL',
+  mapsApiKey: 'NEXT_PUBLIC_GOOGLE_MAPS_API_KEY',
 };
 
 const variableName = (key: PropertyKey): string =>
@@ -82,6 +93,7 @@ function selectSource(source: EnvSource): Record<string, string | undefined> {
     firebaseProjectId: orAbsent(source.NEXT_PUBLIC_FIREBASE_PROJECT_ID),
     geminiApiKey: orAbsent(source.GEMINI_API_KEY),
     geminiModel: orAbsent(source.GEMINI_MODEL),
+    mapsApiKey: orAbsent(source.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY),
   };
 }
 

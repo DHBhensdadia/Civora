@@ -483,3 +483,73 @@ describe('the rest of what a facility reports', () => {
     expect(ledger.stockFor(FACILITY_A)?.items[0]?.onHand).toBe(75);
   });
 });
+
+describe('the record behind a figure', () => {
+  it("returns one item's movements newest first, with the batch and how it arrived", () => {
+    const ledger = service('2026-01-31');
+    ledger.applyEntry(
+      receiptOn('2026-01-05', 100, { batchId: 'batch-a', expiresOn: '2026-06-30' }),
+    );
+    ledger.applyEntry(
+      aLedgerEntry({
+        id: 'issue-1',
+        kind: 'issue',
+        quantity: 10,
+        occurredOn: '2026-01-09',
+        recordedAt: '2026-01-09T10:00:00.000Z',
+        batchId: null,
+        expiresOn: null,
+        captureSource: 'manual',
+        synthetic: false,
+      }),
+    );
+
+    const evidence = ledger.evidenceFor(FACILITY_A, anItem().id);
+
+    expect(evidence).toHaveLength(2);
+    expect(evidence[0]?.id).toBe('issue-1');
+    expect(evidence[0]?.occurredOn).toBe('2026-01-09');
+    // The fields a reader checks on the register: the day the movement belongs
+    // to and the moment it reached the platform are two different things.
+    expect(evidence[0]?.recordedAt).toBe('2026-01-09T10:00:00.000Z');
+    expect(evidence[0]?.captureSource).toBe('manual');
+    expect(evidence[0]?.synthetic).toBe(false);
+    expect(evidence[1]?.batchId).toBe('batch-a');
+    expect(evidence[1]?.expiresOn).toBe('2026-06-30');
+    expect(evidence[1]?.synthetic).toBe(true);
+  });
+
+  it("keeps another item's movements, and another facility's, out of the evidence", () => {
+    const second = anItem({ id: 'item-2' });
+    const ledger = service('2026-01-31', [anItem(), second]);
+    ledger.applyEntry(receiptOn('2026-01-05'));
+    ledger.applyEntry(receiptOn('2026-01-05', 5, { id: 'other-item', itemId: second.id }));
+    ledger.applyEntry(receiptOn('2026-01-06', 7, { id: 'other-facility', facilityId: FACILITY_B }));
+
+    expect(ledger.evidenceFor(FACILITY_A, anItem().id).map((entry) => entry.id)).toEqual([
+      'receipt-2026-01-05',
+    ]);
+    expect(ledger.evidenceFor(FACILITY_A, second.id)).toHaveLength(1);
+    expect(ledger.evidenceFor(FACILITY_B, anItem().id)).toHaveLength(1);
+  });
+
+  it('answers a facility it has never heard from with no evidence rather than an error', () => {
+    expect(service('2026-01-31').evidenceFor(FACILITY_B, anItem().id)).toEqual([]);
+  });
+});
+
+describe("the projection's version", () => {
+  it('counts writes, and reads do not move it', () => {
+    const ledger = service('2026-01-31');
+    expect(ledger.revision()).toBe(0);
+
+    ledger.applyEntry(receiptOn('2026-01-05'));
+    ledger.applyBedStatus(aBedReport({ observedOn: '2026-01-06' }));
+    expect(ledger.revision()).toBe(2);
+
+    ledger.readingFor(FACILITY_A);
+    ledger.stockFor(FACILITY_A);
+    ledger.evidenceFor(FACILITY_A, anItem().id);
+    expect(ledger.revision()).toBe(2);
+  });
+});

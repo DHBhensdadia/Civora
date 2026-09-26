@@ -144,6 +144,9 @@ importers:
       '@civora/federated':
         specifier: workspace:*
         version: link:../../packages/federated
+      '@civora/geo':
+        specifier: workspace:*
+        version: link:../../packages/geo
       '@civora/i18n':
         specifier: workspace:*
         version: link:../../packages/i18n

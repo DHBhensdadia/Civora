@@ -129,6 +129,33 @@ export interface RecentMovement {
   readonly captureSource: string;
 }
 
+/**
+ * One movement, read back as the evidence behind a figure.
+ *
+ * The difference from `RecentMovement` is what a reader is doing with it. That
+ * one answers "what happened here lately" and carries the item's name because it
+ * is shown on a facility's page. This one answers "show me the record this stock
+ * position came from" — the drill-down's last step — so it carries the fields a
+ * person would check on the register itself: the batch and its expiry, whether
+ * the entry corrects an earlier one, which transfer it belongs to, and whether
+ * the record is simulated or arrived through a capture.
+ */
+export interface MovementEvidence {
+  readonly id: string;
+  readonly itemId: ItemId;
+  readonly kind: string;
+  readonly quantity: number;
+  readonly occurredOn: DateOnly;
+  readonly recordedAt: string;
+  readonly batchId: string | null;
+  readonly expiresOn: DateOnly | null;
+  readonly counterpartFacilityId: FacilityId | null;
+  readonly transferId: string | null;
+  readonly correctsEntryId: string | null;
+  readonly captureSource: string;
+  readonly synthetic: boolean;
+}
+
 export interface FacilityReading {
   readonly facilityId: FacilityId;
   readonly status: FacilityStatus;
@@ -185,6 +212,17 @@ export class LedgerService {
   private readonly stockCache = new Map<FacilityId, StockPosition>();
   private readonly readingCache = new Map<FacilityId, FacilityReading>();
 
+  /**
+   * How many times anything has been written to this projection.
+   *
+   * A reader that memoises a whole-country scan needs a way to know when the
+   * scan has gone stale, and a clock is the wrong answer: nothing has changed
+   * until a record arrives, and one arriving is exactly what this counts. The
+   * seed command writes through the same methods as the ingest boundary, so a
+   * revision covers both without either having to remember to say so.
+   */
+  private revisionCount = 0;
+
   private readonly options: LedgerServiceOptions;
   private readonly itemsById = new Map<ItemId, Item>();
 
@@ -198,6 +236,11 @@ export class LedgerService {
   /** Facilities the platform has heard from at least once. */
   facilities(): readonly FacilityId[] {
     return [...this.heardDays.keys()];
+  }
+
+  /** The number of writes this projection has seen, which is its version. */
+  revision(): number {
+    return this.revisionCount;
   }
 
   /**
@@ -225,6 +268,7 @@ export class LedgerService {
    * cleared is the kind of bug a dashboard hides until it matters.
    */
   applyEntry(entry: StockLedgerEntry): void {
+    this.revisionCount += 1;
     this.invalidate(entry.facilityId);
     const list = this.entries.get(entry.facilityId) ?? [];
     list.push(entry);
@@ -239,6 +283,7 @@ export class LedgerService {
   }
 
   applyBedStatus(status: BedStatus): void {
+    this.revisionCount += 1;
     this.invalidate(status.facilityId);
     const previous = this.beds.get(status.facilityId);
     if (previous === undefined || status.observedOn >= previous.observedOn) {
@@ -248,6 +293,7 @@ export class LedgerService {
   }
 
   applyAttendance(attendance: StaffAttendance): void {
+    this.revisionCount += 1;
     this.invalidate(attendance.facilityId);
     const previous = this.attendance.get(attendance.facilityId);
     const day = previous?.[0]?.observedOn;
@@ -266,6 +312,7 @@ export class LedgerService {
   }
 
   applyFootfall(observation: FootfallObservation): void {
+    this.revisionCount += 1;
     this.invalidate(observation.facilityId);
     const previous = this.footfall.get(observation.facilityId);
     if (previous === undefined || observation.observedOn >= previous.observedOn) {
@@ -305,6 +352,7 @@ export class LedgerService {
   }
 
   applySyndromic(signal: SyndromicSignal): void {
+    this.revisionCount += 1;
     this.invalidate(signal.facilityId);
     const previous = this.syndromic.get(signal.facilityId);
     const day = previous?.[0]?.observedOn;
@@ -387,7 +435,26 @@ export class LedgerService {
     const asOf = this.asOf();
     const windowDays = this.options.windowDays ?? DEFAULT_WINDOW_DAYS;
     const from = addDays(asOf, -(windowDays - 1));
+
+    // The facility's entries, grouped by item once.
+    //
+    // `replayStockLedger` filters and then **sorts** what it is given, so handing
+    // it the whole facility ledger for each of fourteen items sorts the same
+    // nineteen hundred entries fourteen times. Grouping first is the same
+    // replay over a fourteenth of the input, and the order within an item is
+    // unchanged because the filter it used to do is exactly this grouping. It is
+    // measurable where it matters: the control tower reads every facility in the
+    // country, and this is where its first request spent its four seconds.
     const entries = this.entries.get(facilityId) ?? [];
+    const byItem = new Map<ItemId, StockLedgerEntry[]>();
+    for (const entry of entries) {
+      const bucket = byItem.get(entry.itemId);
+      if (bucket === undefined) {
+        byItem.set(entry.itemId, [entry]);
+      } else {
+        bucket.push(entry);
+      }
+    }
 
     const positions: ItemPosition[] = [];
     for (const itemId of tracked) {
@@ -396,7 +463,10 @@ export class LedgerService {
         continue;
       }
 
-      const replay = replayStockLedger(entries, facilityId, itemId, { from, to: asOf });
+      const replay = replayStockLedger(byItem.get(itemId) ?? [], facilityId, itemId, {
+        from,
+        to: asOf,
+      });
       const demand = demandRateFromLedger(replay.days);
 
       positions.push({
@@ -550,6 +620,46 @@ export class LedgerService {
       occurredOn: entry.occurredOn,
       recordedAt: entry.recordedAt,
       captureSource: entry.captureSource,
+    }));
+  }
+
+  /**
+   * The movements for one item at one facility, newest first.
+   *
+   * The terminal evidence of the command plane's drill-down: a stock figure, a
+   * cover figure and a forecast are all derivations, and this is the record they
+   * were derived from. Deliberately **not** paginated behind a summary: a reader
+   * asking to see the record is asking to check it, so the movements come back
+   * whole with the batch and the expiry on them.
+   */
+  evidenceFor(facilityId: FacilityId, itemId: ItemId, limit = 10): readonly MovementEvidence[] {
+    const entries = [...(this.entries.get(facilityId) ?? [])]
+      .filter((entry) => entry.itemId === itemId)
+      .sort((left, right) => {
+        if (left.occurredOn !== right.occurredOn) {
+          return left.occurredOn < right.occurredOn ? 1 : -1;
+        }
+        if (left.recordedAt !== right.recordedAt) {
+          return left.recordedAt < right.recordedAt ? 1 : -1;
+        }
+        return left.id < right.id ? 1 : -1;
+      })
+      .slice(0, limit);
+
+    return entries.map((entry) => ({
+      id: entry.id,
+      itemId: entry.itemId,
+      kind: entry.kind,
+      quantity: entry.quantity,
+      occurredOn: entry.occurredOn,
+      recordedAt: entry.recordedAt,
+      batchId: entry.batchId,
+      expiresOn: entry.expiresOn,
+      counterpartFacilityId: entry.counterpartFacilityId,
+      transferId: entry.transferId,
+      correctsEntryId: entry.correctsEntryId,
+      captureSource: entry.captureSource,
+      synthetic: entry.synthetic,
     }));
   }
 

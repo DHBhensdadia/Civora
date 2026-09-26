@@ -152,6 +152,39 @@ a state, and only alerts and transfer decisions accept a client write at all.
 against it, each access asserted twice — the access a role is meant to have and
 the neighbouring access it must not.
 
+**A file from a system the ministry already runs is a record like any other.** Three
+readers live in `packages/interop`: the monthly HMIS stock statement, the Local
+Government Directory extract and the national essential medicines list. The first
+two are on the import path — `/import` is a two-step, **check** and then **accept**,
+where the check runs the same code with writing turned off and reports per row what
+the platform would do, including the rows it refuses and the sentence it refuses
+them with. An importer does not decide what to write: the adapter reads the file into
+the envelope a nurse's phone sends, and the ingest boundary decides each row — the
+same idempotency keys, the same projection, the same audit chain — so an imported row
+differs from a capture only by its source and by the provenance naming the file it
+arrived in. Re-importing is a replay rather than a second movement of the same stock
+(each row's identifier is derived from its own content and the file's digest), scope
+is decided per row, and the act appends one `import-accepted` entry naming the file,
+the rows it wrote and the person who accepted it. Every correspondence is
+field-by-field and held in the code as a value, so a column the reader needs but the
+table does not name fails the build: [`docs/INTEROP.md`](docs/INTEROP.md) prints
+them, and says which shapes were confirmed against a retrieved source and which are
+reconstructed.
+
+**What an operator can see from outside is three small things, and the third can
+fail.** A log line is one JSON object carrying the request's correlation id, minted
+or taken from the caller and echoed on the response — never the query string, which
+is where an identifier arrives when nobody meant to send one — and a field whose key
+looks like a person's is withheld and _named_ in the line that would have carried it.
+`/healthz` says the process is alive; `/readyz` says whether it should be given a
+decision, reading the store, the dataset, the projection and **the audit chain**, so
+a trail that has been altered is reported as not-ready with the entry named rather
+than served as though nothing were wrong. `/api/metrics` is the operator's read —
+chain entries and their actions, imported files and what they wrote, the control
+tower's own cache counters, the reasoning adapter's calls and cache hits — every
+figure read through the mechanism that already owns it, with `null` rather than zero
+for anything nobody has measured.
+
 **Localisation is partial, and the partiality is stated.** Two flows are
 translated into English, Hindi, Marathi, Bengali and Tamil: **the
 medicine-capture form** — its facility, item, movement, quantity, batch, expiry
@@ -214,6 +247,7 @@ which CI accepts while the key is missing and prints that it did.
 pnpm lint         # ESLint over the workspace
 pnpm typecheck    # tsc --noEmit across every package and app
 pnpm test         # Vitest: unit and contract tests
+pnpm test:rules   # the Firestore rules against the emulator
 pnpm build        # production build of the web application
 pnpm e2e          # Playwright against the built application
 pnpm db:seed      # generate the demonstration dataset and store it
@@ -230,6 +264,8 @@ CI runs the same gates in the same order, plus a container build.
   the ingest and tenancy rules, and where each is enforced.
 - [`docs/DATA_PROVENANCE.md`](docs/DATA_PROVENANCE.md) — every dataset, its
   licence, and what is simulated.
+- [`docs/INTEROP.md`](docs/INTEROP.md) — each importer, its source format, its
+  licence position and its field-by-field mapping table.
 - [`infra/firestore.rules`](infra/firestore.rules) — the tenancy rules, with
   `pnpm test:rules` as their matrix of allowed and denied access.
 - [`docs/REDISTRIBUTION.md`](docs/REDISTRIBUTION.md) — the redistribution plan
@@ -239,6 +275,30 @@ CI runs the same gates in the same order, plus a container build.
 - [`CONTRIBUTING.md`](CONTRIBUTING.md) — how to work in this repository.
 - [`SECURITY.md`](SECURITY.md) — scope and how to report a problem.
 - [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md) — Contributor Covenant 2.1.
+
+## What this build does not claim
+
+The limits are listed here as well as in [`docs/INTEROP.md`](docs/INTEROP.md),
+because an unstated limitation is the only kind that misleads.
+
+- **Two importers are deferred.** `eaushadhi-csv` (warehouse receipt and issue
+  extracts) and `ihip-json` (the syndromic feed) are named, with what implementing
+  each would take, and are not silently omitted. `nlem-json` is implemented and
+  drives the catalogue, but the import surface refuses it by name: a file that
+  replaced the catalogue at runtime would change what every ledger entry means.
+- **Two of the three source shapes are reconstructed.** The directory extract and
+  the HMIS statement are written in the published field vocabulary, but neither
+  could be retrieved to confirm its arrangement, which each table says at the top.
+- **No ministry API is integrated and no FHIR/ABDM conformance is claimed.** No
+  HMIS, e-Aushadhi, IHIP or LGD endpoint was called; the adapters, fixtures and
+  mapping tables are the deliverable.
+- **Every store, projection, queue, counter, chain and plan is per process and in
+  memory.** Correct for a single-process demonstration, wrong for a deployment.
+- **The reasoning layer has never called a model**, because the project has no API
+  key: the recorded-fixture adapter answers, its corpus is empty, and every surface
+  that depends on it shows a refusal or names the reading it was supplied. See
+  [`docs/DATA_PROVENANCE.md`](docs/DATA_PROVENANCE.md) and the state file for the
+  blocker.
 
 ## Data
 

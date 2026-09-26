@@ -35,6 +35,19 @@ those two fields is part of the test suite.
 | Integrated Disease Surveillance Programme — syndrome taxonomy | National Centre for Disease Control, MoHFW                                               | Government of India                                                        | 2026-09-25 | **Not retrieved.** The syndrome list in the domain model is a plausible clinical grouping, not the programme's taxonomy                                                                                                                                                       | Syndrome names, documented as an assumption                                                 |
 | Rural Health Statistics — facility counts by state            | Ministry of Health and Family Welfare                                                    | Government of India                                                        | 2026-09-25 | **Not retrieved.** Facility counts are derived from population and the IPHS norms rather than read from a published count                                                                                                                                                     | Nothing directly; facility counts are derived                                               |
 
+Four formats the platform can _read_ are documented the same way, field by field,
+in [`INTEROP.md`](INTEROP.md): the monthly HMIS stock statement and the Local
+Government Directory extract are **reconstructed** (neither export could be
+retrieved to confirm its arrangement — the directory is published only through an
+interactive dashboard), the national essential medicines list was retrieved and is
+carried verbatim, and the e-Aushadhi and IHIP adapters are deferred and named.
+The two CSV files under `apps/web/public/samples/` are written for this repository
+in the documented shape; no ministry file is redistributed here. A row imported
+from any of them carries `captureSource: import` and a provenance naming the file's
+digest, and the file itself is registered with the digest, the counts and the person
+who accepted it — so a ledger row can be traced to the file it arrived in without
+the file being kept.
+
 A source that could not be retrieved is recorded above as a failure and is never
 substituted with a plausible-looking replacement. The two consequential gaps are
 both visible in the data: no identifier claims to be an official LGD code, and

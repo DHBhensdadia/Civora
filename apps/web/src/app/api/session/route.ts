@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
+import { LANGUAGE_COOKIE, languageFrom, offeredLanguages } from '@/lib/language';
 import { getLiveStore } from '@/lib/live-store';
 import {
   NATIONAL_SESSION,
@@ -50,13 +51,18 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   );
   const effective = selected ?? session;
 
-  return NextResponse.json(
-    payload(
+  return NextResponse.json({
+    ...payload(
       effective,
       store.principals,
       openingDistrictFor(effective, store.scope, store.defaultDistrictId),
     ),
-  );
+    // The interface language travels with the session read because every surface
+    // that offers the sign-in control needs it too, and a second request for one
+    // cookie is a second place for the two to disagree.
+    language: languageFrom(request.cookies.get(LANGUAGE_COOKIE)?.value),
+    offeredLanguages: offeredLanguages(),
+  });
 }
 
 export async function POST(request: NextRequest): Promise<NextResponse> {

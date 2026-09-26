@@ -1,6 +1,8 @@
 import Link from 'next/link';
 
+import { LanguagePicker } from '@/components/language-picker';
 import { navigationFor } from '@/lib/navigation';
+import { offeredLanguages } from '@/lib/language';
 import type { Session } from '@/lib/session';
 
 /**
@@ -20,13 +22,19 @@ import type { Session } from '@/lib/session';
  * because the demonstration switches personas on stage and a viewer has to be
  * able to see which one is acting — and because a person who has just been
  * refused deserves to know who the platform thinks they are.
+ *
+ * The language control sits beside it for the same reason, and the page element
+ * it sits in carries the same language, so assistive technology reads the
+ * Devanagari on the page as Devanagari.
  */
 
 export interface SiteNavProps {
   readonly session: Session;
+  /** The interface language, as the cookie resolved it. */
+  readonly language: string;
 }
 
-export function SiteNav({ session }: SiteNavProps) {
+export function SiteNav({ session, language }: SiteNavProps) {
   const sections = navigationFor(session);
 
   return (
@@ -46,6 +54,7 @@ export function SiteNav({ session }: SiteNavProps) {
       >
         {session.label} · {session.role.replace('_', ' ')}
       </span>
+      <LanguagePicker current={language} offered={offeredLanguages()} />
     </nav>
   );
 }

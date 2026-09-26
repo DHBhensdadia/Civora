@@ -8,6 +8,8 @@ import {
   ingestRequestSchema,
 } from '@civora/domain';
 import type { AdjustmentDirection, Cadre, LedgerEntryKind, Syndrome } from '@civora/domain';
+import { messageFor } from '@civora/i18n';
+import type { MessageKey } from '@civora/i18n';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { Notice, Panel, formatCount } from '@/components/ui';
@@ -135,6 +137,8 @@ interface SessionPayload {
     readonly role: string;
   }[];
   readonly openingDistrictId: string;
+  /** The interface language this reader chose, resolved from a cookie. */
+  readonly language: string;
 }
 
 interface FacilityOption {
@@ -170,15 +174,29 @@ const newIdentifier = (prefix: string): string =>
 /** The numbers a form field holds, parsed the way the platform will read them. */
 const asNumber = (value: string): number => (value.trim() === '' ? 0 : Number(value));
 
-const STATUS_WORDS: Readonly<Record<OutboxItem['status'], string>> = {
-  pending: 'Waiting to sync',
-  delivered: 'Recorded',
-  refused: 'Refused by the platform',
-  rejected: 'Not accepted',
+/**
+ * What a queued capture's status is called, in the reader's language.
+ *
+ * Typed as a total record over the outbox's own statuses, so a status added to
+ * the queue fails the build here rather than rendering as an empty badge — which
+ * is the one state a person must never be shown for a record they made.
+ */
+const statusWords = (language: string): Readonly<Record<OutboxItem['status'], string>> => ({
+  pending: messageFor(language, 'capture.pending'),
+  delivered: messageFor(language, 'capture.sent'),
+  refused: messageFor(language, 'capture.refused'),
+  rejected: messageFor(language, 'capture.rejected'),
+});
+
+/** A ledger kind's own name in the reader's language, where the bundle has one. */
+const LEDGER_KIND_KEYS: Partial<Record<LedgerEntryKind, MessageKey>> = {
+  receipt: 'capture.kind.receipt',
+  issue: 'capture.kind.issue',
 };
 
 export default function CapturePage() {
   const [identity, setIdentity] = useState<SessionPayload | null>(null);
+  const [language, setLanguage] = useState<string>('en');
   const [districtId, setDistrictId] = useState<string>('');
   const [visibility, setVisibility] = useState<VisibilityPayload | null>(null);
   const [facilityId, setFacilityId] = useState<string>('');
@@ -248,6 +266,7 @@ export default function CapturePage() {
           return;
         }
         setIdentity(session);
+        setLanguage(session.language);
         setDistrictId(session.openingDistrictId);
         setCatalogue(catalogueBody.items);
         setContextStatus('ready');
@@ -512,7 +531,7 @@ export default function CapturePage() {
             </select>
           </label>
           <label className="flex flex-col gap-1 text-sm">
-            <span className="text-slate-300">Facility</span>
+            <span className="text-slate-300">{messageFor(language, 'capture.facility')}</span>
             <select
               aria-label="Facility"
               className="rounded border border-slate-700 bg-slate-900 px-3 py-2"
@@ -596,7 +615,7 @@ export default function CapturePage() {
           kind !== 'staff_attendance' &&
           kind !== 'footfall_observation' ? (
             <label className="flex flex-col gap-1 text-sm">
-              <span className="text-slate-300">Day</span>
+              <span className="text-slate-300">{messageFor(language, 'capture.occurredOn')}</span>
               <input
                 className="rounded border border-slate-700 bg-slate-900 px-3 py-2"
                 onChange={(event) => {
@@ -611,7 +630,7 @@ export default function CapturePage() {
           {kind === 'stock_ledger_entry' ? (
             <>
               <label className="flex flex-col gap-1 text-sm">
-                <span className="text-slate-300">Item</span>
+                <span className="text-slate-300">{messageFor(language, 'capture.item')}</span>
                 <select
                   aria-label="Item"
                   className="rounded border border-slate-700 bg-slate-900 px-3 py-2"
@@ -628,7 +647,7 @@ export default function CapturePage() {
                 </select>
               </label>
               <label className="flex flex-col gap-1 text-sm">
-                <span className="text-slate-300">Movement</span>
+                <span className="text-slate-300">{messageFor(language, 'capture.kind')}</span>
                 <select
                   aria-label="Movement"
                   className="rounded border border-slate-700 bg-slate-900 px-3 py-2"
@@ -639,13 +658,17 @@ export default function CapturePage() {
                 >
                   {LEDGER_KINDS.map((option) => (
                     <option key={option} value={option}>
-                      {option}
+                      {LEDGER_KIND_KEYS[option] === undefined
+                        ? option
+                        : messageFor(language, LEDGER_KIND_KEYS[option])}
                     </option>
                   ))}
                 </select>
               </label>
               <label className="flex flex-col gap-1 text-sm">
-                <span className="text-slate-300">Quantity ({selectedItem?.unit ?? 'units'})</span>
+                <span className="text-slate-300">
+                  {messageFor(language, 'capture.quantity')} ({selectedItem?.unit ?? 'units'})
+                </span>
                 <input
                   className="rounded border border-slate-700 bg-slate-900 px-3 py-2"
                   inputMode="numeric"
@@ -659,7 +682,7 @@ export default function CapturePage() {
               {fields.ledgerKind === 'receipt' ? (
                 <>
                   <label className="flex flex-col gap-1 text-sm">
-                    <span className="text-slate-300">Batch</span>
+                    <span className="text-slate-300">{messageFor(language, 'capture.batch')}</span>
                     <input
                       className="rounded border border-slate-700 bg-slate-900 px-3 py-2"
                       onChange={(event) => {
@@ -671,7 +694,9 @@ export default function CapturePage() {
                     />
                   </label>
                   <label className="flex flex-col gap-1 text-sm">
-                    <span className="text-slate-300">Expires</span>
+                    <span className="text-slate-300">
+                      {messageFor(language, 'capture.expiresOn')}
+                    </span>
                     <input
                       className="rounded border border-slate-700 bg-slate-900 px-3 py-2"
                       onChange={(event) => {
@@ -907,7 +932,7 @@ export default function CapturePage() {
             }}
             type="button"
           >
-            Queue capture
+            {messageFor(language, 'capture.submit')}
           </button>
           <button
             className="rounded border border-slate-700 px-4 py-2 text-sm text-slate-200"
@@ -970,7 +995,7 @@ export default function CapturePage() {
                           : 'font-mono text-xs text-rose-300'
                     }
                   >
-                    {STATUS_WORDS[item.status]}
+                    {statusWords(language)[item.status]}
                   </span>
                 </div>
                 <span className="text-xs text-slate-500">

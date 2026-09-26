@@ -46,6 +46,7 @@ export const MODULES: readonly ModuleDescriptor[] = [
     name: 'Samvad',
     meaning: 'federation',
     responsibility: 'What states can learn from each other without sharing records.',
-    status: 'not implemented',
+    status:
+      'federation implemented — a differentiable model trained per state silo, clipped weighted aggregation with FedProx, additive-mask secure aggregation, and a Rényi-DP accountant; the managed substrate is documented, not built',
   },
 ] as const;

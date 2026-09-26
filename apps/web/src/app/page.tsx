@@ -86,6 +86,17 @@ export default async function HomePage() {
           with a reason that is recorded in a hash-chained trail. Nothing there executes a transfer,
           and that is deliberate.
         </p>
+        <p className="mt-2 text-amber-100/90">
+          Samvad federates a model across the states without moving a record: each state trains its
+          own rows, what crosses the boundary is a clipped parameter update, a count and a loss, and
+          the noise that buys the privacy guarantee is priced by a Rényi accountant. The{' '}
+          <Link className="underline underline-offset-4" href="/federation">
+            federation console
+          </Link>{' '}
+          shows the rounds, the budget spent, the non-IID diagnostic, and what the guarantee costs —
+          which, at this cohort size, is a great deal. The substrate a real deployment would run on
+          is cited there rather than implied.
+        </p>
         <p className="mt-2 text-sm text-amber-100/70">
           All data the platform shows is simulated. Nothing here is a real stock position and this
           is not a deployed federation.
@@ -122,9 +133,9 @@ export default async function HomePage() {
           Modules
         </h2>
         <p className="text-slate-400">
-          Five capabilities, and a status for each. The two that do not exist are named rather than
-          omitted, so nothing here can be mistaken for a feature by being adjacent to one that
-          works.
+          Five capabilities, and a status for each, in the platform&rsquo;s own words rather than a
+          percentage. All five are implemented; none is described as more than a command measured,
+          and the managed federation substrate is named as documented rather than built.
         </p>
         <ul className="flex flex-col divide-y divide-slate-800 rounded-lg border border-slate-800">
           {MODULES.map((module) => (
@@ -163,6 +174,9 @@ export default async function HomePage() {
         </Link>
         <Link className="text-sky-400 underline-offset-4 hover:underline" href="/redistribution">
           Redistribution
+        </Link>
+        <Link className="text-sky-400 underline-offset-4 hover:underline" href="/federation">
+          Federation
         </Link>
         <Link className="text-sky-400 underline-offset-4 hover:underline" href="/healthz">
           Health check

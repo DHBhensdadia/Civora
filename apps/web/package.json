@@ -13,6 +13,7 @@
   "dependencies": {
     "@civora/ai": "workspace:*",
     "@civora/domain": "workspace:*",
+    "@civora/federated": "workspace:*",
     "@civora/i18n": "workspace:*",
     "@civora/optimizer": "workspace:*",
     "@civora/simulator": "workspace:*",

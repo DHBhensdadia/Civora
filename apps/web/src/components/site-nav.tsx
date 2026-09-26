@@ -14,6 +14,8 @@ const SECTIONS = [
   { href: '/', label: 'Overview' },
   { href: '/visibility', label: 'Visibility' },
   { href: '/intelligence', label: 'Intelligence' },
+  { href: '/redistribution', label: 'Redistribution' },
+  { href: '/federation', label: 'Federation' },
   { href: '/capture', label: 'Capture' },
   { href: '/vision', label: 'Vision intake' },
   { href: '/voice', label: 'Voice intake' },

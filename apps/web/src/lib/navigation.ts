@@ -83,6 +83,15 @@ export const NAV_SECTIONS: readonly NavSection[] = [
     roles: ['state_officer', 'national', 'auditor'],
   },
   {
+    href: '/audit',
+    label: 'Audit trail',
+    purpose:
+      'Every consequential decision in one digest-linked chain, with a verification that names the entry where it stops holding.',
+    // The same rule the stored rules enforce on the collection: the chain holds
+    // every place's decisions, so it is read by the auditor and the control room.
+    roles: ['national', 'auditor'],
+  },
+  {
     href: '/capture',
     label: 'Capture',
     purpose: 'Record what a facility counted, written and spoken, offline.',

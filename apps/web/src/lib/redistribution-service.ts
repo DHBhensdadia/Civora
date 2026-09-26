@@ -676,6 +676,11 @@ export async function decideTransferProposal(
     subjectType: 'transfer_proposal',
     subjectId: proposal.id,
     reason,
+    // A proposal is decided once, so the state it leaves is always the same one:
+    // the pair says what the decision was, and says it in the same vocabulary the
+    // workbench shows.
+    before: 'awaiting decision',
+    after: input.decision === 'approved' ? 'approved' : 'rejected',
     at,
   });
 

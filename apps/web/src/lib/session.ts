@@ -117,6 +117,19 @@ export function canReadDistrict(session: Session, districtId: string, scope: Sco
   }
 }
 
+/**
+ * Whether a session may read the audit chain.
+ *
+ * The same rule the stored rules enforce on the collection
+ * (`infra/firestore.rules`), restated here so the interface refuses the read
+ * before it makes it: the auditor and the control room, and nobody else. A
+ * district officer reading the chain would read every other district's decisions
+ * in it, because a decision is a line in one shared record — so the refusal is a
+ * tenancy rule rather than a matter of taste.
+ */
+export const canReadAuditChain = (session: Session): boolean =>
+  session.role === 'auditor' || session.role === 'national';
+
 /** Why a session may not act, in a sentence a client can show a user. */
 export const scopeRefusalFor = (session: Session, level: string): string =>
   session.role === 'auditor'

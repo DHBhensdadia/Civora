@@ -427,6 +427,10 @@ export async function moveAlert(session: Session, move: AlertMove): Promise<Aler
       subjectType: 'alert',
       subjectId: moved.id,
       reason: move.reason.trim(),
+      // The state it left and the state it entered, which is the pair an alert's
+      // history already tells and the chain restates for a reader who has neither.
+      before: alert.state,
+      after: moved.state,
     });
   }
 

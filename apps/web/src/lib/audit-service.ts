@@ -186,6 +186,13 @@ export interface AuditInput {
   readonly subjectType: AuditSubjectType;
   readonly subjectId: string;
   readonly reason: string | null;
+  /**
+   * What the subject was and became, where the platform has both. Required
+   * rather than optional so that a writer has to say which it is: a pair of
+   * figures, or an explicit statement that there is nothing to compare against.
+   */
+  readonly before: string | null;
+  readonly after: string | null;
   /** The moment of the decision. Defaults to now; tests pass a fixed instant. */
   readonly at?: string | undefined;
 }
@@ -208,6 +215,8 @@ function digestOf(input: {
   readonly subjectType: string;
   readonly subjectId: string;
   readonly reason: string | null;
+  readonly before: string | null;
+  readonly after: string | null;
   readonly previousHash: string | null;
 }): string {
   const canonical = JSON.stringify([
@@ -218,6 +227,8 @@ function digestOf(input: {
     input.subjectType,
     input.subjectId,
     input.reason,
+    input.before,
+    input.after,
     input.previousHash,
   ]);
   return createHash('sha256').update(canonical).digest('hex');
@@ -234,6 +245,22 @@ export async function readAuditEvents(): Promise<readonly AuditEvent[]> {
 }
 
 /**
+ * Appends are taken one at a time.
+ *
+ * An entry's identity depends on the tail of the chain twice over: its
+ * identifier is the next sequence number and its `previousHash` is the digest of
+ * the last entry stored. Two appends that read the same tail therefore claim the
+ * same identifier, and the second write silently replaces the first — a lost
+ * decision, in the one record whose whole value is not losing one. The tests
+ * below fire five concurrent decisions and fail without this queue.
+ *
+ * A deployment gets this from a transaction on the store. The local adapter gets
+ * it from here, so the two have the same guarantee rather than the same hope —
+ * and the guarantee is stated where it is provided.
+ */
+let appending: Promise<unknown> = Promise.resolve();
+
+/**
  * Append one entry to the chain.
  *
  * The previous digest is read from the trail itself rather than kept in memory,
@@ -241,7 +268,15 @@ export async function readAuditEvents(): Promise<readonly AuditEvent[]> {
  * an event: the only operation is append, which is the property the chain rests
  * on.
  */
-export async function recordAuditEvent(input: AuditInput): Promise<AuditEvent> {
+export function recordAuditEvent(input: AuditInput): Promise<AuditEvent> {
+  const appended = appending.then(() => appendOne(input));
+  // The queue has to survive a failure: an append that threw must not stall every
+  // later one, and the caller still sees its own rejection below.
+  appending = appended.catch(() => undefined);
+  return appended;
+}
+
+async function appendOne(input: AuditInput): Promise<AuditEvent> {
   const events = await readAuditEvents();
   const previousHash = events.at(-1)?.hash ?? null;
   const occurredAt = input.at ?? new Date().toISOString();
@@ -256,6 +291,8 @@ export async function recordAuditEvent(input: AuditInput): Promise<AuditEvent> {
     subjectType: input.subjectType,
     subjectId: input.subjectId,
     reason: input.reason,
+    before: input.before,
+    after: input.after,
     previousHash,
   } as const;
 
@@ -271,6 +308,162 @@ export async function recordAuditEvent(input: AuditInput): Promise<AuditEvent> {
 
   await (await collection()).set(id, event);
   return event;
+}
+
+/** How many rows the viewer shows before it says what it is not showing. */
+export const AUDIT_ROW_LIMIT = 100;
+
+/** The question a reader is asking of the chain. Every field is optional. */
+export interface AuditFilters {
+  readonly actor: string | null;
+  readonly action: string | null;
+  readonly subject: string | null;
+  /** Inclusive first day, as `YYYY-MM-DD`, compared against the entry's own day. */
+  readonly from: string | null;
+  readonly to: string | null;
+}
+
+export const NO_AUDIT_FILTERS: AuditFilters = {
+  actor: null,
+  action: null,
+  subject: null,
+  from: null,
+  to: null,
+};
+
+/** One entry as a viewer reads it, with the link made into a sentence. */
+export interface AuditTrailRow {
+  readonly id: string;
+  readonly occurredAt: string;
+  readonly day: string;
+  readonly actorUid: string;
+  readonly actorRole: Role;
+  readonly action: string;
+  /** The registry's own sentence for the action, or null for an unknown one. */
+  readonly meaning: string | null;
+  readonly subjectType: AuditSubjectType;
+  readonly subjectId: string;
+  readonly reason: string | null;
+  readonly before: string | null;
+  readonly after: string | null;
+  readonly hash: string;
+  /** The entry this one links to, or null for the first — the chain's own order. */
+  readonly linksTo: string | null;
+}
+
+export interface AuditTrail {
+  readonly report: AuditChainReport;
+  /** When the chain was walked. The verification is an act, and this is when. */
+  readonly checkedAt: string;
+  readonly rows: readonly AuditTrailRow[];
+  readonly matched: number;
+  readonly total: number;
+  readonly shown: number;
+  readonly filters: AuditFilters;
+  /** What the chain actually holds, so a filter can offer values that exist. */
+  readonly offers: {
+    readonly actors: readonly string[];
+    readonly actions: readonly string[];
+    readonly subjects: readonly string[];
+  };
+  /**
+   * Every action the platform is built to record, with whether it has fired.
+   *
+   * This is the viewer's honesty panel: a registered action with no entry says
+   * the path has not been exercised in this process, rather than being absent
+   * from a list a reader cannot see.
+   */
+  readonly registered: readonly {
+    readonly action: string;
+    readonly detail: string;
+    readonly recorded: number;
+  }[];
+}
+
+const matches = (event: AuditEvent, filters: AuditFilters): boolean => {
+  const day = event.occurredAt.slice(0, 10);
+  if (filters.actor !== null && event.actorUid !== filters.actor) {
+    return false;
+  }
+  if (filters.action !== null && event.action !== filters.action) {
+    return false;
+  }
+  if (
+    filters.subject !== null &&
+    event.subjectId !== filters.subject &&
+    event.subjectType !== filters.subject
+  ) {
+    return false;
+  }
+  if (filters.from !== null && day < filters.from) {
+    return false;
+  }
+  return filters.to === null || day <= filters.to;
+};
+
+/**
+ * The chain as a reader is shown it.
+ *
+ * Two things are deliberately not filtered. The **verification** walks every
+ * entry, because a chain that held only within the rows a reader happened to ask
+ * for would be a chain that can be broken anywhere else — and a reader who
+ * filtered down to one actor must not be told the trail is intact when it is not.
+ * And each row **links to the entry before it in the chain**, not to the row above
+ * it in the list, because that link is what the digest commits to and a filtered
+ * list's neighbour is an artefact of the filter.
+ */
+export async function readAuditTrail(
+  filters: AuditFilters = NO_AUDIT_FILTERS,
+): Promise<AuditTrail> {
+  const events = await readAuditEvents();
+  const report = verifyAuditChain(events);
+
+  const previousIdOf = new Map<string, string>();
+  for (let index = 1; index < events.length; index += 1) {
+    const event = events[index];
+    const before = events[index - 1];
+    if (event !== undefined && before !== undefined) {
+      previousIdOf.set(event.id, before.id);
+    }
+  }
+
+  const matching = events.filter((event) => matches(event, filters));
+  const newestFirst = [...matching].reverse();
+
+  return {
+    report,
+    checkedAt: new Date().toISOString(),
+    rows: newestFirst.slice(0, AUDIT_ROW_LIMIT).map((event) => ({
+      id: event.id,
+      occurredAt: event.occurredAt,
+      day: event.occurredAt.slice(0, 10),
+      actorUid: event.actorUid,
+      actorRole: event.actorRole,
+      action: event.action,
+      meaning: consequentialActionOf(event.action)?.detail ?? null,
+      subjectType: event.subjectType,
+      subjectId: event.subjectId,
+      reason: event.reason,
+      before: event.before,
+      after: event.after,
+      hash: event.hash,
+      linksTo: previousIdOf.get(event.id) ?? null,
+    })),
+    matched: matching.length,
+    total: events.length,
+    shown: Math.min(matching.length, AUDIT_ROW_LIMIT),
+    filters,
+    offers: {
+      actors: [...new Set(events.map((event) => event.actorUid))].sort(),
+      actions: [...new Set(events.map((event) => event.action))].sort(),
+      subjects: [...new Set(events.map((event) => event.subjectType))].sort(),
+    },
+    registered: CONSEQUENTIAL_ACTIONS.map((entry) => ({
+      action: entry.action,
+      detail: entry.detail,
+      recorded: events.filter((event) => event.action === entry.action).length,
+    })),
+  };
 }
 
 export interface AuditChainReport {
@@ -303,6 +496,8 @@ export function verifyAuditChain(events: readonly AuditEvent[]): AuditChainRepor
       subjectType: event.subjectType,
       subjectId: event.subjectId,
       reason: event.reason,
+      before: event.before,
+      after: event.after,
       previousHash: event.previousHash,
     });
 

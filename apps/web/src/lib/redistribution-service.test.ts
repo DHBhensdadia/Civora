@@ -431,6 +431,8 @@ describe('the audit chain', () => {
       subjectType: 'alert',
       subjectId: 'alert-fixture-never-moved',
       reason: null,
+      before: 'raised',
+      after: 'acknowledged',
     });
     const after = await readAuditEvents();
 

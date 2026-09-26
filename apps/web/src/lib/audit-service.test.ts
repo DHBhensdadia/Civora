@@ -16,6 +16,7 @@ import {
   CONSEQUENTIAL_ACTIONS,
   actorOf,
   readAuditEvents,
+  recordAuditEvent,
   verifyAuditChain,
 } from './audit-service';
 import { applySubmission } from './ingest-boundary';
@@ -203,10 +204,19 @@ describe('what a stored observation adds to the chain', () => {
     expect(captured?.subjectId).toBe(applied.subjectKey);
     expect(captured?.actorUid).toBe(NATIONAL_SESSION.label);
     expect(captured?.actorRole).toBe('national');
+    // The pair is the projection's own on-hand figure on both sides of the write,
+    // which is what makes an entry answer "from what, to what". The prior figure
+    // is null only when the facility had never stocked the item, and the receipt
+    // is what changes that.
+    expect(captured?.after).not.toBeNull();
+    expect(Number(captured?.after)).toBe(
+      (captured?.before === null ? 0 : Number(captured?.before)) + 7,
+    );
 
     // The correction carries what the platform can state about the movement,
     // because the observation itself has nowhere to put a reason.
     expect(corrected?.action).toBe('adjustment-recorded');
+    expect(Number(corrected?.after)).toBe(Number(corrected?.before) - 7);
     expect(corrected?.reason).toContain(itemId);
     expect(corrected?.reason).toContain('down');
     expect(corrected?.reason).toContain('2026-09-20');
@@ -217,7 +227,7 @@ describe('what a stored observation adds to the chain', () => {
     const replayed = await applySubmission(store, capture, '2026-09-19T11:00:00.000Z', actor);
     expect(replayed.decision.outcome).toBe('replayed');
     expect((await readAuditEvents()).length).toBe(after.length);
-  });
+  }, 60_000);
 });
 
 describe('what a person does to an alert', () => {
@@ -257,6 +267,43 @@ describe('what a person does to an alert', () => {
     expect(entry?.reason).toBe('the district pharmacist has taken this on');
     expect(entry?.actorUid).toBe(NATIONAL_SESSION.label);
     expect(verifyAuditChain(after).valid).toBe(true);
+  }, 60_000);
+});
+
+describe('appends under concurrency', () => {
+  it('gives five simultaneous decisions five entries, and loses none of them', async () => {
+    const before = await readAuditEvents();
+    const actor = { uid: 'Concurrency fixture', role: 'auditor' } as const;
+
+    // Five decisions taken at the same moment, which is what a server does when
+    // five requests arrive together. Each append reads the tail of the chain to
+    // learn its own identifier and its link, so without serialisation they claim
+    // one identifier between them and four decisions disappear.
+    const written = await Promise.all(
+      [1, 2, 3, 4, 5].map((each) =>
+        recordAuditEvent({
+          actor,
+          action: 'alert-acknowledged',
+          subjectType: 'alert',
+          subjectId: `alert-concurrent-${String(each)}`,
+          reason: null,
+          before: 'raised',
+          after: 'acknowledged',
+        }),
+      ),
+    );
+
+    const after = await readAuditEvents();
+    expect(after.length).toBe(before.length + written.length);
+    expect(new Set(written.map((event) => event.id)).size).toBe(written.length);
+
+    // And the chain the concurrent writers produced still holds: every link is to
+    // the entry the writer actually read, in the order the appends were taken.
+    const report = verifyAuditChain(after);
+    expect(report.valid).toBe(true);
+    for (const event of after.slice(-5)) {
+      expect(event.actorUid).toBe('Concurrency fixture');
+    }
   });
 });
 

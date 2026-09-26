@@ -174,6 +174,18 @@ export const auditEventSchema = z.strictObject({
   subjectType: auditSubjectTypeSchema,
   subjectId: z.string().trim().min(1),
   reason: z.string().trim().min(1).nullable(),
+  /**
+   * What the subject was, and what it became.
+   *
+   * A reason explains; a pair of figures answers. For a stock movement it is the
+   * on-hand quantity the projection reported before and after, which is the
+   * quantity a dispute is about; for an alert it is the state it left and the
+   * state it entered; for a proposal it is the decision. `null` is used where the
+   * platform genuinely has nothing to compare against — a bed report has no prior
+   * value here, and saying so is more honest than quoting zero.
+   */
+  before: z.string().trim().min(1).nullable(),
+  after: z.string().trim().min(1).nullable(),
   /** Digest of this entry; recomputing it is how the chain is verified. */
   hash: z.string().trim().min(1),
   /** Digest of the preceding entry. Null only for the first. */

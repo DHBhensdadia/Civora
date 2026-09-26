@@ -348,6 +348,7 @@ async function build(actor: AuditActor): Promise<FederationConsole> {
   // spend a privacy budget, so the chain records who asked and what was taken. It
   // is written where the rounds are actually taken, which is why a second reader
   // of a memoised console appends nothing: no further budget was spent.
+  const spent = priced.view.rounds.at(-1)?.epsilonSpent ?? null;
   await recordAuditEvent({
     actor,
     action: 'federation-rounds-computed',
@@ -356,6 +357,12 @@ async function build(actor: AuditActor): Promise<FederationConsole> {
     reason: `the console's runs: the comparison, the priced run at ε=${String(
       CONSOLE_EPSILON_TARGET,
     )} and the curve at ${CONSOLE_CURVE_TARGETS.join(', ')}`,
+    // Nothing existed before this computation, and what it left behind is the
+    // budget: the pair states the spend rather than a state change.
+    before: null,
+    after: `${String(CONSOLE_ROUNDS)} rounds over ${String(
+      partition.silos.length,
+    )} silos${spent === null ? '' : ` · ε ${spent.toFixed(4)}`}`,
   });
 
   // 5. The round narrative, through the provider port. With no key configured

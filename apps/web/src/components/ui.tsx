@@ -173,6 +173,13 @@ export interface NoticeProps {
   readonly id: string;
   readonly tone: NoticeTone;
   readonly title: string;
+  /**
+   * An identifier for the browser journeys. It is a prop rather than a
+   * `data-testid` written at the call site because a component drops attributes
+   * it does not declare: the journey would then fail to find a marker that looks
+   * present in the source.
+   */
+  readonly testId?: string;
   readonly children: ReactNode;
 }
 
@@ -191,10 +198,11 @@ const NOTICE_BODY: Readonly<Record<NoticeTone, string>> = {
   info: 'text-sky-100/80',
 };
 
-export function Notice({ id, tone, title, children }: NoticeProps) {
+export function Notice({ id, tone, title, testId, children }: NoticeProps) {
   return (
     <section
       aria-labelledby={`${id}-heading`}
+      data-testid={testId}
       className={`rounded-xl border p-6 ${NOTICE_TONES[tone]}`}
     >
       <h2 id={`${id}-heading`} className={`text-base font-semibold ${NOTICE_TITLES[tone]}`}>

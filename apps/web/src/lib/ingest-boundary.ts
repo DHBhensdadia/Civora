@@ -9,7 +9,13 @@ import {
   subjectKeyOfRequest,
   syncConflictSchema,
 } from '@civora/domain';
-import type { AuditSubjectType, IngestDecision, IngestRequest } from '@civora/domain';
+import type {
+  AuditSubjectType,
+  FacilityId,
+  IngestDecision,
+  IngestRequest,
+  ItemId,
+} from '@civora/domain';
 
 import { recordAuditEvent } from './audit-service';
 import type { AuditActor, AuditAction } from './audit-service';
@@ -64,6 +70,21 @@ interface ConsequentialWrite {
   readonly subjectType: AuditSubjectType;
   readonly reason: string | null;
 }
+
+/**
+ * On-hand stock for one item at one facility, as the platform's own projection
+ * reports it, or null when it has nothing to report.
+ *
+ * Taken from the projection rather than recomputed here, so the two figures the
+ * chain carries are the same figures a reader of the stock surface sees. It is
+ * read before and after the movement, which is what makes an adjustment's entry
+ * answer "from what, to what" instead of describing the entry itself.
+ */
+const onHandOf = (store: LiveStore, facilityId: FacilityId, itemId: ItemId): string | null => {
+  const position = store.ledger.stockFor(facilityId);
+  const item = position?.items.find((each) => each.itemId === itemId);
+  return item === undefined ? null : String(item.onHand);
+};
 
 /**
  * Which consequential action a stored observation is.
@@ -126,16 +147,27 @@ export async function applySubmission(
   });
 
   if (decision.record !== null) {
+    const consequential = consequentialOf(submission);
+    const itemId = submission.type === 'stock_ledger_entry' ? submission.observation.itemId : null;
+    const facilityId = submission.observation.facilityId;
+
+    // The pair is stated for stock movements, where the platform has a figure on
+    // both sides of the change, and stated as absent for the rest: a bed report
+    // has no prior value here to compare against, and quoting one would be
+    // inventing the comparison the entry exists to answer.
+    const before = itemId === null ? null : onHandOf(store, facilityId, itemId);
+
     await observations.set(subjectKey, decision.record);
     store.ledger.applyRequest(submission);
 
-    const consequential = consequentialOf(submission);
     await recordAuditEvent({
       actor,
       action: consequential.action,
       subjectType: consequential.subjectType,
       subjectId: subjectKey,
       reason: consequential.reason,
+      before,
+      after: itemId === null ? null : onHandOf(store, facilityId, itemId),
     });
   }
 

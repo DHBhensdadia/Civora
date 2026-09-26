@@ -1,4 +1,4 @@
-import { transferProposalSchema } from '@civora/domain';
+import { LedgerService, transferProposalSchema } from '@civora/domain';
 import type { FacilityId, StockLedgerEntry } from '@civora/domain';
 import { FACILITY_A, aLedgerEntry } from '@civora/domain/testing';
 import {
@@ -6,6 +6,8 @@ import {
   DEMO_SEED,
   ITEMS,
   buildNetwork,
+  lotsFrom,
+  planWorld,
   scorePopulation,
   simulateNetwork,
 } from '@civora/simulator';
@@ -14,15 +16,12 @@ import { beforeAll, describe, expect, it } from 'vitest';
 
 import { readAuditEvents, recordAuditEvent, verifyAuditChain } from './audit-service';
 import { readScoredPopulation } from './intelligence-service';
-import { LedgerService } from './ledger-service';
 import { getLiveStore } from './live-store';
 import {
   LIST_LIMIT,
   ProposalRefused,
   decisionRefusal,
   decideTransferProposal,
-  lotsFrom,
-  planWorld,
   readDecisions,
   readRedistribution,
 } from './redistribution-service';

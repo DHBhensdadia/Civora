@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-import { CRITICAL_COVER_DAYS, STALE_AFTER_DAYS } from '@/lib/ledger-service';
-import type { FacilityReading, ItemPosition } from '@/lib/ledger-service';
+import { CRITICAL_COVER_DAYS, STALE_AFTER_DAYS } from '@civora/domain';
+import type { FacilityReading, ItemPosition } from '@civora/domain';
 import { getLiveStore } from '@/lib/live-store';
 import {
   SESSION_COOKIE,

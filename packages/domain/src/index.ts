@@ -24,6 +24,7 @@ export * from './logic/ingest';
 export * from './logic/inventory';
 export * from './logic/keys';
 export * from './logic/ledger';
+export * from './logic/ledger-service';
 export * from './logic/match';
 export * from './logic/network';
 export * from './logic/reporting';

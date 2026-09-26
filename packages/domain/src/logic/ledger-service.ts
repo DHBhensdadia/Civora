@@ -1,31 +1,21 @@
-import {
-  REPORTING_DOMAINS,
-  addDays,
-  daysBetween,
-  daysOfStock,
-  demandRateFromLedger,
-  detectReportingGaps,
-  replayStockLedger,
-  totalIssued,
-} from '@civora/domain';
+import type { DateOnly, FacilityId, ItemId, Provenance } from '../model/common';
+import { REPORTING_DOMAINS } from '../model/derived';
+import type { DemandBasis, ReportingGap } from '../model/derived';
+import type { IngestRequest } from '../model/ingest';
 import type {
   BedStatus,
-  DateOnly,
-  DemandBasis,
-  EssentialityTier,
-  FacilityId,
   FootfallObservation,
-  Item,
-  ItemCategory,
-  IngestRequest,
-  ItemId,
-  Provenance,
-  ReportingGap,
   StaffAttendance,
   StockLedgerEntry,
   Syndrome,
   SyndromicSignal,
-} from '@civora/domain';
+} from '../model/sensing';
+import type { EssentialityTier, Item, ItemCategory } from '../model/catalogue';
+import { addDays, daysBetween } from './dates';
+import { daysOfStock, demandRateFromLedger, totalIssued } from './inventory';
+import { replayStockLedger } from './ledger';
+import { detectReportingGaps } from './reporting';
+import { STALE_AFTER_DAYS } from './risk';
 
 /**
  * What the platform knows about a facility, derived from what it was told.
@@ -49,14 +39,12 @@ import type {
  */
 
 /**
- * Days without a reading after which a facility is treated as out of contact.
- *
- * Three, because the network is expected to report daily: a facility that has
- * missed three consecutive days is not experiencing ordinary intermittent
- * connectivity, and a reading that old is not a position an officer should act
- * on without checking.
+ * The staleness tolerance is imported from the risk engine rather than restated
+ * here. `logic/risk.ts` already carries it — the risk score stops being a
+ * measurement after the same three days — and one definition of when the
+ * platform has stopped hearing from a facility is the only way the two
+ * projections cannot disagree about a facility that has gone quiet.
  */
-export const STALE_AFTER_DAYS = 3;
 
 /**
  * Days of cover below which an item is flagged.

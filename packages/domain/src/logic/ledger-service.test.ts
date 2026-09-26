@@ -10,7 +10,8 @@ import {
 } from '@civora/domain/testing';
 import { describe, expect, it } from 'vitest';
 
-import { CRITICAL_COVER_DAYS, LedgerService, STALE_AFTER_DAYS } from './ledger-service';
+import { CRITICAL_COVER_DAYS, LedgerService } from './ledger-service';
+import { STALE_AFTER_DAYS } from './risk';
 
 /**
  * What a facility looks like, derived from what it reported.

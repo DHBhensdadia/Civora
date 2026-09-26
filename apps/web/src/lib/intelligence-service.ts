@@ -8,7 +8,7 @@ import type {
   RiskDriver,
   RiskScore,
 } from '@civora/domain';
-import { scorePopulation } from '@civora/simulator';
+import { scoredPopulationFor } from '@civora/simulator';
 import type { ScoredPopulation } from '@civora/simulator';
 
 import { getLiveStore } from './live-store';
@@ -174,15 +174,13 @@ async function build(): Promise<Built> {
   const store = await getLiveStore();
   const { simulation, network } = store.dataset;
 
-  // Fewer bootstrap replications than the batch job, because this runs inside a
-  // request and only the upper quantile is read. The number travels on every
-  // forecast's own features, so the interface is not claiming the batch's
-  // precision for a lighter computation.
-  const population = scorePopulation(simulation, network, {
-    horizonDays: 14,
-    seedPrefix: 'intelligence',
-    bootstrapReplications: 60,
-  });
+  // The options are the redistribution gather's own (`REDISTRIBUTION_SCORING`),
+  // shared so a plan the surface builds and a plan the batch command builds read
+  // the same scored population term for term. Fewer bootstrap replications than
+  // the batch job uses, because this runs inside a request and only the upper
+  // quantile is read — and the number travels on every forecast's own features,
+  // so nothing here claims the batch's precision for a lighter computation.
+  const population = scoredPopulationFor(simulation, network);
 
   const facilityById = new Map(
     network.facilities.map((facility) => [

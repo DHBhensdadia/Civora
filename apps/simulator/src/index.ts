@@ -24,12 +24,18 @@
  *  - `intelligence.ts` — the surge, forecast, score and alert pipeline over a
  *    generated world, shared by the batch job and the surfaces so that the two
  *    cannot disagree about the same dataset.
+ *  - `projection.ts` — that world replayed into what the platform knows about
+ *    each facility, the one reading the surfaces and the batch jobs both use.
+ *  - `redistribution.ts` — the redistribution gather: the scoring the plan's
+ *    needs are ranked from, the lots the ledger holds, the positions the
+ *    projection reports, and the mapping into the optimiser's vocabulary.
  */
 
 import type { FacilityId } from '@civora/domain';
 
 import { buildNetwork } from './network';
 import type { Network, NetworkOptions } from './network';
+import { DEFAULT_SCENARIO_ID } from './scenarios';
 import { simulateNetwork } from './simulation';
 import type { Simulation, SimulationOptions } from './simulation';
 import { summariseDataset } from './summary';
@@ -42,6 +48,8 @@ export * from './behaviour';
 export * from './dataset-series';
 export * from './intelligence';
 export * from './network';
+export * from './projection';
+export * from './redistribution';
 export * from './rng';
 export * from './scenarios';
 export * from './seeding';
@@ -153,14 +161,28 @@ export interface DemoDataset {
  * The network is built whole — every state, district and facility the profile
  * covers — while the history is generated for the sample, which is the split
  * the summary reports.
+ *
+ * The seed is a parameter rather than a constant for one reason: a batch command
+ * that is run twice to compare its output must be able to vary the world on
+ * purpose as well as reproduce it, and a caller that had to reassemble these
+ * three calls to do so would be re-deciding what "the demonstration dataset"
+ * means. The default is the published demonstration seed, so every existing
+ * caller gets exactly the dataset it got before.
  */
 export const buildDemoDataset = (
   facilitiesPerRegion: number = DEMO_HISTORY_FACILITIES_PER_REGION,
+  seed: string = DEMO_SEED,
+  scenarioId: string = DEFAULT_SCENARIO_ID,
 ): DemoDataset => {
   const startedAt = Date.now();
-  const network = buildNetwork(DEMO_NETWORK_OPTIONS);
+  const network = buildNetwork({ ...DEMO_NETWORK_OPTIONS, seed });
   const facilityIds = historySample(network, facilitiesPerRegion);
-  const simulation = simulateNetwork(network, { ...DEMO_SIMULATION_OPTIONS, facilityIds });
+  const simulation = simulateNetwork(network, {
+    ...DEMO_SIMULATION_OPTIONS,
+    seed,
+    scenarioId,
+    facilityIds,
+  });
   const summary = summariseDataset(network, simulation);
 
   return {

@@ -1,9 +1,14 @@
 import { InMemoryDataProvider } from '@civora/domain';
-import type { DataProvider, DistrictId, FacilityId, Item } from '@civora/domain';
-import { DEMO_SEED, ITEMS, buildDemoDataset, seedDataProvider } from '@civora/simulator';
+import type { DataProvider, DistrictId, FacilityId, Item, LedgerService } from '@civora/domain';
+import {
+  DEMO_SEED,
+  ITEMS,
+  buildDemoDataset,
+  projectSimulation,
+  seedDataProvider,
+} from '@civora/simulator';
 import type { DemoDataset } from '@civora/simulator';
 
-import { LedgerService } from './ledger-service';
 import { NATIONAL_SESSION } from './session';
 import type { Principal, ScopeLookup } from './session';
 
@@ -138,35 +143,11 @@ async function build(): Promise<LiveStore> {
     items: ITEMS,
   });
 
-  const ledger = new LedgerService({
-    from: dataset.simulation.from,
-    through: dataset.simulation.to,
-    items: ITEMS,
-    synthetic: true,
-    // A reporting gap is not observed and not generated: it is computed from
-    // what the platform received, so it says so rather than inheriting the
-    // simulator's label from the records it was derived over.
-    provenance: { kind: 'derived', reference: 'reporting-gap-detection' },
-  });
-
-  // Replayed rather than queried, so the projection is built by the same
-  // methods the ingest boundary calls. A collection-wide scan would be the
-  // alternative, and it would need a query the persistence port does not have.
-  for (const entry of dataset.simulation.ledgerEntries) {
-    ledger.applyEntry(entry);
-  }
-  for (const status of dataset.simulation.bedStatuses) {
-    ledger.applyBedStatus(status);
-  }
-  for (const attendance of dataset.simulation.staffAttendance) {
-    ledger.applyAttendance(attendance);
-  }
-  for (const observation of dataset.simulation.footfall) {
-    ledger.applyFootfall(observation);
-  }
-  for (const signal of dataset.simulation.syndromicSignals) {
-    ledger.applySyndromic(signal);
-  }
+  // Replayed rather than queried, so the projection is built by the same methods
+  // the ingest boundary calls. `projectSimulation` is that replay, shared with
+  // the batch jobs: one reading of the generated world, so a figure a surface
+  // shows and a figure a worker plans from cannot come from two of them.
+  const ledger = projectSimulation(dataset.simulation, ITEMS);
 
   const districtOfFacility = new Map(
     dataset.network.facilities.map((facility) => [

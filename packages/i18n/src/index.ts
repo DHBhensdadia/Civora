@@ -10,14 +10,16 @@
  * English.
  *
  * **Built today:** the language registry (`LANGUAGES`, `languageOf`,
- * `isSupported`, `languageLabelOf`) — which languages a reader may ask for,
- * named in their own script, with the `Intl` locale and numbering system each of
- * them renders in; the **locale bundles** (`BUNDLES`, `bundleFor`,
- * `messageFor`, `MESSAGE_KEYS`), a total record per language over a typed key
- * union covering the capture and alert flows; and the formatting helpers
- * (`formatNumber`, `formatCount`, `formatPercent`, `formatDate`, `formatDays`)
- * that render a figure the way the language writes it. The advisory writer and
- * the advisory panel read the registry, so a language is added in one place.
+ * `isSupported`, `languageLabelOf`, `speechTagOf`) — which languages a reader
+ * may ask for, named in their own script, with the `Intl` locale each of them
+ * renders in and the plain tag a voice is handed; the **locale bundles**
+ * (`BUNDLES`, `bundleFor`, `messageFor`, `MESSAGE_KEYS`), a total record per
+ * language over a typed key union covering the capture and alert flows; the
+ * formatting helpers (`formatNumber`, `formatCount`, `formatPercent`,
+ * `formatDate`, `formatDays`) that render a figure the way the language writes
+ * it; and the **record reader** (`bodyIn`, `heldLanguages`) that answers with a
+ * body the record actually holds in a language, or with nothing — never with
+ * another language's text wearing the tag that was asked for.
  *
  * **Not built:** machine translation of anything not in a bundle. A register a
  * facility photographs, a sentence a health worker speaks and a risk driver's
@@ -32,8 +34,11 @@ export {
   languageCodes,
   languageLabelOf,
   languageOf,
+  speechTagOf,
 } from './languages';
 export type { Language } from './languages';
+
+export { bodyIn, heldLanguages } from './bodies';
 
 export {
   BUNDLES,

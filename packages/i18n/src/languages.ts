@@ -46,6 +46,16 @@ export interface Language {
   readonly locale: string;
   /** The numbering system `locale` renders digits in, named for the record. */
   readonly numberingSystem: 'latn' | 'deva' | 'beng';
+  /**
+   * The tag handed to a speech synthesiser, which is not the `Intl` tag.
+   *
+   * `locale` carries a numbering-system extension so a date renders in the
+   * language's own digits; a voice engine matching against that tag finds no
+   * voice, which is how a platform ends up reading Hindi text in an American
+   * accent. A voice wants the plain language tag, and a device with no voice for
+   * it is reported rather than faked.
+   */
+  readonly speech: string;
 }
 
 /**
@@ -66,6 +76,7 @@ export const LANGUAGES: readonly Language[] = [
     script: 'Latin',
     locale: 'en-IN',
     numberingSystem: 'latn',
+    speech: 'en-IN',
   },
   {
     code: 'hi',
@@ -74,6 +85,7 @@ export const LANGUAGES: readonly Language[] = [
     script: 'Devanagari',
     locale: 'hi-IN-u-nu-deva',
     numberingSystem: 'deva',
+    speech: 'hi-IN',
   },
   {
     code: 'mr',
@@ -82,6 +94,7 @@ export const LANGUAGES: readonly Language[] = [
     script: 'Devanagari',
     locale: 'mr-IN-u-nu-deva',
     numberingSystem: 'deva',
+    speech: 'mr-IN',
   },
   {
     code: 'bn',
@@ -90,6 +103,7 @@ export const LANGUAGES: readonly Language[] = [
     script: 'Bengali',
     locale: 'bn-IN-u-nu-beng',
     numberingSystem: 'beng',
+    speech: 'bn-IN',
   },
   {
     code: 'ta',
@@ -98,6 +112,7 @@ export const LANGUAGES: readonly Language[] = [
     script: 'Tamil',
     locale: 'ta-IN',
     numberingSystem: 'latn',
+    speech: 'ta-IN',
   },
 ] as const;
 
@@ -113,6 +128,14 @@ export const languageOf = (code: string): Language | null =>
 
 /** Whether a tag is one of the offered languages. */
 export const isSupported = (code: string): boolean => languageOf(code) !== null;
+
+/**
+ * The tag to hand a voice for a language, or null when the language is not
+ * offered here. Null rather than the tag echoed back, because a caller that is
+ * about to speak needs to know it would be speaking something the platform does
+ * not offer rather than being told a tag that resolves to no voice.
+ */
+export const speechTagOf = (code: string): string | null => languageOf(code)?.speech ?? null;
 
 /**
  * How to name a language in a list a person reads.

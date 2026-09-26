@@ -4,6 +4,7 @@ import { formatDate, messageFor, messageKeys } from '@civora/i18n';
 import type { MessageKey } from '@civora/i18n';
 import { useCallback, useEffect, useState } from 'react';
 
+import { SpeakButton } from '@/components/speak';
 import { CountList, Notice, Panel, StatCard, formatCount } from '@/components/ui';
 
 /**
@@ -527,6 +528,15 @@ export default function IntelligencePage() {
                 </div>
 
                 <p className="mt-2 text-sm text-slate-200">{alert.bodies.en}</p>
+
+                {/*
+                 * Reading it aloud, which is how an alert reaches a health
+                 * worker with their hands full. The body that is read is the
+                 * record's own, in the reader's language — and where the record
+                 * holds none, the control refuses and says so rather than
+                 * reading the English one in a Hindi voice.
+                 */}
+                <SpeakButton alertId={alert.id} bodies={alert.bodies} language={language} />
 
                 {alert.history.length === 0 ? null : (
                   <ol className="mt-3 flex flex-col gap-1 text-xs text-slate-400">

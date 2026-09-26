@@ -76,6 +76,78 @@ test.describe('the interface in the reader’s language', () => {
     await expect(inbox.getByText(/[०-९][०-९] [^\s]+ २०२६/u).first()).toBeVisible();
   });
 
+  test('reads an alert aloud in the language the record carries, and refuses where it carries none', async ({
+    page,
+    request,
+  }) => {
+    // A stub voice, installed before any page script runs. The assertion is about
+    // what the platform asks the synthesiser to say and in which language — not
+    // about whether this machine happens to have a Hindi voice installed, which
+    // is exactly the kind of environment-dependent claim a demo would fail on.
+    await page.addInitScript(() => {
+      const spoken: { text: string; lang: string }[] = [];
+      (window as unknown as { __spoken: typeof spoken }).__spoken = spoken;
+      Object.defineProperty(window, 'speechSynthesis', {
+        configurable: true,
+        value: {
+          speak: (utterance: SpeechSynthesisUtterance) => {
+            spoken.push({ text: utterance.text, lang: utterance.lang });
+          },
+          cancel: () => {
+            /* nothing is queued in the stub */
+          },
+        },
+      });
+    });
+
+    const payload = (await (await request.get('/api/intelligence')).json()) as {
+      alerts: readonly {
+        id: string;
+        state: string;
+        bodies: Readonly<Record<string, string>>;
+      }[];
+    };
+    const alert = payload.alerts.find(
+      (candidate) => candidate.state !== 'resolved' && (candidate.bodies.hi ?? '') !== '',
+    );
+    if (alert === undefined) {
+      throw new Error('no open alert carries a Hindi body, so the journey cannot run');
+    }
+    const hindiBody = alert.bodies.hi ?? '';
+
+    await SET_LANGUAGE(page, 'hi');
+    await page.goto('/intelligence');
+
+    const listen = page.getByTestId(`speak-${alert.id}`);
+    await expect(listen).toHaveText('सुनकर समझें');
+    await listen.click();
+
+    // The body that was read is the record's own Hindi body, and the voice was
+    // asked for in `hi-IN` — the registry's speech tag, without the numbering
+    // extension (`hi-IN-u-nu-deva`) that matches no installed voice.
+    await expect(listen).toHaveText('पढ़ना बंद करें');
+    const spoken = await page.evaluate(
+      () => (window as unknown as { __spoken: { text: string; lang: string }[] }).__spoken,
+    );
+    expect(spoken).toEqual([{ text: hindiBody.trim(), lang: 'hi-IN' }]);
+
+    // Marathi is offered, and this alert holds no Marathi body. The control
+    // refuses in Marathi and says nothing, rather than reading the Hindi or
+    // English words in a Marathi voice.
+    await SET_LANGUAGE(page, 'mr');
+    await page.goto('/intelligence');
+    const silent = page.getByTestId(`speak-${alert.id}`);
+    await expect(silent).toHaveText('ऐकून घ्या');
+    await silent.click();
+    await expect(page.getByTestId(`speak-refusal-${alert.id}`)).toContainText(
+      'काहीही वाचून दाखवले जात नाही',
+    );
+    const afterRefusal = await page.evaluate(
+      () => (window as unknown as { __spoken: { text: string; lang: string }[] }).__spoken,
+    );
+    expect(afterRefusal).toEqual([]);
+  });
+
   test('refuses a language it does not offer, and names the ones it does', async ({ request }) => {
     const response = await request.post('/api/language', { data: { language: 'fr' } });
     expect(response.status()).toBe(400);

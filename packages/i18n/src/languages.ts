@@ -33,6 +33,19 @@ export interface Language {
   readonly native: string;
   /** The script it is written in. */
   readonly script: string;
+  /**
+   * The tag handed to `Intl` for dates and numbers, script included.
+   *
+   * `hi-IN` alone would render Latin digits on most platforms; the language is
+   * written in Devanagari and a reader of it expects Devanagari numerals, so the
+   * numbering system is part of the tag rather than a default to be discovered at
+   * runtime. `ta-IN` carries no override for the same reason: Tamil is written
+   * with Latin digits in official use, so asking for Tamil numerals would be the
+   * affectation, not the honesty.
+   */
+  readonly locale: string;
+  /** The numbering system `locale` renders digits in, named for the record. */
+  readonly numberingSystem: 'latn' | 'deva' | 'beng';
 }
 
 /**
@@ -46,11 +59,46 @@ export interface Language {
  * exact overclaim this file exists to avoid.
  */
 export const LANGUAGES: readonly Language[] = [
-  { code: 'en', english: 'English', native: 'English', script: 'Latin' },
-  { code: 'hi', english: 'Hindi', native: 'हिन्दी', script: 'Devanagari' },
-  { code: 'mr', english: 'Marathi', native: 'मराठी', script: 'Devanagari' },
-  { code: 'bn', english: 'Bengali', native: 'বাংলা', script: 'Bengali' },
-  { code: 'ta', english: 'Tamil', native: 'தமிழ்', script: 'Tamil' },
+  {
+    code: 'en',
+    english: 'English',
+    native: 'English',
+    script: 'Latin',
+    locale: 'en-IN',
+    numberingSystem: 'latn',
+  },
+  {
+    code: 'hi',
+    english: 'Hindi',
+    native: 'हिन्दी',
+    script: 'Devanagari',
+    locale: 'hi-IN-u-nu-deva',
+    numberingSystem: 'deva',
+  },
+  {
+    code: 'mr',
+    english: 'Marathi',
+    native: 'मराठी',
+    script: 'Devanagari',
+    locale: 'mr-IN-u-nu-deva',
+    numberingSystem: 'deva',
+  },
+  {
+    code: 'bn',
+    english: 'Bengali',
+    native: 'বাংলা',
+    script: 'Bengali',
+    locale: 'bn-IN-u-nu-beng',
+    numberingSystem: 'beng',
+  },
+  {
+    code: 'ta',
+    english: 'Tamil',
+    native: 'தமிழ்',
+    script: 'Tamil',
+    locale: 'ta-IN',
+    numberingSystem: 'latn',
+  },
 ] as const;
 
 /** The language a reader is shown when nothing else is known. */

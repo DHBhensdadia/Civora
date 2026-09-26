@@ -1,13 +1,246 @@
 rules_version = '2';
 
-// Deny by default.
+// The tenancy model, enforced where the data lives.
 //
-// Every rule this project adds is written against the tenancy model — a state
-// officer reads one state, a district officer one district — and each addition
-// ships with a test that proves it both allows the intended access and refuses
-// the neighbouring case. Until a collection has such a rule, it stays closed.
+// A deployment of Civora has five roles — the same five `apps/web/src/lib/session.ts`
+// decides in the application — and this file is the second, independent place they
+// are enforced. It exists because the application's checks are only as good as the
+// code path that calls them: a route that forgets to ask is a route that hands a
+// district officer another state's ledger. A rule cannot be forgotten, because a
+// read that no rule allows is refused by the database itself.
+//
+// ## How a session is expressed
+//
+// The identity provider puts two values in the token's custom claims:
+//
+//   role     — `phc_staff` | `district_officer` | `state_officer` | `national` | `auditor`
+//   scopeId  — the place the role is anchored to: a facility, a district or a region
+//              identifier, and absent for `national` and `auditor`.
+//
+// Claims rather than a lookup, so a rule evaluates without reading a session
+// document, and tokens rather than cookies, because that is what a Firebase
+// deployment has. `apps/web` keeps its own fixture identity for local development;
+// the mapping from a real sign-in to these two claims is the deployment's job and
+// is recorded in `docs/INTEROP.md`.
+//
+// ## How scope is decided
+//
+// Every observation and conclusion document carries the `facilityId` it is about,
+// and the facility document carries `districtId` and `regionId`. One `get()` up the
+// spine is therefore enough to answer "may this session read this document", which
+// keeps the rule short enough to read and cheap enough to evaluate. A document whose
+// facility does not exist denies: an unverifiable scope is a closed one.
+//
+// ## What may be written from a client at all
+//
+// Three collections accept client writes: `alerts` (a move), `transferProposals`
+// (a decision), and nothing else. Captures, receipts, imports, scores and the audit
+// chain are written by the platform's own server with privileged credentials, which
+// no rule here grants — so a compromised or mistaken browser cannot append to the
+// ledger or to the chain, whatever it sends. The chain in particular is append-only
+// from a single writer, and that writer is the server.
+
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function role() {
+      return request.auth.token.role;
+    }
+
+    function scopeId() {
+      return request.auth.token.scopeId;
+    }
+
+    function isNational() {
+      return role() == 'national';
+    }
+
+    function isAuditor() {
+      return role() == 'auditor';
+    }
+
+    // The facility document, for the one lookup the scope rules need.
+    function facilityOf(facilityId) {
+      return get(/databases/$(database)/documents/facilities/$(facilityId)).data;
+    }
+
+    function inDistrict(facilityId) {
+      return facilityOf(facilityId).districtId == scopeId();
+    }
+
+    function inRegion(facilityId) {
+      return facilityOf(facilityId).regionId == scopeId();
+    }
+
+    // May this session read a document about this facility?
+    //
+    // The auditor reads everything and writes nothing, which is why it appears
+    // here and never in a write rule. `phc_staff` is the narrowest: its own
+    // facility, and nothing beside it.
+    function readsFacility(facilityId) {
+      return signedIn() && (
+        isNational() ||
+        isAuditor() ||
+        (role() == 'district_officer' && inDistrict(facilityId)) ||
+        (role() == 'state_officer' && inRegion(facilityId)) ||
+        (role() == 'phc_staff' && facilityId == scopeId())
+      );
+    }
+
+    // May this session write a document about this facility? Never the auditor.
+    function writesFacility(facilityId) {
+      return signedIn() && (
+        isNational() ||
+        (role() == 'district_officer' && inDistrict(facilityId)) ||
+        (role() == 'state_officer' && inRegion(facilityId)) ||
+        (role() == 'phc_staff' && facilityId == scopeId())
+      );
+    }
+
+    // A transfer has two endpoints. A reader anywhere on either endpoint's spine
+    // may see it — a transfer that crosses a district line is still the business
+    // of both districts — and a decision may be written by a session that may
+    // write at either endpoint. An auditor may read and may not decide.
+    function readsTransfer(proposal) {
+      return signedIn() && (
+        isNational() ||
+        isAuditor() ||
+        (role() == 'district_officer' &&
+          (inDistrict(proposal.fromFacilityId) || inDistrict(proposal.toFacilityId))) ||
+        (role() == 'state_officer' &&
+          (inRegion(proposal.fromFacilityId) || inRegion(proposal.toFacilityId)))
+      );
+    }
+
+    function writesTransfer(proposal) {
+      return signedIn() && (
+        isNational() ||
+        (role() == 'district_officer' &&
+          (inDistrict(proposal.fromFacilityId) || inDistrict(proposal.toFacilityId))) ||
+        (role() == 'state_officer' &&
+          (inRegion(proposal.fromFacilityId) || inRegion(proposal.toFacilityId)))
+      );
+    }
+
+    // Reference data — the administrative spine and the catalogue.
+    //
+    // Readable by every signed-in session: a facility's own name is not a secret,
+    // and the platform cannot render anything without it. Never written from a
+    // client; the seeder and the importers write through privileged credentials.
+    match /countries/{document} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
+    match /regions/{document} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
+    match /districts/{document} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
+    match /blocks/{document} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
+    match /facilities/{document} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
+    match /items/{document} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
+
+    // What the front line recorded: the ledger, beds, attendance, footfall.
+    //
+    // Every one of them carries the facility it is about, and the platform writes
+    // them. A client may not, however plausible the payload — this is the rule
+    // that keeps a capture form from becoming a way to write another facility's
+    // ledger even if the HTTP route were wrong.
+    match /stockLedgerEntries/{document} {
+      allow read: if readsFacility(resource.data.facilityId);
+      allow write: if false;
+    }
+    match /bedStatuses/{document} {
+      allow read: if readsFacility(resource.data.facilityId);
+      allow write: if false;
+    }
+    match /staffAttendances/{document} {
+      allow read: if readsFacility(resource.data.facilityId);
+      allow write: if false;
+    }
+    match /footfallObservations/{document} {
+      allow read: if readsFacility(resource.data.facilityId);
+      allow write: if false;
+    }
+
+    // What the platform concluded. Read within scope; written by the jobs.
+    match /forecasts/{document} {
+      allow read: if readsFacility(resource.data.facilityId);
+      allow write: if false;
+    }
+    match /riskScores/{document} {
+      allow read: if readsFacility(resource.data.facilityId);
+      allow write: if false;
+    }
+    match /epidemicEvents/{document} {
+      allow read: if signedIn() && (
+        isNational() || isAuditor() ||
+        (role() == 'district_officer' && resource.data.districtId == scopeId()) ||
+        (role() == 'state_officer' && resource.data.regionId == scopeId()) ||
+        (role() == 'phc_staff' && resource.data.facilityId == scopeId())
+      );
+      allow write: if false;
+    }
+
+    // The early-warning inbox: a move is the one write a front-line session makes.
+    // An alert's move is append-only in the record itself (the history), and the
+    // move rule is the same scope as the read.
+    match /alerts/{document} {
+      allow read: if readsFacility(resource.data.facilityId);
+      allow create, update: if writesFacility(request.resource.data.facilityId);
+      allow delete: if false;
+    }
+
+    // The redistribution workbench: a decision a person makes, within their own
+    // scope, and never a delete. The donor's and the receiver's people may both
+    // see it; only the roles with authority over one of the endpoints may decide.
+    match /transferProposals/{document} {
+      allow read: if readsTransfer(resource.data);
+      allow create, update: if writesTransfer(request.resource.data);
+      allow delete: if false;
+    }
+
+    // Receipts of what arrived, and conflicts the platform refused to resolve.
+    // Read where the observation came from; written by the platform.
+    match /ingestReceipts/{document} {
+      allow read: if readsFacility(resource.data.facilityId);
+      allow write: if false;
+    }
+    match /syncConflicts/{document} {
+      allow read: if readsFacility(resource.data.facilityId);
+      allow write: if false;
+    }
+
+    // The tamper-evident chain.
+    //
+    // Read by the two roles whose job is the whole record — the auditor and the
+    // control room. A district officer reading the chain would read every other
+    // district's decisions in it, which is the cross-state read this file exists
+    // to refuse. Never written from a client: the server appends, and the
+    // append-only property is the chain's whole value.
+    match /auditEvents/{document} {
+      allow read: if signedIn() && (isAuditor() || isNational());
+      allow write: if false;
+    }
+
+    // Anything not named above is closed. A collection added later without a rule
+    // is unavailable rather than public.
     match /{document=**} {
       allow read, write: if false;
     }

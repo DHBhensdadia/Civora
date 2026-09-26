@@ -34,13 +34,16 @@
     "emulators": "firebase emulators:start --config infra/firebase.json --project civora-local",
     "audit": "pnpm audit --audit-level high",
     "check:bundle": "node scripts/check-browser-bundle.mjs",
-    "verify": "pnpm lint && pnpm typecheck && pnpm test && pnpm build && pnpm check:bundle"
+    "verify": "pnpm lint && pnpm typecheck && pnpm test && pnpm build && pnpm check:bundle",
+    "test:rules": "firebase emulators:exec --only firestore --project demo-civora --config infra/firebase.json 'vitest run --config vitest.rules.config.ts'"
   },
   "devDependencies": {
     "@civora/config": "workspace:*",
+    "@firebase/rules-unit-testing": "catalog:",
     "@playwright/test": "catalog:",
     "@types/node": "catalog:",
     "eslint": "catalog:",
+    "firebase": "catalog:",
     "firebase-tools": "catalog:",
     "prettier": "catalog:",
     "typescript": "catalog:",

@@ -48,6 +48,10 @@ catalog:
 
   # Local platform
   firebase-tools: 15.31.0
+  # Rules unit tests. The rules tests drive a real client SDK against the
+  # emulator, so the client it drives is pinned here too.
+  '@firebase/rules-unit-testing': 5.0.2
+  firebase: 12.19.0
 
 # pnpm blocks lifecycle scripts by default. These packages need theirs to fetch
 # or link a native binary; everything else is pure JavaScript.

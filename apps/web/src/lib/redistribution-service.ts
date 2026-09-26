@@ -360,8 +360,9 @@ function strategyViews(plan: RedistributionPlan): readonly StrategyView[] {
  *
  * The proposal records go through the persistence port on the way out, so the
  * record a decision is appended to is the record the platform stored. The plan
- * itself is held in memory: it is a computation over the dataset, and the batch
- * job recomputes it from the same inputs.
+ * itself is held in memory: it is a computation over the dataset, and
+ * `pnpm worker:propose` recomputes it from the same inputs and prints a digest
+ * of it, which is how the numbers on the page are reproduced outside a browser.
  */
 async function build(): Promise<Built> {
   const startedAt = Date.now();

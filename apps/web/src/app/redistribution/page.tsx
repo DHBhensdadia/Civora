@@ -23,8 +23,14 @@ import { Notice, Panel, StatCard } from '@/components/ui';
  * the approval is the end of the pipeline.
  *
  * The data is polled over HTTP like the other surfaces, because the local
- * adapter has no change feed. The plan itself is computed once per server
- * process, so a refresh is cheap and a *decision* is the thing that changes.
+ * adapter has no change feed. The plan is computed once per server process and
+ * memoised, which is what makes a five-second poll cheap: what changes between
+ * two polls is a *decision*, not a plan. `pnpm worker:propose` recomputes the
+ * same plan as a batch step and prints a digest of it, so the figures here can
+ * be reproduced outside a browser — in a process of its own, whose store is its
+ * own until there is a durable one (Phase 9/10). That is why a refreshed plan
+ * reaches this page when the server rebuilds rather than mid-poll, and the page
+ * says so rather than implying the poll is watching the optimiser.
  */
 
 /** How often to re-read. Short enough to see a decision land, long enough to be cheap. */
@@ -431,7 +437,10 @@ export default function RedistributionPage() {
         <p className="text-xs text-slate-500">
           Every proposal is derived from the generated dataset (`{payload.seed}`, scenario{' '}
           {payload.scenarioId}, plan built in {number(payload.generatedInMs)} ms). Refreshes every 5
-          seconds (polling, because the local adapter has no change feed). Last read {updatedAt}.
+          seconds (polling, because the local adapter has no change feed). The plan is computed once
+          per server process, so a poll is a read and never a rebuild;{' '}
+          <code className="font-mono">pnpm worker:propose</code> recomputes it from the same inputs
+          and prints a digest of it. Last read {updatedAt}.
         </p>
       </header>
 

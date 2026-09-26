@@ -27,6 +27,7 @@
     "forecast:backtest": "node --import ./scripts/node/register-typescript.mjs apps/worker/src/backtest.ts",
     "worker:score": "node --import ./scripts/node/register-typescript.mjs apps/worker/src/score.ts",
     "worker:advisories": "node --import ./scripts/node/register-typescript.mjs apps/worker/src/advisories.ts",
+    "worker:propose": "node --import ./scripts/node/register-typescript.mjs apps/worker/src/propose.ts",
     "ai:eval": "node --import ./scripts/node/register-typescript.mjs apps/worker/src/eval.ts",
     "emulators": "firebase emulators:start --config infra/firebase.json --project civora-local",
     "audit": "pnpm audit --audit-level high",

@@ -25,6 +25,7 @@ export default defineConfig({
       '@civora/domain': packageEntry('domain'),
       '@civora/federated': packageEntry('federated'),
       '@civora/forecasting': packageEntry('forecasting'),
+      '@civora/geo': packageEntry('geo'),
       '@civora/i18n': packageEntry('i18n'),
       '@civora/interop': packageEntry('interop'),
       '@civora/optimizer': packageEntry('optimizer'),

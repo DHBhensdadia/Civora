@@ -1,21 +1,77 @@
 # Civora
 
-A federated AI platform for health resource and supply-chain planning across a
-national primary health centre network.
+Civora is a federated AI platform for India's public health supply chain. A
+primary health centre records stock — typed, photographed or spoken, and queued
+on the device when there is no connection — and the platform forecasts what each
+facility and item will need, raises early warning with the evidence beside it,
+proposes transfers that respect every safety constraint, and records a person's
+approval in a hash-chained audit trail. **Planning is deterministic; a language
+model extracts and explains, and never authors a quantity that reaches the
+record.** The national network it runs on is simulated from a fixed seed,
+labelled as simulated everywhere it appears, and reproducible byte for byte.
 
-> **Status: the prototype is complete as a build; there is no live deployment.**
-> Every build phase is in the repository and every gate is green: the seeded
-> national simulation, intermittent-demand forecasting with a published
-> evaluation, the risk inbox and early warning, constraint-checked
-> redistribution that a person decides on, the federated-learning console with
-> its privacy budget, offline capture, HMIS/NLEM interop, five languages, and a
-> reasoning layer that has been executed against a real Gemini model.
-> **No live deployment exists** — the project has no Google Cloud project or
-> billing account — so [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) is the
-> reproduction path, not a record of a deployment, and nothing here claims a URL
-> answers. Nothing below is claimed beyond what the test suite and the recorded
-> evidence exercise; the gaps this build does not close are named in [What this
-> build does not claim](#what-this-build-does-not-claim).
+> **Status — read this first: there is no live deployment.** No Google Cloud
+> project, billing account or container runtime exists on the machine this was
+> built on, so nothing is provisioned and no URL answers. Everything else is in
+> the repository and every gate is green: the seeded national simulation,
+> intermittent-demand forecasting with a published evaluation, the risk inbox
+> and early warning, constraint-checked redistribution a person decides on, the
+> federated console with its privacy budget, offline capture, HMIS/NLEM interop,
+> five languages, and a reasoning layer that **has been executed against a real
+> Gemini model**. [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) is the reproduction
+> path, not a record of a deployment; [What this build does not
+> claim](#what-this-build-does-not-claim) names every gap.
+
+### Submission artefacts
+
+| Artefact                             | State                                                                                                                                                                                                                                                |
+| ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Source code**                      | This repository. Five commands below take a clone to a running, seeded platform, with no cloud account.                                                                                                                                              |
+| **Live link**                        | **None, and that is the honest answer.** No project, no billing account and no container runtime were available, so no instance was ever provisioned. [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) §10 lists every step a real run still has to prove. |
+| **Demo video**                       | **Not recorded yet.** The shot list is written and every path it walks has been executed in a browser, including against a real model; recording it is an owner action, listed as such in the project state.                                         |
+| **Pitch deck and brief description** | Written, and every figure in them traces to a command whose output is retained in this repository's documentation — no number in either is an estimate.                                                                                              |
+| **Container image**                  | Never built here: no container runtime was available. The Dockerfile, the deploy scripts and the image check are reviewable and dry-run-able without one.                                                                                            |
+
+### The loop, in one picture
+
+```mermaid
+flowchart LR
+  subgraph facility["At the facility"]
+    C["Capture — typed, photographed or spoken<br/>queued on the device when offline"]
+  end
+
+  subgraph platform["The platform (one process)"]
+    I["Ingest boundary<br/>idempotent · facility-scoped"]
+    P["Projection<br/>stock positions, beds, reporting gaps"]
+    F["Forecasting<br/>intermittent demand, per facility × item"]
+    A["Alerts and advisories<br/>driver, quantity, body per language"]
+    R["Redistribution<br/>constraint-checked proposals"]
+    D["A person decides<br/>approve or reject, with a reason"]
+    X["Audit chain<br/>hash-linked, walked on every read"]
+    L["Federated console<br/>round, ε budget, payload assertion"]
+  end
+
+  subgraph ports["Behind ports, chosen by configuration"]
+    S["Storage — in-memory or Firestore"]
+    ID["Identity — session or Firebase claims"]
+    AI["Reasoning — fixture or Gemini"]
+  end
+
+  C --> I --> P --> F --> A --> R --> D --> X
+  F --> L
+  I -.-> S
+  P -.-> S
+  C -.-> AI
+  A -.-> AI
+  R -.-> AI
+  L -.-> AI
+  D -.-> ID
+```
+
+The same loop is asserted in the browser, end to end, by `e2e/` — a capture is
+recorded offline, delivered when the platform is reachable, forecast into an
+alert, written into an advisory, proposed as a transfer, decided by a named
+person and found in the audit chain afterwards.
 
 ---
 
@@ -67,20 +123,32 @@ and what each holds — while the platform's own facility list is deliberately n
 stored, because a list of facilities is a statement about the world that only
 the platform is entitled to make.
 
-## Quickstart
+## Quickstart — five commands from a clone to the running platform
 
 Requires **Node 22 or newer** and **pnpm 10**. No cloud account, no credentials,
-no configuration.
+no configuration, and the five commands are the whole of it:
 
 ```bash
-pnpm bootstrap
-pnpm dev
+git clone https://github.com/DHBhensdadia/Civora.git
+cd Civora/Source
+pnpm bootstrap   # installs the workspace, creates .env.local, fetches Chromium
+pnpm db:seed     # generates the demonstration dataset and stores it
+pnpm dev         # http://localhost:3000
 ```
 
-`pnpm bootstrap` installs the workspace, creates `.env.local` from
-`.env.example`, and fetches the browser used by the end-to-end tests. `pnpm dev`
-starts the application on <http://localhost:3000>, with the Firebase emulator
-suite if it is available.
+`pnpm bootstrap` runs `pnpm install`, creates `.env.local` from `.env.example`,
+and fetches the browser the end-to-end tests use. `pnpm db:seed` builds the
+demonstration world — 90 facilities across 30 districts in six states, 208 days
+of history for twelve of them, and the ledger the surfaces read (1,73,564
+entries) —
+from the fixed seed, so two people running it get the same world, document for
+document. `pnpm dev` starts the application on <http://localhost:3000>, with the
+Firebase emulator suite if it is available. The dataset is optional for looking
+at the interface and necessary for the numbers in it to mean anything;
+`http://localhost:3000/dataset` shows exactly what was generated.
+
+The repository is private today by owner choice: the evaluation account is
+granted access as a submission step, and the clone URL above is the one it uses.
 
 (The script is `bootstrap` rather than `setup` because `pnpm setup` is a reserved
 command that reconfigures your shell.)
@@ -220,24 +288,37 @@ asked for in the registry's plain speech tag (`hi-IN`, never
 
 ## Google AI
 
-Google AI is the reasoning layer, behind the `ReasoningProvider` port defined in
-`packages/domain` and implemented in `packages/ai`. The adapter exists, is
-contract-tested, and every response is validated against the caller's schema
-before it leaves it; a narrative that states a number nobody computed is refused.
-It is used for register extraction, spoken-command parsing, advisory bodies and
-risk-driver explanations, and it **has been executed against a real model**: a
+**The Google technologies, named, with what each has actually done here:**
+
+| Google technology                                                                              | Where it is                                                                                                                              | What has been executed                                                                                                                                                                                                                                                                                      |
+| ---------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Gemini** (the `@google/genai` interactions API)                                              | `packages/ai` — `GeminiReasoningProvider` behind the `ReasoningProvider` port: five registered prompts, each schema-locked and grounded  | **Executed** against `gemini-3.1-flash-lite`: a register page read into the ledger, a recording heard and written only after a person confirmed it, advisories **6/6**, transfer rationales **6/6**, round narratives **4/4** — with calls, tokens, refusals and milliseconds counted by the adapter itself |
+| **BigQuery ML** (`AI.FORECAST` over **TimesFM 2.0**, and `ML.FORECAST` with `ARIMA_PLUS_XREG`) | `packages/forecasting/src/bqml.ts` — the same forecast contract as the local engine, behind the same port                                | **SQL built and unit-tested; never executed.** It needs a Google Cloud project and billing, and neither exists, so every published evaluation figure comes from the local engine and `docs/EVALUATION.md` says so in its own row                                                                            |
+| **Federated learning** (the cross-silo reference architecture)                                 | `packages/federated` and the console — FedAvg/FedProx, update clipping, Gaussian noise, an RDP accountant, a per-round payload assertion | **Executed locally** over six partitioned silos: six rounds, ε **7.9999** at δ 1e-5, and the console publishes what the noise costs rather than claiming it is free                                                                                                                                         |
+
+Behind all three is the `ReasoningProvider` port defined in `packages/domain`.
+The adapter is contract-tested, and every response is validated against the
+caller's schema before it leaves it; a narrative that states a number nobody
+computed is refused. The five wired tasks are register extraction,
+spoken-command parsing, advisory bodies, transfer rationales and the federation's
+round narrative — and the layer **has been executed against a real model**: a
 rendered register page read into the ledger, a spoken update heard, held and
 written only after a person confirmed it, six advisories written in two
-languages, six transfer rationales and four round narratives. That run is gated
-and reproducible — `CIVORA_LIVE_AI=1 pnpm e2e live-ai.spec.ts` — and with no key
-configured every surface shows the writer's own refusal rather than a
-substitute, because the recorded-fixture adapter refuses rather than pretends.
-Every attempt, refusal, cache hit, token and millisecond is counted by the
-adapter itself and shown on the intelligence surface, so what a burst would cost
-is the platform's own figure rather than an estimate. The free tier's ceiling on
-one model — **twenty requests a day**, measured off a real `429` rather than read
-from documentation — is why the demonstration pins `gemini-3.1-flash-lite` and
-why the advisory set is written ahead of the demo rather than during it.
+languages, six transfer rationales and four round narratives.
+[`docs/AI_APPROACH.md`](docs/AI_APPROACH.md) is the adversarial review of exactly
+this layer — every call site, and what breaks in each one when the model returns
+nothing.
+
+That run is gated and reproducible — `CIVORA_LIVE_AI=1 pnpm e2e live-ai.spec.ts`
+— and with no key configured every surface shows the writer's own refusal rather
+than a substitute, because the recorded-fixture adapter refuses rather than
+pretends. Every attempt, refusal, cache hit, token and millisecond is counted by
+the adapter itself and shown on the intelligence surface, so what a burst would
+cost is the platform's own figure rather than an estimate. The free tier's
+ceiling on one model — **twenty requests a day**, measured off a real `429`
+rather than read from documentation — is why the demonstration pins
+`gemini-3.1-flash-lite` and why the advisory set is written ahead of the demo
+rather than during it.
 
 `pnpm check:bundle` is the standing check that none of this is reachable from the
 browser: it reads the built client bundle and fails if the reasoning endpoint, the
@@ -257,8 +338,48 @@ and a corpus file without them is **refused by name** rather than quietly skippe
 No provenance-bearing corpus exists, so that mode still prints `NOT MEASURED`
 with the reason and **no percentage at all** — a rate over nothing is not a
 measurement — and exits `2`, which CI accepts and prints that it saw. That gap is
-named rather than papered over: it is the one Phase 5 checklist item this build
-does not satisfy.
+named rather than papered over: the evaluation plan asks for a measured
+extraction accuracy, and this build does not have one.
+
+## Results
+
+Every figure below was produced by the command beside it, at the commit this
+README describes. Nothing here is an estimate, and the two gates that could not
+run are named rather than omitted.
+
+| Gate                       | Command                                              | Result                                                                                                                                                                 |
+| -------------------------- | ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Types, lint, formatting    | `pnpm typecheck` · `pnpm lint` · `pnpm format:check` | zero errors                                                                                                                                                            |
+| Unit and property tests    | `pnpm test`                                          | **77 files, 783 tests**, all passing                                                                                                                                   |
+| Firestore rules            | `pnpm test:rules`                                    | **25 cases**, each access asserted allowed and denied                                                                                                                  |
+| Interoperability contracts | `pnpm --filter @civora/interop test`                 | **4 files, 33 tests** — every fixture parses                                                                                                                           |
+| Browser journeys           | `CI=1 pnpm e2e`                                      | **109 passed, 0 flaky, 9 skipped with their reason printed** (five gated live-model journeys, four gated live-smoke ones)                                              |
+| Grounding evaluation       | `pnpm ai:eval --grounding`                           | **PASS, exit 0** — 9 adversarial cases, the rule shown refusing an ungrounded draft                                                                                    |
+| Extraction accuracy        | `pnpm ai:eval --golden-set`                          | **`NOT MEASURED`, exit 2** — a case needs real-call provenance, and no labelled corpus exists                                                                          |
+| Forecasting backtest       | `pnpm forecast:backtest`                             | report regenerated and committed ([`docs/EVALUATION.md`](docs/EVALUATION.md)); re-running reproduces every figure, changing only the date and the measured runtime     |
+| Federated round            | `pnpm fl:run --dp`                                   | six silos, six rounds, **ε 7.9999** at δ 1e-5, digest `sha256:b0d37c69…` reproduced across runs                                                                        |
+| Live reasoning             | `CIVORA_LIVE_AI=1 pnpm e2e live-ai.spec.ts`          | **5 journeys passed** against `gemini-3.1-flash-lite`: advisories 6/6, rationales 6/6, narratives 4/4, a register read and a recording confirmed                       |
+| Client bundle              | `pnpm check:bundle`                                  | **22 client files, 12,33,087 bytes** — no reasoning endpoint, SDK class, key name or provider config, with both positive controls firing                               |
+| Dependencies               | `pnpm audit --audit-level high`                      | **0 high**, 2 moderate (named in the audit output)                                                                                                                     |
+| Container image            | `docker build`                                       | **BLOCKED — no container runtime on this machine.** The deployment path builds in Cloud Build instead, which is why this does not block a deployment                   |
+| Deployed end-to-end        | `CIVORA_LIVE_URL=… pnpm smoke:live`                  | **BLOCKED — no URL exists.** The spec is written, executed against the production build locally in three instance states, and skips with its reason until a URL is set |
+
+## What the brief asks for, and where it is
+
+| The ask                                               | Where it lives                                                       | The evidence that holds it                                                                                                                    |
+| ----------------------------------------------------- | -------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| Offline, low-connectivity capture                     | `apps/web/src/app/capture`, the ingest boundary in `packages/domain` | `e2e/capture.spec.ts` — the screen reopens with no connection, the queue replays, a duplicate delivery is a replay                            |
+| One ledger, no double counting                        | the ingest boundary's idempotency keys and projection                | `e2e/capture.spec.ts`, and the domain tests that fire the same submission twice                                                               |
+| Intermittent-demand forecasting per facility and item | `packages/forecasting` (censored-demand correction, then the engine) | [`docs/EVALUATION.md`](docs/EVALUATION.md) — the backtest over 4,734 origins and 33,138 scored days                                           |
+| Early warning with its evidence beside it             | the intelligence surface and the alert records                       | `e2e/risk-inbox.spec.ts`; every alert carries the quantity that put it there                                                                  |
+| Constraint-checked redistribution a person decides on | `packages/optimizer` — the validator is separate from the solver     | `e2e/redistribution.spec.ts`; [`docs/REDISTRIBUTION.md`](docs/REDISTRIBUTION.md)                                                              |
+| A record of who decided what, and why                 | `apps/web/src/lib/audit-service.ts` and `/audit`                     | `e2e/audit-chain.spec.ts`; the registry-completeness test reads every writer                                                                  |
+| Federated learning with a stated privacy budget       | `packages/federated` and the console                                 | `pnpm fl:run --dp`; the console's ε curve and payload assertion                                                                               |
+| Interoperability with systems already in place        | `packages/interop`                                                   | [`docs/INTEROP.md`](docs/INTEROP.md); `e2e/import.spec.ts` — check, then accept                                                               |
+| Tenancy enforced where the data lives                 | `infra/firestore.rules`                                              | `pnpm test:rules` — 25 cases, each asserted both ways                                                                                         |
+| Five languages, properly rendered                     | `packages/i18n`                                                      | `e2e/i18n.spec.ts` — Devanagari numerals asserted, not string substitution                                                                    |
+| A model that never authors a quantity                 | `packages/ai/src/grounding.ts`                                       | `pnpm ai:eval --grounding`, a CI gate                                                                                                         |
+| Deployability and scale                               | `infra/`, [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md)                 | every script dry-run and failure path executed; the free-tier arithmetic is in the document, and §10 names what a real run still has to prove |
 
 ## Deployment
 
@@ -307,6 +428,8 @@ CI runs the same gates in the same order, plus a container build.
 
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — the layers, the capture path,
   the ingest and tenancy rules, and where each is enforced.
+- [`docs/AI_APPROACH.md`](docs/AI_APPROACH.md) — every AI call site, what each
+  one does, and what happens in each when the model returns nothing.
 - [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) — how the demonstration would be
   deployed, its free-tier shape and cost arithmetic, what is bound from Secret
   Manager, the fallback, the teardown, and what has not been verified.
@@ -345,20 +468,51 @@ because an unstated limitation is the only kind that misleads.
   their failure paths exercised, but no Google Cloud project exists and no
   container runtime is available on this machine, so no image has been built and
   no URL answers. `docs/DEPLOYMENT.md` §10 lists every step that is unverified.
-- **Every store, projection, queue, counter, chain and plan is per process and in
-  memory.** Correct for a single-process demonstration, wrong for a deployment.
+- **The federation is a reference implementation, not a deployed federation.**
+  Six silos are partitions of one local dataset, computed inside one process:
+  nothing crosses an organisational boundary and no transport between
+  organisations exists. What is real is the mechanism — FedAvg and FedProx,
+  update clipping, Gaussian noise, an RDP accountant with a stated (ε, δ), and an
+  assertion on every payload that a silo's sample counts and update norms leave
+  it only masked. A cross-organisation deployment needs the transport, the
+  identity federation and the governance agreement around it, and none of those
+  is built.
+- **It is a single-region, at-most-two-instance design, and its state is in
+  memory.** The scripted deployment pins one region and `max-instances=2`, while
+  every store, projection, queue, counter, chain and plan is per process. That is
+  correct for a demonstration and wrong for load: two instances would hold two
+  divergent worlds. Scale means moving each in-memory adapter behind the
+  persistence port it already sits behind — a configuration change plus the
+  adapter, not a redesign.
 - **Two reasoning gaps are named, not hidden.** The accuracy evaluation still
   prints `NOT MEASURED` because no corpus with real-call provenance exists, and
   the `driver-explanation@1` prompt is registered with a schema and has no
   surface that calls it. Five of the six tasks are wired and live-verified. See
   `docs/DATA_PROVENANCE.md` and the project state files for the evidence.
 
-## Data
+## Data — what is real and what is generated
 
-No real data is used. This repository reads no facility, patient or stock record,
-and no personal health information is collected by construction. The facility
-network is synthetic, generated from a fixed seed so that any result can be
-reproduced exactly. See [`docs/DATA_PROVENANCE.md`](docs/DATA_PROVENANCE.md).
+**No real data is used, and no facility, patient or stock record was read at any
+point.** Every stock position, movement, bed count, attendance figure, forecast,
+alert and transfer proposal is generated from one fixed seed —
+`civora-demo-2026` — so two people running `pnpm db:seed` get the same world
+document for document, and the dataset's fingerprint is
+`sha256:4f620405fcc62cc5946c460950edb1d0` read from two independent processes.
+Every layer that is generated says so where it is shown: the badge and the
+sentence in the application shell are on every surface, the API payloads carry a
+`simulated` marker beside the data they describe, and `e2e/labelling.spec.ts`
+sweeps both.
+
+The records the platform holds are counts and quantities — stock, beds,
+attendance totals, syndromic counts — and **no personal health information is
+collected by construction**, because no person-level record is ever written.
+
+**What is real is the vocabulary.** The essential-medicines catalogue, the
+administrative directory codes and the HMIS field names are published Indian
+datasets and formats, cited with their licences in
+[`docs/DATA_PROVENANCE.md`](docs/DATA_PROVENANCE.md); the two sample inputs a
+reviewer can use (`pnpm samples:register`, `pnpm samples:voice`) are generated
+here and their README says exactly that.
 
 ## Licence
 

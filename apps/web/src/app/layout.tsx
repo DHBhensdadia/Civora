@@ -33,13 +33,36 @@ export default async function RootLayout({ children }: { readonly children: Reac
       <body className="min-h-screen bg-slate-950 text-slate-100 antialiased">
         <header className="border-b border-slate-800/80 px-6 py-4">
           <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3">
-            <span className="font-mono text-sm tracking-wide text-slate-400">
-              Civora · health supply-chain resilience
+            <span className="flex items-center gap-3">
+              <span className="font-mono text-sm tracking-wide text-slate-400">
+                Civora · health supply-chain resilience
+              </span>
+              {/*
+               * The disclosure travels with the shell, not with the home page.
+               * A judge who deep-links to a surface must meet it there: a page
+               * that renders a national stock position without saying the position
+               * is generated is the one way this demonstration could mislead.
+               */}
+              <span
+                data-testid="simulated-badge"
+                className="rounded border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 font-mono text-xs text-amber-200"
+              >
+                simulated data
+              </span>
             </span>
             <SiteNav session={session} language={language} />
           </div>
         </header>
         {children}
+        <footer className="border-t border-slate-800/80 px-6 py-4">
+          <p
+            data-testid="simulation-disclosure"
+            className="mx-auto max-w-5xl text-center text-xs text-slate-500"
+          >
+            All data the platform shows is simulated. Nothing here is a real stock position and this
+            is not a deployed federation.
+          </p>
+        </footer>
       </body>
     </html>
   );

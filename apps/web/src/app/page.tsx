@@ -39,8 +39,10 @@ export default async function HomePage() {
           The platform proposes redistribution — and executes none of it
         </h2>
         <p className="mt-2 text-amber-100/90">
-          What works today is the half that everything else depends on. A facility can record stock,
-          beds, attendance and footfall{' '}
+          The loop closes end to end in this build — capture, visibility, forecast, alert, a
+          constraint-checked transfer proposal, a person&rsquo;s decision and the audit trail behind
+          it — but <strong>no live deployment exists yet</strong>: the deployment is scripted and
+          the demonstration runs locally. A facility can record stock, beds, attendance and footfall{' '}
           <Link className="underline underline-offset-4" href="/capture">
             offline
           </Link>
@@ -96,10 +98,6 @@ export default async function HomePage() {
           shows the rounds, the budget spent, the non-IID diagnostic, and what the guarantee costs —
           which, at this cohort size, is a great deal. The substrate a real deployment would run on
           is cited there rather than implied.
-        </p>
-        <p className="mt-2 text-sm text-amber-100/70">
-          All data the platform shows is simulated. Nothing here is a real stock position and this
-          is not a deployed federation.
         </p>
       </section>
 

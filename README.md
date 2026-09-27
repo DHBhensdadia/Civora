@@ -51,10 +51,10 @@ flowchart LR
     L["Federated console<br/>round, ε budget, payload assertion"]
   end
 
-  subgraph ports["Behind ports, chosen by configuration"]
-    S["Storage — in-memory or Firestore"]
-    ID["Identity — session or Firebase claims"]
-    AI["Reasoning — fixture or Gemini"]
+  subgraph ports["Behind ports (ADR 0004) — the adapters this build implements"]
+    S["Storage — in-memory"]
+    ID["Identity — session cookie"]
+    AI["Reasoning — fixture, or Gemini with a key"]
   end
 
   C --> I --> P --> F --> A --> R --> D --> X
@@ -221,9 +221,13 @@ to the chain, and then asserts the converse: every file in the application that
 appends to the chain is registered. A new consequential action that skips the
 chain is a failing test rather than a second code path nobody reviewed.
 
-**The tenancy model is enforced where the data lives.** `infra/firestore.rules`
-implements the roles and scopes the application uses, so a read the database
-refuses cannot be forgotten by a route: custom claims carry the role and the
+**The tenancy model is written down where a deployment's data would live, and
+enforced in the routes this build runs.** `infra/firestore.rules` implements the
+roles and scopes the application uses, so in the pilot shape a read the database
+refuses cannot be forgotten by a route — and the same rules are asserted against
+the emulator here. The demonstration itself stores nothing outside its own
+process (the in-memory adapter), and its scoping is enforced in the session and
+route rules the specs assert: custom claims carry the role and the
 place it is anchored to, one lookup up the facility spine resolves a district or
 a state, and only alerts and transfer decisions accept a client write at all.
 `pnpm test:rules` starts the Firestore emulator and runs twenty-five cases

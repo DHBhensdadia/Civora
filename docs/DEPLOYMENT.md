@@ -208,10 +208,15 @@ when a deployment exists.
 
 ## 7. Scaling up and off the free tier
 
-1. **Data and identity:** bind `CIVORA_DATA_PROVIDER=firestore` and
-   `CIVORA_AUTH_PROVIDER=firebase`, seed Firestore from the same deterministic generator,
-   and deploy [`infra/firestore.rules`](../infra/firestore.rules) — 25 emulator tests
-   assert each allowed and denied access (`pnpm test:rules`).
+1. **Data and identity — an adapter to write, then a binding.** Neither hosted adapter is
+   part of this build: selecting one throws `ProviderNotAvailableError` naming it
+   (`apps/web/src/providers.ts`), which is why §1's table binds `in-memory` and `fixture`.
+   The work is to implement the store and the identity resolution behind the ports that
+   already exist — the rules they must agree with are written and tested — seed the store
+   from the same deterministic generator, then bind `CIVORA_DATA_PROVIDER=firestore` and
+   `CIVORA_AUTH_PROVIDER=firebase`. Deploy
+   [`infra/firestore.rules`](../infra/firestore.rules) with them: 25 emulator tests assert
+   each allowed and denied access (`pnpm test:rules`).
 2. **Scheduled work:** run `apps/worker`'s commands as Cloud Run Jobs on Cloud Scheduler
    (`pnpm worker:score`, `pnpm worker:advisories`, `pnpm fl:run`), so forecasts, alerts
    and federation rounds happen whether or not a browser is open.
@@ -266,16 +271,16 @@ be claimed about a deployment, and a URL that no longer responds is not a deploy
 
 Every line here is a gap, not a footnote.
 
-| Unverified                                          | Why                                              | What would close it                                                                |
-| --------------------------------------------------- | ------------------------------------------------ | ---------------------------------------------------------------------------------- |
-| Any provisioning step against a real project        | no `gcloud`, no project, no billing account (B1) | Run `infra/provision.sh` twice and record both runs                                |
-| The container image building and running            | no container runtime (B8)                        | `bash infra/check-image.sh`                                                        |
-| The Cloud Build path                                | same as above, plus B1                           | `bash infra/deploy.sh`                                                             |
-| A live URL, its cold start, and the live smoke test | no deployment exists                             | `CIVORA_LIVE_URL=… pnpm e2e live-smoke.spec.ts`, output recorded in `RUN_STATE.md` |
-| The budget alert, and the billing spending limit    | B1                                               | `gcloud billing budgets list`                                                      |
-| The fallback instance (§8)                          | B8                                               | Deploy once to a non-Google host and run the same smoke test                       |
-| The Firestore data provider on a real project       | B1                                               | Provision, seed, run `pnpm test:rules` against the deployed rules                  |
-| The deployed advisory set surviving a cold start    | no deployment                                    | Record the counts from `--warm`, then from the first read after an idle period     |
+| Unverified                                                    | Why                                                                                                               | What would close it                                                                                   |
+| ------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| Any provisioning step against a real project                  | no `gcloud`, no project, no billing account (B1)                                                                  | Run `infra/provision.sh` twice and record both runs                                                   |
+| The container image building and running                      | no container runtime (B8)                                                                                         | `bash infra/check-image.sh`                                                                           |
+| The Cloud Build path                                          | same as above, plus B1                                                                                            | `bash infra/deploy.sh`                                                                                |
+| A live URL, its cold start, and the live smoke test           | no deployment exists                                                                                              | `CIVORA_LIVE_URL=… pnpm e2e live-smoke.spec.ts`, output recorded in `RUN_STATE.md`                    |
+| The budget alert, and the billing spending limit              | B1                                                                                                                | `gcloud billing budgets list`                                                                         |
+| The fallback instance (§8)                                    | B8                                                                                                                | Deploy once to a non-Google host and run the same smoke test                                          |
+| The Firestore data provider and the Firebase identity adapter | neither adapter is part of this build (`apps/web/src/providers.ts` refuses them by name); a real project needs B1 | Write each behind its port, then provision, seed and run `pnpm test:rules` against the deployed rules |
+| The deployed advisory set surviving a cold start              | no deployment                                                                                                     | Record the counts from `--warm`, then from the first read after an idle period                        |
 
 **What was executed, on 2026-09-27:** all four scripts' `--dry-run` paths (plans printed,
 exit `0`); the missing-prerequisite paths (one sentence, exit `3` for `provision.sh`,

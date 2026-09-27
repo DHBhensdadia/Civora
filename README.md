@@ -3,13 +3,19 @@
 A federated AI platform for health resource and supply-chain planning across a
 national primary health centre network.
 
-> **Status: sensing plane.** The platform can now capture stock, beds,
-> attendance and footfall at a facility **offline**, accept it idempotently and
-> scoped to the facility that sent it, and show a district officer what the
-> district can see — including the facilities it cannot. Forecasting, early
-> warning, redistribution and federation are **not** implemented. Nothing below
-> is claimed to work beyond what the test suite exercises; the modules that do
-> not exist say so on the overview page.
+> **Status: the prototype is complete as a build; there is no live deployment.**
+> Every build phase is in the repository and every gate is green: the seeded
+> national simulation, intermittent-demand forecasting with a published
+> evaluation, the risk inbox and early warning, constraint-checked
+> redistribution that a person decides on, the federated-learning console with
+> its privacy budget, offline capture, HMIS/NLEM interop, five languages, and a
+> reasoning layer that has been executed against a real Gemini model.
+> **No live deployment exists** — the project has no Google Cloud project or
+> billing account — so [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) is the
+> reproduction path, not a record of a deployment, and nothing here claims a URL
+> answers. Nothing below is claimed beyond what the test suite and the recorded
+> evidence exercise; the gaps this build does not close are named in [What this
+> build does not claim](#what-this-build-does-not-claim).
 
 ---
 
@@ -24,20 +30,23 @@ The consequence is avoidable: a platform that can tell the difference, predict
 demand per facility, and propose a transfer that respects every safety constraint
 turns a national shortage into a routing problem.
 
-## What happens next
+## What this does, end to end
 
-The prototype is being built in phases, each ending in something that runs. The
-first end-to-end slice will take a stock capture at one facility, propagate it
-into a national risk view, forecast its consumption, explain the resulting
-stock-out risk in the facility's own language, and propose a constraint-checked
-transfer from a facility that can spare the stock.
+A **capture** at one facility — typed, photographed or spoken, and queued on the
+device when there is no connection — reaches the ledger through one ingest
+boundary, idempotently and scoped to the facility that sent it. From there the
+platform **forecasts** consumption per facility and item, **raises alerts** with
+the quantity that put each one there, **proposes transfers** that respect shelf
+life, cold chain and handling limits, and **records a person's decision** on each
+proposal in a hash-chained audit trail. A **console** shows the federated
+learning round, its privacy budget and the honest measurement of what the noise
+costs.
 
-So far the repository can generate the world that slice operates on. `pnpm test`
-runs the simulator against the same seeded inputs every time, and its scenarios —
-a monsoon surge, a diarrhoeal outbreak, a facility that goes offline, a disrupted
-state warehouse, a cold-chain failure, a district expiry cliff — are asserted to
-produce the effects they are named for, alongside two negative controls that are
-asserted to produce nothing at all.
+`pnpm test` runs the simulator against the same seeded inputs every time, and its
+scenarios — a monsoon surge, a diarrhoeal outbreak, a facility that goes offline,
+a disrupted state warehouse, a cold-chain failure, a district expiry cliff — are
+asserted to produce the effects they are named for, alongside two negative
+controls that are asserted to produce nothing at all.
 
 `pnpm db:seed` generates that dataset and stores it through the persistence port,
 and running it again stores the same documents under the same identifiers. What
@@ -46,16 +55,17 @@ it set out to use but could not obtain are all on the **dataset inspector** at
 <http://localhost:3000/dataset>.
 
 The **capture surface** at <http://localhost:3000/capture> queues what a facility
-records on the device and delivers it when the platform can be reached, and the
+records on the device and delivers it when the platform can be reached; the
 **visibility surface** at <http://localhost:3000/visibility> reads the resulting
-stock positions, bed pressure and reporting gaps. Turn the network off in the
-browser and capture anyway: that is the path the platform is built around, and
-`docs/ARCHITECTURE.md` states each rule it rests on and the file that enforces
-it. The capture screen is also stored on the device once it has been opened, so
-it reopens with no connection at all — the form, the queue and what each holds —
-while the platform's own facility list is deliberately not stored, because a
-list of facilities is a statement about the world that only the platform is
-entitled to make.
+stock positions, bed pressure and reporting gaps; and the **control tower** at
+<http://localhost:3000/command> drills from the national picture to a batch. Turn
+the network off in the browser and capture anyway: that is the path the platform
+is built around, and `docs/ARCHITECTURE.md` states each rule it rests on and the
+file that enforces it. The capture screen is also stored on the device once it
+has been opened, so it reopens with no connection at all — the form, the queue
+and what each holds — while the platform's own facility list is deliberately not
+stored, because a list of facilities is a statement about the world that only
+the platform is entitled to make.
 
 ## Quickstart
 
@@ -215,12 +225,19 @@ Google AI is the reasoning layer, behind the `ReasoningProvider` port defined in
 contract-tested, and every response is validated against the caller's schema
 before it leaves it; a narrative that states a number nobody computed is refused.
 It is used for register extraction, spoken-command parsing, advisory bodies and
-risk-driver explanations, and **no live call has been made yet**: the project has
-no API key, so the recorded-fixture adapter answers in its place, the fixture
-corpus is empty, and the intake surfaces say which reading was supplied rather
-than read. Every attempt, refusal, cache hit, token and millisecond is counted by
-the adapter itself and shown on the intelligence surface, so what a burst would
-cost is the platform's own figure rather than an estimate.
+risk-driver explanations, and it **has been executed against a real model**: a
+rendered register page read into the ledger, a spoken update heard, held and
+written only after a person confirmed it, six advisories written in two
+languages, six transfer rationales and four round narratives. That run is gated
+and reproducible — `CIVORA_LIVE_AI=1 pnpm e2e live-ai.spec.ts` — and with no key
+configured every surface shows the writer's own refusal rather than a
+substitute, because the recorded-fixture adapter refuses rather than pretends.
+Every attempt, refusal, cache hit, token and millisecond is counted by the
+adapter itself and shown on the intelligence surface, so what a burst would cost
+is the platform's own figure rather than an estimate. The free tier's ceiling on
+one model — **twenty requests a day**, measured off a real `429` rather than read
+from documentation — is why the demonstration pins `gemini-3.1-flash-lite` and
+why the advisory set is written ahead of the demo rather than during it.
 
 `pnpm check:bundle` is the standing check that none of this is reachable from the
 browser: it reads the built client bundle and fails if the reasoning endpoint, the
@@ -237,9 +254,35 @@ neither, and it needs no key. `--golden-set` scores recorded readings against
 hand-written labels, and a case is only a case if its response came from a real
 call: the command, the day and the digest of the media it answers are all required,
 and a corpus file without them is **refused by name** rather than quietly skipped.
-The corpus is empty, so that mode prints `NOT MEASURED` with the reason and **no
-percentage at all** — a rate over nothing is not a measurement — and exits `2`,
-which CI accepts while the key is missing and prints that it did.
+No provenance-bearing corpus exists, so that mode still prints `NOT MEASURED`
+with the reason and **no percentage at all** — a rate over nothing is not a
+measurement — and exits `2`, which CI accepts and prints that it saw. That gap is
+named rather than papered over: it is the one Phase 5 checklist item this build
+does not satisfy.
+
+## Deployment
+
+**There is no live deployment.** The machine this was built on has no Google
+Cloud project, no billing account and no running container runtime, so nothing
+has been provisioned and no URL answers. That is stated here rather than left for
+a reader to discover.
+
+The deployment is scripted and reviewable without any of those credentials:
+
+```bash
+bash infra/provision.sh --dry-run   # every gcloud step, printed, none executed
+bash infra/deploy.sh --dry-run      # the Cloud Run service and its cost caps
+bash infra/check-image.sh           # non-root, production, no key, probes answer
+bash infra/teardown.sh --dry-run    # what a teardown deletes, and what it keeps
+```
+
+[`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) is the reproduction path: what is
+deployed, the free-tier shape with its arithmetic, the budget alert and what an
+alert is not, how the Gemini key and model are bound from Secret Manager, the
+migration path off the free tier, the non-Google fallback, the teardown, and a
+list of exactly what is unverified. When a URL exists, it is smoke-tested from
+outside with `CIVORA_LIVE_URL=… pnpm smoke:live`; with no URL configured that
+spec skips and prints why, so the gate stays green and honest.
 
 ## Development
 
@@ -252,6 +295,8 @@ pnpm build        # production build of the web application
 pnpm e2e          # Playwright against the built application
 pnpm db:seed      # generate the demonstration dataset and store it
 pnpm check:bundle # the built client bundle carries no reasoning endpoint or key
+pnpm check:image  # build the container and check it (needs a container runtime)
+pnpm smoke:live   # the deployed instance, when CIVORA_LIVE_URL is set
 pnpm ai:eval      # the grounding assertion, and extraction accuracy against a corpus
 pnpm verify       # lint, typecheck, test, build and the bundle check
 ```
@@ -262,6 +307,9 @@ CI runs the same gates in the same order, plus a container build.
 
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — the layers, the capture path,
   the ingest and tenancy rules, and where each is enforced.
+- [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) — how the demonstration would be
+  deployed, its free-tier shape and cost arithmetic, what is bound from Secret
+  Manager, the fallback, the teardown, and what has not been verified.
 - [`docs/DATA_PROVENANCE.md`](docs/DATA_PROVENANCE.md) — every dataset, its
   licence, and what is simulated.
 - [`docs/INTEROP.md`](docs/INTEROP.md) — each importer, its source format, its
@@ -292,13 +340,18 @@ because an unstated limitation is the only kind that misleads.
 - **No ministry API is integrated and no FHIR/ABDM conformance is claimed.** No
   HMIS, e-Aushadhi, IHIP or LGD endpoint was called; the adapters, fixtures and
   mapping tables are the deliverable.
+- **There is no live deployment, and the container image has never been built
+  here.** The provisioning, deploy and image-check scripts have been dry-run and
+  their failure paths exercised, but no Google Cloud project exists and no
+  container runtime is available on this machine, so no image has been built and
+  no URL answers. `docs/DEPLOYMENT.md` §10 lists every step that is unverified.
 - **Every store, projection, queue, counter, chain and plan is per process and in
   memory.** Correct for a single-process demonstration, wrong for a deployment.
-- **The reasoning layer has never called a model**, because the project has no API
-  key: the recorded-fixture adapter answers, its corpus is empty, and every surface
-  that depends on it shows a refusal or names the reading it was supplied. See
-  [`docs/DATA_PROVENANCE.md`](docs/DATA_PROVENANCE.md) and the state file for the
-  blocker.
+- **Two reasoning gaps are named, not hidden.** The accuracy evaluation still
+  prints `NOT MEASURED` because no corpus with real-call provenance exists, and
+  the `driver-explanation@1` prompt is registered with a schema and has no
+  surface that calls it. Five of the six tasks are wired and live-verified. See
+  `docs/DATA_PROVENANCE.md` and the project state files for the evidence.
 
 ## Data
 

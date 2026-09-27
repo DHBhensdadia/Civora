@@ -25,7 +25,7 @@ function aReport(overrides: Partial<ReasoningTelemetry> = {}): ReasoningTelemetr
     totalDurationMs: 800,
     perTask: [
       {
-        task: 'advisory-generation@1',
+        task: 'advisory-generation@2',
         calls: 3,
         attempts: 4,
         cacheHits: 1,
@@ -101,7 +101,7 @@ describe('the view of an adapter’s own counters', () => {
     });
 
     expect(view.perTask.map((task) => task.task)).toEqual([
-      'advisory-generation@1',
+      'advisory-generation@2',
       'stock-extraction@1',
     ]);
     expect(view.perTask[0]).toMatchObject({ calls: 3, attempts: 4, failures: 2 });
@@ -121,7 +121,7 @@ describe('the view of an adapter’s own counters', () => {
         totalOutputTokens: null,
         perTask: [
           {
-            task: 'advisory-generation@1',
+            task: 'advisory-generation@2',
             calls: 3,
             attempts: 0,
             cacheHits: 1,

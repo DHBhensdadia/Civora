@@ -246,7 +246,7 @@ describe('provenance', () => {
   it('refuses a task this harness cannot score, rather than skipping it', () => {
     const directory = corpusDirectory();
     const digest = media(directory);
-    writeCase(directory, anExtractionCase(digest, { task: 'transfer-rationale@1' }));
+    writeCase(directory, anExtractionCase(digest, { task: 'transfer-rationale@2' }));
 
     expect(scoreDirectory(directory).load.refused[0]?.reason).toContain(
       'is not one this harness scores',

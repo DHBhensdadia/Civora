@@ -1,5 +1,6 @@
 import {
   advisoryFactsOf,
+  advisoryPrompt,
   generateAdvisory,
   groundingProblems,
   selectReasoningProvider,
@@ -127,7 +128,7 @@ async function reportWriter(lines: string[]): Promise<{ readonly wroteUngrounded
     `  provider           ${provider.kind}${
       provider.kind === 'fixture' ? ' — refuses every request: no key is configured' : ''
     }`,
-    `  task               advisory-generation@1, language en`,
+    `  task               ${advisoryPrompt.id}, language en`,
     `  status             ${attempt.status}`,
   );
 

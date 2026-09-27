@@ -166,7 +166,7 @@ describe('putting the bodies onto the record', () => {
       language: 'hi',
       status: 'refused' as const,
       draft: null,
-      refusal: 'no recorded response for task "advisory-generation@1"',
+      refusal: 'no recorded response for task "advisory-generation@2"',
       provider: 'fixture',
       model: null,
       cacheHit: false,

@@ -29,7 +29,7 @@ import type { ReasoningTelemetry } from '@civora/domain';
 
 /** One task's counts, named the way a person reads them. */
 export interface TaskTelemetryView {
-  /** The task identifier: `stock-extraction@1`, `advisory-generation@1`, … */
+  /** The task identifier: `stock-extraction@1`, `advisory-generation@2`, … */
   readonly task: string;
   readonly calls: number;
   readonly attempts: number;

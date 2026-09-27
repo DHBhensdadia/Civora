@@ -173,7 +173,7 @@ describe('an advisory request built from an alert', () => {
   it('carries the alert’s own facts and nothing else', () => {
     const request = advisoryRequestFor(anAlert(), 'hi');
 
-    expect(request.task).toBe('advisory-generation@1');
+    expect(request.task).toBe('advisory-generation@2');
     expect(request.facts).toEqual(
       expect.arrayContaining([
         { key: 'daysOfStock', value: 4 },

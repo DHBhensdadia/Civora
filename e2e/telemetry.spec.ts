@@ -99,9 +99,9 @@ test.describe('the telemetry panel', () => {
     // The row this work belongs to is named, and it carries the pass: a per-task
     // breakdown is what says which capability is spending the quota.
     const taskCalls = (snapshot: Telemetry): number =>
-      snapshot.perTask.find((task) => task.task === 'advisory-generation@1')?.calls ?? 0;
+      snapshot.perTask.find((task) => task.task === 'advisory-generation@2')?.calls ?? 0;
     expect(
-      after.perTask.some((task) => task.task === 'advisory-generation@1'),
+      after.perTask.some((task) => task.task === 'advisory-generation@2'),
       'the advisory task is named in the breakdown',
     ).toBe(true);
 
@@ -233,10 +233,10 @@ test.describe('the telemetry panel', () => {
     await page.goto('/intelligence');
 
     const advisoryRow = page.locator(
-      '[data-testid="telemetry-task"][data-task="advisory-generation@1"]',
+      '[data-testid="telemetry-task"][data-task="advisory-generation@2"]',
     );
     await expect(advisoryRow).toHaveCount(1);
-    await expect(advisoryRow).toContainText('advisory-generation@1');
+    await expect(advisoryRow).toContainText('advisory-generation@2');
 
     // Every task the adapter had reported keeps its row, so a capability cannot
     // spend quota invisibly — which is the thing a per-task breakdown exists to

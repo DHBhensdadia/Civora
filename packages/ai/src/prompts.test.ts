@@ -67,20 +67,21 @@ describe('the prompt corpus', () => {
 
     expect(new Set(ids).size).toBe(ids.length);
     expect([...ids].sort()).toEqual([
-      'advisory-generation@1',
+      'advisory-generation@2',
       'driver-explanation@1',
-      'federation-narrative@1',
+      'federation-narrative@2',
       'stock-extraction@1',
-      'transfer-rationale@1',
+      'transfer-rationale@2',
       'voice-command-parsing@1',
     ]);
   });
 
   it('finds a prompt by identifier, and finds nothing for a version nobody wrote', () => {
-    expect(promptById('advisory-generation@1')).toBe(advisoryPrompt);
+    expect(promptById('advisory-generation@2')).toBe(advisoryPrompt);
     // A bumped version is a new asset with a new recording behind it; the old
-    // identifier must not resolve to the old words.
-    expect(promptById('advisory-generation@2')).toBeUndefined();
+    // identifier must not resolve to the new words either, which is what makes
+    // the bump a change of record rather than an edit in place.
+    expect(promptById('advisory-generation@1')).toBeUndefined();
     expect(promptById('not-a-task@1')).toBeUndefined();
   });
 

@@ -1,7 +1,7 @@
 import { transferRationaleSchema } from '@civora/domain';
 import type { TransferRationale } from '@civora/domain';
 
-import { definePrompt, JSON_ONLY, NO_INVENTED_NUMBERS } from './prompt';
+import { CITATIONS_NAME_FACTS, definePrompt, JSON_ONLY, NO_INVENTED_NUMBERS } from './prompt';
 import type { Prompt } from './prompt';
 
 /**
@@ -17,13 +17,14 @@ import type { Prompt } from './prompt';
  */
 export const transferRationalePrompt: Prompt<TransferRationale> = definePrompt({
   task: 'transfer-rationale',
-  version: 1,
+  version: 2,
   instructions: [
     'You explain a proposed transfer of stock between two facilities to the pharmacist who would receive it. The quantities, the two facilities and the constraints the proposal already satisfies are in the facts.',
     'Summarise the proposal in one sentence, in terms the receiving facility can check against its own shelf and its own register.',
     'Then state the conditions under which this transfer would be the wrong thing to do — a batch close to expiry, demand at the sending facility that the facts show, a quantity larger than the receiving shelf can hold. Name what the facts show, and leave the list empty only if there is genuinely nothing to check.',
     'Write in the language given in the task parameters.',
-    'List in citations the names of the facts your rationale rests on.',
+    'List in citations the facts your rationale rests on.',
+    CITATIONS_NAME_FACTS,
     NO_INVENTED_NUMBERS,
     JSON_ONLY,
   ].join('\n'),

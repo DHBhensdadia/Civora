@@ -1,7 +1,7 @@
 import { roundNarrativeSchema } from '@civora/domain';
 import type { RoundNarrative } from '@civora/domain';
 
-import { definePrompt, JSON_ONLY, NO_INVENTED_NUMBERS } from './prompt';
+import { CITATIONS_NAME_FACTS, definePrompt, JSON_ONLY, NO_INVENTED_NUMBERS } from './prompt';
 import type { Prompt } from './prompt';
 
 /**
@@ -18,14 +18,15 @@ import type { Prompt } from './prompt';
  */
 export const federationNarrativePrompt: Prompt<RoundNarrative> = definePrompt({
   task: 'federation-narrative',
-  version: 1,
+  version: 2,
   instructions: [
     'You summarise one round of federated training between administrative silos for an engineer reading the federation console. Every participant, count, loss, noise figure and privacy budget in the facts is a measurement already taken; state them and what they mean together.',
     'Say whether the round reduced the shared model’s error, using the global loss before and after this round. If the facts do not show a reduction, say that instead of implying progress.',
     'Explain the noise and the privacy budget in the facts in plain terms: the standard deviation is the Gaussian noise added to the clipped aggregate, and the ε is the cumulative budget spent at the stated δ. If no ε is present, say that this run added no noise and therefore has no privacy bound.',
     'State what this round cannot support. The silos are simulated administrative partitions running on one machine, so nothing here is a deployed multi-organisation federation; the ε bounds what a record can contribute to what is sent, not what an observer could infer; and a lower squared error is a fit to recorded demand, not a clinical or operational outcome.',
     'Do not name a facility, an item, a patient or a date: none exists in the facts, and their absence is the point of the boundary.',
-    'List in citations the names of the facts your narrative rests on.',
+    'List in citations the facts your narrative rests on.',
+    CITATIONS_NAME_FACTS,
     NO_INVENTED_NUMBERS,
     JSON_ONLY,
   ].join('\n'),

@@ -1,4 +1,8 @@
-import { generateRoundNarratives, selectReasoningProvider } from '@civora/ai';
+import {
+  federationNarrativePrompt,
+  generateRoundNarratives,
+  selectReasoningProvider,
+} from '@civora/ai';
 import type { NarrativeAttempt } from '@civora/ai';
 import {
   FEDERATION_ARCHITECTURE_REFERENCE,
@@ -470,7 +474,10 @@ async function build(actor: AuditActor): Promise<FederationConsole> {
       artifactCommand: 'pnpm fl:sweep --epsilon 1,2,4,8,16,32,64,128 --out docs/federated-tradeoff',
     },
     narratives: {
-      task: 'federation-narrative@1',
+      // Read from the prompt asset rather than copied: the surface must name the
+      // same task the call is made under, and a version bump must not leave the
+      // page describing an older wording than the one that ran.
+      task: federationNarrativePrompt.id,
       attemptedOn: `round ${String(narrativeRounds.at(-1)?.round ?? 0)} of the priced run, and every round before it`,
       oncePerProcess:
         'Attempted once per process, when this console is first built, rather than on every read: a refresh that called the model again would be a burst nobody asked for.',

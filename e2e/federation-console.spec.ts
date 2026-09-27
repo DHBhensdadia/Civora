@@ -256,21 +256,21 @@ test.describe('the federation console', () => {
   test('refuses a round narrative instead of inventing one', async ({ request, page }) => {
     const payload = await readConsole(request);
 
-    expect(payload.narratives.task).toBe('federation-narrative@1');
+    expect(payload.narratives.task).toBe('federation-narrative@2');
     expect(payload.narratives.written).toBe(0);
     expect(payload.narratives.refusals).toBe(payload.narratives.attempts.length);
     expect(payload.narratives.attempts.length).toBe(payload.priced.rounds.length);
     for (const attempt of payload.narratives.attempts) {
       expect(attempt.status).toBe('refused');
       expect(attempt.narrative).toBeNull();
-      expect(attempt.refusal ?? '').toContain('federation-narrative@1');
+      expect(attempt.refusal ?? '').toContain('federation-narrative@2');
     }
 
     await openConsole(page);
     await expect(page.getByRole('heading', { name: /round narrative/ })).toBeVisible();
     await expect(page.getByText(/no fixture was invented to fill the panel/)).toBeVisible();
     await expect(
-      page.getByText(`no recorded response for task "federation-narrative@1"`).first(),
+      page.getByText(`no recorded response for task "federation-narrative@2"`).first(),
     ).toBeVisible();
 
     // The commands behind the claim are on the page, including the phase's own

@@ -1,4 +1,8 @@
-import { generateRoundNarrative, selectReasoningProvider } from '@civora/ai';
+import {
+  federationNarrativePrompt,
+  generateRoundNarrative,
+  selectReasoningProvider,
+} from '@civora/ai';
 import {
   COUNTRY_IDENTIFIER_SETS,
   FEDERATION_ARCHITECTURE_REFERENCE,
@@ -491,7 +495,7 @@ async function run(argv: readonly string[]): Promise<number> {
         masked: last.masked,
       });
       lines.push(
-        `Narrative for round ${String(last.round)} — task federation-narrative@1, attempted through the provider port:`,
+        `Narrative for round ${String(last.round)} — task ${federationNarrativePrompt.id}, attempted through the provider port:`,
         '',
         ...(attempt.status === 'written'
           ? [

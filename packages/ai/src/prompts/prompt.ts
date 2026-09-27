@@ -34,6 +34,21 @@ export const JSON_ONLY =
  * merely invention: a rounded figure is a figure the fact set does not contain,
  * and the grounding assertion would refuse it.
  */
+/**
+ * How a citation is written, worded once for every task that has citations.
+ *
+ * The facts block renders its lines as `key: value`, and a model told to "cite
+ * the facts" copies the whole line: a live run refused eight citations reading
+ * `leadTimeDays: 8` in one draft, because a citation has to name a fact and
+ * `leadTimeDays: 8` names none. So the rule says which part of the line is the
+ * name, and shows what a citation looks like.
+ */
+export const CITATIONS_NAME_FACTS = [
+  'In citations, name facts: the part of a facts-block line before the colon, exactly as written',
+  '— `leadTimeDays`, never `leadTimeDays: 8` and never `8`. A citation is a name, and a citation',
+  'naming no fact in the block is refused by the platform rather than repaired.',
+].join(' ');
+
 export const NO_INVENTED_NUMBERS = [
   'Every numeral you write must appear, exactly as written, in the facts block below.',
   'Do not compute, sum, average, round, convert, extrapolate or estimate any number:',

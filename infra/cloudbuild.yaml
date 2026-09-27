@@ -1,0 +1,32 @@
+# Build the Civora image in the cloud, from the repository root.
+#
+#     gcloud builds submit --config=infra/cloudbuild.yaml \
+#       --substitutions=_IMAGE=<region>-docker.pkg.dev/<project>/civora/web,_TAG=<tag> .
+#
+# `infra/deploy.sh` is the caller; this file exists so a machine with no Docker
+# daemon can still produce the image the deployment runs — which is the state
+# this project is in (BLOCKERS.md B8). The build itself is the same
+# `infra/Dockerfile` a local `docker build` would use, with the same context
+# (the repository root, because the lockfile spans the workspace), so the two
+# paths cannot produce different images by construction.
+#
+# The `images:` list is what `gcloud builds submit` pushes; Cloud Build's own
+# service account needs `roles/artifactregistry.writer` on the project, which
+# `infra/provision.sh` grants.
+
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - --file=infra/Dockerfile
+      - --tag=${_IMAGE}:${_TAG}
+      - --tag=${_IMAGE}:latest
+      - .
+
+images:
+  - ${_IMAGE}:${_TAG}
+  - ${_IMAGE}:latest
+
+# The first build installs the whole workspace; a cold pnpm store takes minutes,
+# not the default ten.
+timeout: 2400s

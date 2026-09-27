@@ -128,7 +128,15 @@ function viewOfLanguage(
     actions: draft?.actions ?? [],
     reasoning: draft?.reasoning ?? [],
     citations: draft?.citations ?? [],
-    refusal: entry?.attempt.refusal ?? 'this language has not been attempted in this process yet',
+    // Null when a body was written. The live check found the fallback sentence
+    // leaking onto written rows — a refusal that never happened, beside a body
+    // that had just been written.
+    refusal:
+      entry === undefined
+        ? 'this language has not been attempted in this process yet'
+        : entry.attempt.status === 'written'
+          ? null
+          : (entry.attempt.refusal ?? 'the writer refused without saying why'),
     model: entry?.attempt.model ?? null,
     cacheHit: entry?.attempt.cacheHit ?? false,
     attemptedAt: entry?.at ?? '',

@@ -223,13 +223,28 @@ async function run(argv: readonly string[]): Promise<number> {
       : `  stored             ${String(stored)} alert(s) with a new body`,
     `  elapsed            ${String(Date.now() - startedAt)} ms`,
     '',
-    ...(written.length === 0 && refused.length > 0
+    // What was written and what was refused, attempt by attempt. A batch command
+    // that reported only totals could show a green-looking `2 written` while four
+    // bodies silently kept prose nobody had replaced — and the reason a body was
+    // refused is the thing an operator needs in order to act on it.
+    ...(written.length > 0
       ? [
-          'Every attempt was refused, so no body was replaced. The alerts keep the bodies they',
-          'were raised with, and the refusals are reported below rather than hidden:',
-          ...refused
-            .slice(0, 6)
-            .map((attempt) => `  ${attempt.language}: ${attempt.refusal ?? ''}`),
+          'Written, attempt by attempt:',
+          ...written.map(
+            (attempt) =>
+              `  ${attempt.language} · ${attempt.alertId} · model ${attempt.model ?? 'unreported'}${attempt.cacheHit ? ' (from cache)' : ''}`,
+          ),
+          '',
+        ]
+      : []),
+    ...(refused.length > 0
+      ? [
+          written.length === 0
+            ? 'Every attempt was refused, so no body was replaced. The alerts keep the bodies they'
+            : 'Refused, attempt by attempt; those alerts keep the bodies they were raised with:',
+          ...refused.map(
+            (attempt) => `  ${attempt.language} · ${attempt.alertId}: ${attempt.refusal ?? ''}`,
+          ),
           '',
         ]
       : []),

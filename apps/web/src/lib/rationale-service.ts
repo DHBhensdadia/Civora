@@ -42,7 +42,14 @@ export interface RationaleView {
   /** What would make this transfer the wrong thing to do. */
   readonly conditions: readonly string[];
   readonly citations: readonly string[];
-  /** Why nothing was written, in the writer's own words. */
+  /**
+   * Why nothing was written, in the writer's own words.
+   *
+   * Null when something *was* written. A field that carried "no rationale has
+   * been asked for" beside a written summary would be a sentence a client could
+   * read as a refusal that never happened — the live check found exactly that,
+   * which is why it is asserted there.
+   */
   readonly refusal: string | null;
   readonly model: string | null;
   readonly cacheHit: boolean;
@@ -116,7 +123,12 @@ function viewOf(proposalId: string, entry: Attempted | undefined): RationaleView
     summary: rationale?.summary ?? null,
     conditions: rationale?.conditions ?? [],
     citations: rationale?.citations ?? [],
-    refusal: entry?.attempt.refusal ?? 'no rationale has been asked for in this process yet',
+    refusal:
+      entry === undefined
+        ? 'no rationale has been asked for in this process yet'
+        : entry.attempt.status === 'written'
+          ? null
+          : (entry.attempt.refusal ?? 'the writer refused without saying why'),
     model: entry?.attempt.model ?? null,
     cacheHit: entry?.attempt.cacheHit ?? false,
     attemptedAt: entry?.at ?? '',

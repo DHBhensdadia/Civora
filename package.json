@@ -36,6 +36,8 @@
     "emulators": "firebase emulators:start --config infra/firebase.json --project civora-local",
     "audit": "pnpm audit --audit-level high",
     "check:bundle": "node scripts/check-browser-bundle.mjs",
+    "check:image": "bash infra/check-image.sh",
+    "smoke:live": "playwright test e2e/live-smoke.spec.ts",
     "verify": "pnpm lint && pnpm typecheck && pnpm test && pnpm build && pnpm check:bundle",
     "test:rules": "firebase emulators:exec --only firestore --project demo-civora --config infra/firebase.json 'vitest run --config vitest.rules.config.ts'"
   },

@@ -19,6 +19,26 @@ const isCI = process.env.CI !== undefined && process.env.CI !== '';
  */
 const liveAi = process.env.CIVORA_LIVE_AI === '1';
 
+/**
+ * The deployed instance under test, when a live smoke run is asked for.
+ *
+ * Setting it changes two things and says so, because pointing a browser suite at a
+ * deployment by accident is how a smoke test starts deleting somebody's data:
+ *
+ *  - **only `live-smoke.spec.ts` can run.** Every other spec in `e2e/` asserts the
+ *    platform's own rules against local adapters; running them against a remote
+ *    host would be a different experiment wearing the same name.
+ *  - **no local server is started.** The suites that need one are not running, and
+ *    a build would only slow the smoke test down.
+ */
+const liveUrl = process.env.CIVORA_LIVE_URL;
+
+if (liveUrl !== undefined) {
+  process.stdout.write(
+    `playwright: CIVORA_LIVE_URL is set, so only e2e/live-smoke.spec.ts will run, against ${liveUrl}\n`,
+  );
+}
+
 if (
   liveAi &&
   (process.env.GEMINI_API_KEY === undefined || process.env.GEMINI_MODEL === undefined)
@@ -33,6 +53,7 @@ if (
 
 export default defineConfig({
   testDir: './e2e',
+  ...(liveUrl === undefined ? {} : { testMatch: /live-smoke\.spec\.ts/ }),
   fullyParallel: true,
   forbidOnly: isCI,
   retries: isCI ? 1 : 0,
@@ -42,26 +63,30 @@ export default defineConfig({
     trace: 'on-first-retry',
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
-  webServer: {
-    // Browser tests run against the production build in exactly the form the
-    // container serves, including the local adapters a deployer gets with no
-    // credentials configured. Run `pnpm build` first.
-    command: 'node scripts/serve-standalone.mjs',
-    url: `${BASE_URL}/healthz`,
-    reuseExistingServer: !isCI,
-    timeout: 120_000,
-    env: {
-      PORT: String(PORT),
-      HOSTNAME: '127.0.0.1',
-      CIVORA_DATA_PROVIDER: 'in-memory',
-      CIVORA_AUTH_PROVIDER: 'fixture',
-      CIVORA_REASONING_PROVIDER: liveAi ? 'gemini' : 'fixture',
-      ...(liveAi && process.env.GEMINI_API_KEY !== undefined
-        ? { GEMINI_API_KEY: process.env.GEMINI_API_KEY }
-        : {}),
-      ...(liveAi && process.env.GEMINI_MODEL !== undefined
-        ? { GEMINI_MODEL: process.env.GEMINI_MODEL }
-        : {}),
-    },
-  },
+  ...(liveUrl === undefined
+    ? {
+        webServer: {
+          // Browser tests run against the production build in exactly the form the
+          // container serves, including the local adapters a deployer gets with no
+          // credentials configured. Run `pnpm build` first.
+          command: 'node scripts/serve-standalone.mjs',
+          url: `${BASE_URL}/healthz`,
+          reuseExistingServer: !isCI,
+          timeout: 120_000,
+          env: {
+            PORT: String(PORT),
+            HOSTNAME: '127.0.0.1',
+            CIVORA_DATA_PROVIDER: 'in-memory',
+            CIVORA_AUTH_PROVIDER: 'fixture',
+            CIVORA_REASONING_PROVIDER: liveAi ? 'gemini' : 'fixture',
+            ...(liveAi && process.env.GEMINI_API_KEY !== undefined
+              ? { GEMINI_API_KEY: process.env.GEMINI_API_KEY }
+              : {}),
+            ...(liveAi && process.env.GEMINI_MODEL !== undefined
+              ? { GEMINI_MODEL: process.env.GEMINI_MODEL }
+              : {}),
+          },
+        },
+      }
+    : {}),
 });

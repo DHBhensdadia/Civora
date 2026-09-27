@@ -31,6 +31,8 @@
     "fl:run": "node --import ./scripts/node/register-typescript.mjs apps/worker/src/fl-run.ts",
     "fl:sweep": "node --import ./scripts/node/register-typescript.mjs apps/worker/src/fl-sweep.ts",
     "ai:eval": "node --import ./scripts/node/register-typescript.mjs apps/worker/src/eval.ts",
+    "samples:register": "node --import ./scripts/node/register-typescript.mjs scripts/make-sample-register.mjs",
+    "samples:voice": "bash scripts/make-sample-voice.sh",
     "emulators": "firebase emulators:start --config infra/firebase.json --project civora-local",
     "audit": "pnpm audit --audit-level high",
     "check:bundle": "node scripts/check-browser-bundle.mjs",

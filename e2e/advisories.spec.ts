@@ -44,6 +44,21 @@ interface AdvisoryView {
   }[];
 }
 
+/**
+ * How long the surface may take to answer while another journey holds the
+ * server's thread.
+ *
+ * The result panel appears when a whole pass over the set has finished — every
+ * alert, in every language it carries — and the pass is the platform's own work
+ * on one thread. Asserting the panel's wording is the point of this suite;
+ * failing because a neighbouring spec was mid-arithmetic would be measuring the
+ * queue instead, so the waiting is made explicit rather than left to the default.
+ */
+const PATIENCE_MS = 60_000;
+
+/** The same patience, for the surface's own first render. */
+const PATIENT = { timeout: PATIENCE_MS } as const;
+
 const readAdvisories = async (request: APIRequestContext): Promise<AdvisoryView> => {
   const response = await request.get('/api/advisories');
   expect(response.ok()).toBe(true);
@@ -129,14 +144,14 @@ test.describe('the advisory set', () => {
     await page.goto('/intelligence');
 
     const summary = page.getByTestId('advisory-summary');
-    await expect(summary).toContainText('fixture');
+    await expect(summary).toContainText('fixture', PATIENT);
     await expect(summary).toContainText(String(advisories.languages.length));
     await expect(summary).toContainText(String(expected));
 
     // One entry per language per alert, every one of them refused and reason
     // given, so a reader of any language knows the difference between an empty
     // body and a writer that was not there.
-    await expect(page.getByTestId('advisory-language')).toHaveCount(expected);
+    await expect(page.getByTestId('advisory-language')).toHaveCount(expected, PATIENT);
     await expect(page.getByTestId('advisory-refusal')).toHaveCount(expected);
     await expect(page.getByTestId('advisory-language').first()).toHaveAttribute(
       'data-status',
@@ -183,7 +198,7 @@ test.describe('the advisory set', () => {
 
     await page.goto('/intelligence');
     await page.getByTestId('advisory-regenerate').click();
-    await expect(page.getByTestId('advisory-result')).toContainText('0 written');
+    await expect(page.getByTestId('advisory-result')).toContainText('0 written', PATIENT);
     await expect(page.getByTestId('advisory-result')).toContainText('refused');
   });
 });

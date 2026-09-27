@@ -220,6 +220,12 @@ const visit = async (page: Page, path: string, session?: Session): Promise<void>
  * a chain of 8 entries" — contains three numbers followed by the same word, so a
  * parser that matches the first is reading a different quantity than the
  * assertion thinks it is, and would pass on a coincidence.
+ *
+ * **The page pluralizes**, and a run can find the chain holding one entry: the
+ * store starts empty, so the first journey of a run that records something is
+ * looking at a chain of exactly one. "chain of 1 entry" is a correct reading of
+ * the trail, so the phrases accept both forms rather than requiring the plural a
+ * busier run happens to print.
  */
 const countIn = (text: string, pattern: RegExp): number => {
   const match = pattern.exec(text.replaceAll(',', ''));
@@ -227,12 +233,12 @@ const countIn = (text: string, pattern: RegExp): number => {
   return Number(match?.[1] ?? '0');
 };
 
-/** "…is in a chain of 8 entries". */
-const CHAIN_OF = /chain of (\d+) entries/;
+/** "…is in a chain of 8 entries", or "…of 1 entry". */
+const CHAIN_OF = /chain of (\d+) entr(?:y|ies)/;
 /** "all 8 entries link to the one before them", the verification's own sentence. */
-const WALKED = /all (\d+) entries/;
-/** "of 5 matching entries". */
-const MATCHING = /of (\d+) matching entries/;
+const WALKED = /all (\d+) entr(?:y|ies)/;
+/** "of 5 matching entries", or "of 1 matching entry". */
+const MATCHING = /of (\d+) matching entr(?:y|ies)/;
 
 test.describe('the audit chain', () => {
   test('holds, and the walk the viewer reports covers the whole chain', async ({
@@ -248,8 +254,20 @@ test.describe('the audit chain', () => {
 
     await visit(page, '/audit');
 
-    await expect(page.getByTestId('audit-report')).toHaveAttribute('data-valid', 'true');
-    await expect(page.getByTestId('audit-rows')).toBeVisible();
+    // The surface's own first render is a read like any other — the trail is
+    // fetched, then the walk is reported — so it is given the same patience as
+    // the requests above rather than the default, for the reason stated at the
+    // top of this file: a blank five seconds under a parallel run measures the
+    // queue, not the chain.
+    await expect(page.getByTestId('audit-report')).toHaveAttribute('data-valid', 'true', {
+      timeout: PATIENCE_MS,
+    });
+    await expect(page.getByTestId('audit-rows')).toBeVisible({ timeout: PATIENCE_MS });
+    // The count line arrives with the same payload, so it is read after the report
+    // it belongs to rather than raced against it.
+    await expect(page.getByTestId('audit-count')).toContainText('chain of', {
+      timeout: PATIENCE_MS,
+    });
 
     // Read off the page itself: the entries the report says it walked, and the
     // entries the chain is said to hold. They have to be the same number, because
@@ -276,7 +294,9 @@ test.describe('the audit chain', () => {
 
     // And the walk can be asked for again, which is the action the phase names.
     await page.getByTestId('audit-verify').click();
-    await expect(page.getByTestId('audit-report')).toHaveAttribute('data-valid', 'true');
+    await expect(page.getByTestId('audit-report')).toHaveAttribute('data-valid', 'true', {
+      timeout: PATIENCE_MS,
+    });
   });
 
   test('records a capture a facility made, with the actor who made it', async ({
@@ -317,8 +337,12 @@ test.describe('the audit chain', () => {
     // The clerk who recorded it is not shown the chain; the control room is.
     await visit(page, '/audit');
     await expect(page.getByTestId('audit-refusal')).toHaveCount(0);
-    await expect(page.getByTestId('audit-rows')).toContainText(target.session.label);
-    await expect(page.getByTestId('audit-rows')).toContainText('capture-recorded');
+    await expect(page.getByTestId('audit-rows')).toContainText(target.session.label, {
+      timeout: PATIENCE_MS,
+    });
+    await expect(page.getByTestId('audit-rows')).toContainText('capture-recorded', {
+      timeout: PATIENCE_MS,
+    });
   });
 
   test('records the federated rounds a session caused, and what they spent', async ({

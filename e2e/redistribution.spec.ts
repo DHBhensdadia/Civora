@@ -353,6 +353,17 @@ test.describe('the redistribution workbench', () => {
     expect(unchanged?.decision?.reason).toBe(decided.decision.reason);
     expect(unchanged?.decision?.at).toBe(decided.decision.at);
     expect(after.audit.valid).toBe(true);
-    expect(after.audit.events).toBe(before.audit.events);
+    // The chain itself may grow while this journey runs — other journeys against
+    // the same server record their own consequential actions, so a whole-chain
+    // count is not this test's to assert. "Nothing moved" is asserted on what the
+    // refusals named: the record of this proposal still holds the single event
+    // the approval wrote, and the proposal that does not exist holds none.
+    const eventsFor = (view: RedistributionView, subjectId: string): number =>
+      view.auditEvents.filter((event) => event.subjectId === subjectId).length;
+    expect(eventsFor(after, decided.proposal.id)).toBe(1);
+    expect(eventsFor(after, decided.proposal.id)).toBe(eventsFor(before, decided.proposal.id));
+    expect(eventsFor(after, 'transfer:nowhere:nowhere:nothing:none')).toBe(0);
+    // Appending is the only write the trail admits, so the count cannot fall.
+    expect(after.audit.events).toBeGreaterThanOrEqual(before.audit.events);
   });
 });

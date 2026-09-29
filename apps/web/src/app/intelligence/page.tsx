@@ -195,7 +195,7 @@ const BAND_CLASSES: Readonly<Record<IntelligenceRow['band'], string>> = {
   high: 'border-signal-high/40 bg-signal-high/10 text-signal-high',
   watch: 'border-signal-watch/30 bg-signal-watch/5 text-signal-watch',
   low: 'border-signal-ok/30 bg-signal-ok/5 text-signal-ok',
-  unknown: 'border-ink-600 bg-ink-800 text-fg',
+  unknown: 'border-hairline bg-paper-sunken text-ink',
 };
 
 /**
@@ -422,7 +422,7 @@ export default function IntelligencePage() {
   if (payload === null) {
     return (
       <PageHeader spacing="roomy" title="Poorvadarshan · Chetavani">
-        <p className="text-sm text-fg-muted">
+        <p className="text-sm text-ink-muted">
           {error === null
             ? 'Scoring the demonstration dataset — forecast, surge lift, nine drivers, alerts…'
             : `The intelligence read failed: ${error}`}
@@ -436,12 +436,12 @@ export default function IntelligencePage() {
   return (
     <div className="flex flex-col gap-12">
       <PageHeader label="Risk and forecasting" spacing="roomy" title="Poorvadarshan · Chetavani">
-        <p className="max-w-measure text-sm text-fg-muted">
+        <p className="max-w-measure text-sm text-ink-muted">
           What the platform expects to happen to each facility&apos;s stock, and what it is asking
           somebody to do about it. Every pair is scored from one run at one day, so two readers
           looking at the same district see the same figures.
         </p>
-        <p className="text-xs text-fg-subtle">
+        <p className="text-xs text-ink-subtle">
           Every figure is derived from the generated dataset (`{payload.store.seed}`, scenario{' '}
           {payload.store.scenarioId}). The band is chosen from what was measured about the shelf;
           the item&apos;s essentiality and the district&apos;s population are shown beside it as
@@ -519,7 +519,7 @@ export default function IntelligencePage() {
         description="Conditions that justify somebody acting today, each carrying the quantity that put it there. Acknowledging, escalating, proposing an action, snoozing or resolving an alert appends to its history with who did it, when, and why — and a move the model does not allow is refused rather than clamped."
       >
         {inbox.length === 0 ? (
-          <p className="text-sm text-fg-muted" data-testid="inbox-empty">
+          <p className="text-sm text-ink-muted" data-testid="inbox-empty">
             Nothing in the inbox at this scoring day.
           </p>
         ) : (
@@ -529,21 +529,21 @@ export default function IntelligencePage() {
                 key={alert.id}
                 aria-label={`Alert for ${alert.itemId} at ${alert.facilityId}`}
                 data-testid={`alert-${alert.id}`}
-                className={`rounded-instrument border border-l-2 border-ink-700 bg-ink-900 p-4 ${SEVERITY_RAIL[alert.severity] ?? 'border-l-ink-600'}`}
+                className={`rounded-card border border-l-2 border-hairline bg-paper-raised p-4 ${SEVERITY_RAIL[alert.severity] ?? 'border-l-hairline'}`}
               >
                 <div className="flex flex-wrap items-center gap-2 text-xs">
                   <span className="rounded-full border border-signal-critical/40 bg-signal-critical/10 px-2.5 py-0.5 font-mono text-eyebrow text-signal-critical uppercase">
                     {severityLabel(alert.severity, language)}
                   </span>
-                  <span className="rounded-full border border-ink-600 px-2.5 py-0.5 font-mono text-eyebrow text-fg-muted uppercase">
+                  <span className="rounded-full border border-hairline px-2.5 py-0.5 font-mono text-eyebrow text-ink-muted uppercase">
                     {stateLabel(alert.state, language)}
                   </span>
-                  <span className="text-fg-subtle">
+                  <span className="text-ink-subtle">
                     {formatDate(alert.raisedOn, language)} · condition {alert.dedupeKey}
                   </span>
                 </div>
 
-                <p className="mt-2 text-sm text-fg">{alert.bodies.en}</p>
+                <p className="mt-2 text-sm text-ink">{alert.bodies.en}</p>
 
                 {/*
                  * Reading it aloud, which is how an alert reaches a health
@@ -555,7 +555,7 @@ export default function IntelligencePage() {
                 <SpeakButton alertId={alert.id} bodies={alert.bodies} language={language} />
 
                 {alert.history.length === 0 ? null : (
-                  <ol className="mt-3 flex flex-col gap-1 text-xs text-fg-muted">
+                  <ol className="mt-3 flex flex-col gap-1 text-xs text-ink-muted">
                     {alert.history.map((move, index) => (
                       <li key={`${alert.id}:${String(index)}`}>
                         {move.from} → {move.to} · {move.actor} ({move.actorRole}) · {move.at} —{' '}
@@ -566,11 +566,11 @@ export default function IntelligencePage() {
                 )}
 
                 <div className="mt-3 flex flex-wrap items-center gap-2">
-                  <label className="flex items-center gap-2 text-xs text-fg-muted">
+                  <label className="flex items-center gap-2 text-xs text-ink-muted">
                     {messageFor(language, 'alert.reason')}
                     <input
                       aria-label={`Reason for ${alert.itemId}`}
-                      className="w-64 min-h-11 rounded-instrument border border-ink-600 bg-ink-950 px-2 py-1 text-sm text-fg"
+                      className="w-64 min-h-11 rounded-card border border-hairline bg-paper px-2 py-1 text-sm text-ink"
                       onChange={(event) => {
                         setReasons((current) => ({ ...current, [alert.id]: event.target.value }));
                       }}
@@ -605,7 +605,7 @@ export default function IntelligencePage() {
         description="An alert says a shelf is going to run out; it does not explain it, in the language the officer reads. These are the bodies a writer produced for the whole alert set, once, before anybody opened a row — and every language the alert record carries is named, whether or not prose exists for it, because a blank space where a body should be is the one thing a reader would take for agreement."
       >
         {advisories === null ? (
-          <p className="text-sm text-fg-muted" data-testid="advisory-pending">
+          <p className="text-sm text-ink-muted" data-testid="advisory-pending">
             {advisoryBusy
               ? 'Asking the writer for a body per language for the whole alert set…'
               : 'No advisory read has happened yet.'}
@@ -619,7 +619,7 @@ export default function IntelligencePage() {
               </p>
             ) : null}
             <div
-              className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-instrument border border-ink-700 bg-ink-900 px-3 py-2 text-sm text-fg-muted"
+              className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-card border border-hairline bg-paper-raised px-3 py-2 text-sm text-ink-muted"
               data-testid="advisory-summary"
             >
               <span>
@@ -638,7 +638,7 @@ export default function IntelligencePage() {
               <span className="text-signal-watch">
                 refused <span className="font-mono">{String(advisories.refused)}</span>
               </span>
-              <span className="text-xs text-fg-subtle">
+              <span className="text-xs text-ink-subtle">
                 {advisories.regenerated
                   ? `written by this read in ${String(advisories.generatedInMs)} ms, at ${advisories.generatedAt}`
                   : `answered from this process; the set was written at ${advisories.generatedAt}`}
@@ -648,7 +648,7 @@ export default function IntelligencePage() {
             {advisories.languages.some((code) =>
               advisories.offered.every((offered) => offered.code !== code),
             ) ? (
-              <p className="text-xs text-fg-subtle">
+              <p className="text-xs text-ink-subtle">
                 An alert carries a language this build does not offer:{' '}
                 {advisories.languages
                   .filter((code) => advisories.offered.every((offered) => offered.code !== code))
@@ -657,7 +657,7 @@ export default function IntelligencePage() {
               </p>
             ) : null}
 
-            <p className="text-xs text-fg-subtle">
+            <p className="text-xs text-ink-subtle">
               Offered and not carried by any alert yet:{' '}
               {advisories.offered
                 .filter((offered) => !advisories.languages.includes(offered.code))
@@ -671,10 +671,10 @@ export default function IntelligencePage() {
               {advisories.alerts.map((alert) => (
                 <li
                   key={alert.alertId}
-                  className="rounded-instrument border border-ink-700 bg-ink-900 p-3"
+                  className="rounded-card border border-hairline bg-paper-raised p-3"
                   data-testid="advisory-alert"
                 >
-                  <p className="text-sm text-fg">
+                  <p className="text-sm text-ink">
                     {alert.facilityName} · {alert.itemName} ·{' '}
                     <span className="text-signal-critical">
                       {' '}
@@ -687,25 +687,25 @@ export default function IntelligencePage() {
                     {alert.languages.map((language) => (
                       <li
                         key={`${alert.alertId}:${language.language}`}
-                        className="rounded-instrument border border-ink-700 bg-ink-950/60 px-3 py-2"
+                        className="rounded-card border border-hairline bg-paper/60 px-3 py-2"
                         data-language={language.language}
                         data-status={language.status}
                         data-testid="advisory-language"
                       >
                         <div className="flex flex-wrap items-center gap-2 text-xs">
-                          <span className="text-fg-muted">{language.label}</span>
+                          <span className="text-ink-muted">{language.label}</span>
                           <span
                             className={
                               language.status === 'written'
-                                ? 'rounded-instrument border border-signal-ok/40 bg-signal-ok/10 px-2 py-0.5 text-signal-ok'
-                                : 'rounded-instrument border border-signal-watch/40 bg-signal-watch/10 px-2 py-0.5 text-signal-watch'
+                                ? 'rounded-card border border-signal-ok/40 bg-signal-ok/10 px-2 py-0.5 text-signal-ok'
+                                : 'rounded-card border border-signal-watch/40 bg-signal-watch/10 px-2 py-0.5 text-signal-watch'
                             }
                             data-testid="advisory-status"
                           >
                             {language.status}
                           </span>
                           {language.model === null ? null : (
-                            <span className="text-fg-subtle">
+                            <span className="text-ink-subtle">
                               {language.model}
                               {language.cacheHit ? ' · from cache' : ''}
                             </span>
@@ -714,23 +714,23 @@ export default function IntelligencePage() {
 
                         {language.generated === null ? null : (
                           <div className="mt-2 flex flex-col gap-1">
-                            <p className="text-sm text-fg">{language.generated}</p>
+                            <p className="text-sm text-ink">{language.generated}</p>
                             {language.actions.length === 0 ? null : (
-                              <ul className="list-inside list-disc text-xs text-fg-muted">
+                              <ul className="list-inside list-disc text-xs text-ink-muted">
                                 {language.actions.map((action) => (
                                   <li key={action}>{action}</li>
                                 ))}
                               </ul>
                             )}
-                            <p className="text-xs text-fg-subtle">
+                            <p className="text-xs text-ink-subtle">
                               cites {language.citations.join(', ')}
                             </p>
                           </div>
                         )}
 
-                        <p className="mt-2 text-xs text-fg-muted">
+                        <p className="mt-2 text-xs text-ink-muted">
                           In the record for this language:{' '}
-                          <span className="text-fg-muted">
+                          <span className="text-ink-muted">
                             {language.inRecord ?? 'nothing — no body exists in this language yet'}
                           </span>
                         </p>
@@ -762,7 +762,7 @@ export default function IntelligencePage() {
               >
                 Ask the writer again
               </button>
-              <span className="text-xs text-fg-subtle">
+              <span className="text-xs text-ink-subtle">
                 A refusal is a result, not a failure: with no reasoning provider configured every
                 language above refuses, and the alert keeps the body it was raised with rather than
                 losing it to a writer that could not improve it. No numeral in a generated body may
@@ -786,13 +786,13 @@ export default function IntelligencePage() {
         description="Counted at the call by the adapter itself, for this process: requests, attempts against the model, answers served from cache, refusals, tokens and time spent waiting. The ceiling here is a free tier and a per-day rate limit, so the figures are the platform's own account of what it spent rather than an estimate from document counts. The adapter is named beside them, because the same panel under a replay adapter is not a measurement of a model."
       >
         {telemetry === null ? (
-          <p className="text-sm text-fg-muted" data-testid="telemetry-pending">
+          <p className="text-sm text-ink-muted" data-testid="telemetry-pending">
             No telemetry read has happened yet.
           </p>
         ) : (
           <div className="flex flex-col gap-4">
             <div
-              className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-instrument border border-ink-700 bg-ink-900 px-3 py-2 text-sm text-fg-muted"
+              className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-card border border-hairline bg-paper-raised px-3 py-2 text-sm text-ink-muted"
               data-testid="telemetry-provider"
               data-provider={telemetry.provider}
               data-reported={telemetry.reported ? 'yes' : 'no'}
@@ -805,7 +805,7 @@ export default function IntelligencePage() {
                   ? 'sends nowhere — it replays recorded answers'
                   : `model ${telemetry.model}`}
               </span>
-              <span className="text-xs text-fg-subtle">
+              <span className="text-xs text-ink-subtle">
                 snapshot taken {telemetry.readAt}, refreshed with the inbox every 5 seconds
               </span>
             </div>
@@ -813,7 +813,7 @@ export default function IntelligencePage() {
             {telemetry.reported ? (
               <>
                 <div
-                  className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-fg-muted"
+                  className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-ink-muted"
                   data-testid="telemetry-totals"
                 >
                   <span>
@@ -839,79 +839,79 @@ export default function IntelligencePage() {
                 </div>
 
                 {telemetry.perTask.length === 0 ? (
-                  <p className="text-sm text-fg-muted" data-testid="telemetry-none">
+                  <p className="text-sm text-ink-muted" data-testid="telemetry-none">
                     Nothing has been asked of a model in this process yet, so there is nothing to
                     attribute. A panel of zeros here would be a claim; this is not one.
                   </p>
                 ) : (
-                  <div className="overflow-x-auto rounded-instrument border border-ink-700">
+                  <div className="overflow-x-auto rounded-card border border-hairline">
                     <table className="w-full border-collapse text-sm">
                       <caption className="sr-only">
                         Requests made, per task, with attempts, refusals and time
                       </caption>
                       <thead>
-                        <tr className="border-b border-ink-700 bg-ink-900 text-left">
-                          <th scope="col" className="px-4 py-2 font-medium text-fg-muted">
+                        <tr className="border-b border-hairline bg-paper-raised text-left">
+                          <th scope="col" className="px-4 py-2 font-medium text-ink-muted">
                             Task
                           </th>
                           <th
                             scope="col"
-                            className="px-4 py-2 text-right font-medium text-fg-muted"
+                            className="px-4 py-2 text-right font-medium text-ink-muted"
                           >
                             Calls
                           </th>
                           <th
                             scope="col"
-                            className="px-4 py-2 text-right font-medium text-fg-muted"
+                            className="px-4 py-2 text-right font-medium text-ink-muted"
                           >
                             Attempts
                           </th>
                           <th
                             scope="col"
-                            className="px-4 py-2 text-right font-medium text-fg-muted"
+                            className="px-4 py-2 text-right font-medium text-ink-muted"
                           >
                             Cache
                           </th>
                           <th
                             scope="col"
-                            className="px-4 py-2 text-right font-medium text-fg-muted"
+                            className="px-4 py-2 text-right font-medium text-ink-muted"
                           >
                             Refused
                           </th>
                           <th
                             scope="col"
-                            className="px-4 py-2 text-right font-medium text-fg-muted"
+                            className="px-4 py-2 text-right font-medium text-ink-muted"
                           >
                             Tokens in / out
                           </th>
                           <th
                             scope="col"
-                            className="px-4 py-2 text-right font-medium text-fg-muted"
+                            className="px-4 py-2 text-right font-medium text-ink-muted"
                           >
                             Mean
                           </th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-ink-700/70">
+                      <tbody className="divide-y divide-hairline/70">
                         {telemetry.perTask.map((task) => (
                           <tr key={task.task} data-task={task.task} data-testid="telemetry-task">
-                            <td className="px-4 py-2 font-mono text-fg">{task.task}</td>
-                            <td className="px-4 py-2 text-right font-mono text-fg-muted">
+                            <td className="px-4 py-2 font-mono text-ink">{task.task}</td>
+                            <td className="px-4 py-2 text-right font-mono text-ink-muted">
                               {formatCount(task.calls)}
                             </td>
-                            <td className="px-4 py-2 text-right font-mono text-fg-muted">
+                            <td className="px-4 py-2 text-right font-mono text-ink-muted">
                               {formatCount(task.attempts)}
                             </td>
-                            <td className="px-4 py-2 text-right font-mono text-fg-muted">
+                            <td className="px-4 py-2 text-right font-mono text-ink-muted">
                               {formatCount(task.cacheHits)}
                             </td>
                             <td className="px-4 py-2 text-right font-mono text-signal-watch">
                               {formatCount(task.failures)}
                             </td>
-                            <td className="px-4 py-2 text-right font-mono text-fg-muted">
+                            <td className="px-4 py-2 text-right font-mono text-ink-muted">
                               {countOr(task.inputTokens)} / {countOr(task.outputTokens)}
                             </td>
-                            <td className="px-4 py-2 text-right font-mono text-fg-muted">
+                            <td className="px-4 py-2 text-right font-mono text-ink-muted">
                               {millisOr(task.meanRequestMs)}
                             </td>
                           </tr>
@@ -930,7 +930,7 @@ export default function IntelligencePage() {
             )}
 
             <div
-              className="rounded-instrument border border-ink-700 bg-ink-900 px-3 py-2 text-sm text-fg-muted"
+              className="rounded-card border border-hairline bg-paper-raised px-3 py-2 text-sm text-ink-muted"
               data-testid="telemetry-projection"
             >
               <p>
@@ -945,7 +945,7 @@ export default function IntelligencePage() {
                 {formatCount(telemetry.projection.advisoryPass)} requests a day for the
                 demonstration profile.
               </p>
-              <p className="mt-1 text-xs text-fg-subtle">
+              <p className="mt-1 text-xs text-ink-subtle">
                 A photograph and a recording are {formatCount(telemetry.projection.perCapture)}{' '}
                 request each — a capture is one request, and a retry that actually happened is
                 counted in the attempts above rather than estimated here. People take photographs
@@ -965,7 +965,7 @@ export default function IntelligencePage() {
                 provider&apos;s account of itself.
               </p>
             ) : (
-              <p className="text-xs text-fg-subtle" data-testid="telemetry-caveat">
+              <p className="text-xs text-ink-subtle" data-testid="telemetry-caveat">
                 A refusal is counted here as a failure, and a retry as an extra attempt against the
                 model: neither is hidden, because a count that only rose on success would make a
                 quota problem invisible until it became an outage. No numeral from this panel
@@ -982,31 +982,31 @@ export default function IntelligencePage() {
         title="Risk-ranked list"
         description="Every scored pair, worst first, with the driver contributions behind the order. The index ranks and bands; it is not a probability, which is why the forecast's own measured probability and the window it was measured over are shown beside it."
       >
-        <div className="overflow-x-auto rounded-instrument border border-ink-700">
+        <div className="overflow-x-auto rounded-card border border-hairline">
           <table className="w-full border-collapse text-sm">
             <caption className="sr-only">
               Facility-item pairs ranked by stock-out risk, with drivers
             </caption>
             <thead>
-              <tr className="border-b border-ink-700 bg-ink-900 text-left">
-                <th scope="col" className="px-4 py-2 font-medium text-fg-muted">
+              <tr className="border-b border-hairline bg-paper-raised text-left">
+                <th scope="col" className="px-4 py-2 font-medium text-ink-muted">
                   Band
                 </th>
-                <th scope="col" className="px-4 py-2 font-medium text-fg-muted">
+                <th scope="col" className="px-4 py-2 font-medium text-ink-muted">
                   Facility · item
                 </th>
-                <th scope="col" className="px-4 py-2 text-right font-medium text-fg-muted">
+                <th scope="col" className="px-4 py-2 text-right font-medium text-ink-muted">
                   Index
                 </th>
-                <th scope="col" className="px-4 py-2 font-medium text-fg-muted">
+                <th scope="col" className="px-4 py-2 font-medium text-ink-muted">
                   Measured shortfall
                 </th>
-                <th scope="col" className="px-4 py-2 font-medium text-fg-muted">
+                <th scope="col" className="px-4 py-2 font-medium text-ink-muted">
                   Why
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-ink-700/70">
+            <tbody className="divide-y divide-hairline/70">
               {payload.rows.map((row) => (
                 <tr
                   key={`${row.facilityId}|${row.itemId}`}
@@ -1020,32 +1020,32 @@ export default function IntelligencePage() {
                       {row.band}
                     </span>
                   </td>
-                  <td className="px-4 py-2 text-fg-muted">
-                    <span className="block text-fg">{row.itemName}</span>
-                    <span className="text-xs text-fg-subtle">
+                  <td className="px-4 py-2 text-ink-muted">
+                    <span className="block text-ink">{row.itemName}</span>
+                    <span className="text-xs text-ink-subtle">
                       {row.facilityName} · {row.districtName} · {row.essentiality}
                     </span>
                   </td>
-                  <td className="px-4 py-2 text-right font-mono text-fg">
+                  <td className="px-4 py-2 text-right font-mono text-ink">
                     {row.riskIndex.toFixed(2)}
                   </td>
-                  <td className="px-4 py-2 font-mono text-fg-muted">{probability(row)}</td>
-                  <td className="px-4 py-2 text-fg-muted">
+                  <td className="px-4 py-2 font-mono text-ink-muted">{probability(row)}</td>
+                  <td className="px-4 py-2 text-ink-muted">
                     <details>
                       <summary className="cursor-pointer text-xs text-accent">
                         Nine drivers
-                        <span className="ml-2 text-fg-subtle">
+                        <span className="ml-2 text-ink-subtle">
                           {row.drivers[0]?.driver ?? 'none'} first
                         </span>
                       </summary>
                       <ul className="mt-2 flex flex-col gap-1 text-xs">
                         {row.drivers.map((driver) => (
                           <li key={driver.driver} className="flex gap-2">
-                            <span className="w-10 shrink-0 text-right font-mono text-fg-muted">
+                            <span className="w-10 shrink-0 text-right font-mono text-ink-muted">
                               {signed(driver.contribution)}
                             </span>
-                            <span className="text-fg-muted">
-                              <span className="font-medium text-fg">{driver.driver}</span> —{' '}
+                            <span className="text-ink-muted">
+                              <span className="font-medium text-ink">{driver.driver}</span> —{' '}
                               {driver.detail}
                             </span>
                           </li>
@@ -1072,7 +1072,7 @@ export default function IntelligencePage() {
         description="Syndromic series whose level moved beyond the facility's own seasonal and weekly pattern, with the growth rate a decision is made on. A signal lifts the forecast for every item that treats the syndrome."
       >
         {payload.events.length === 0 ? (
-          <p className="text-sm text-fg-muted" data-testid="events-empty">
+          <p className="text-sm text-ink-muted" data-testid="events-empty">
             No epidemic signal was detected in this scoring run. A quiet year is a result.
           </p>
         ) : (
@@ -1080,12 +1080,12 @@ export default function IntelligencePage() {
             {payload.events.map((event) => (
               <li
                 key={event.id}
-                className="rounded-instrument border border-ink-700 bg-ink-900 p-4 text-sm"
+                className="rounded-card border border-hairline bg-paper-raised p-4 text-sm"
               >
-                <p className="text-fg">
+                <p className="text-ink">
                   {event.syndrome} · {event.facilityName} · {event.districtName}
                 </p>
-                <p className="mt-1 text-xs text-fg-muted">
+                <p className="mt-1 text-xs text-ink-muted">
                   detected {event.detectedOn} by {event.method} over {event.windowDays} days ·
                   growth {percent(event.growthRate)} a day · {event.baselineCaseCount.toFixed(1)}{' '}
                   expected against {event.observedCaseCount.toFixed(1)} seen

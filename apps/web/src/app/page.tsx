@@ -41,7 +41,7 @@ export default async function HomePage() {
         spacing="roomy"
         title={env.appName}
       >
-        <p className="max-w-measure text-lg text-fg-muted">
+        <p className="max-w-measure text-lg text-ink-muted">
           A federated platform for health resource and supply-chain planning across the primary
           health centre network.
         </p>
@@ -53,7 +53,7 @@ export default async function HomePage() {
        */}
       <section
         aria-labelledby="status-heading"
-        className="rounded-instrument border border-signal-watch/40 bg-signal-watch/10 p-6 sm:p-8"
+        className="rounded-card border border-signal-watch/40 bg-signal-watch/10 p-6 sm:p-8"
       >
         <h2 id="status-heading" className="max-w-measure text-2xl text-balance text-signal-watch">
           The platform proposes redistribution — and executes none of it
@@ -117,7 +117,7 @@ export default async function HomePage() {
           <h2 id="adapters-heading" className="text-2xl">
             Active adapters
           </h2>
-          <p className="max-w-measure text-sm text-fg-muted">
+          <p className="max-w-measure text-sm text-ink-muted">
             Every external boundary is a port. With no cloud credentials configured the process runs
             against local adapters, which is how the platform stays testable and demoable offline.
           </p>
@@ -127,7 +127,7 @@ export default async function HomePage() {
             <StatCard key={adapter.port} label={adapter.port} value={adapter.kind} />
           ))}
         </div>
-        <p className="text-sm text-fg-subtle">
+        <p className="text-sm text-ink-subtle">
           Data adapter health:{' '}
           <span className={data.ok ? 'text-signal-ok' : 'text-signal-critical'}>
             {data.ok ? 'reachable' : 'unreachable'}
@@ -142,7 +142,7 @@ export default async function HomePage() {
           <h2 id="modules-heading" className="text-2xl">
             Modules
           </h2>
-          <p className="max-w-measure text-sm text-fg-muted">
+          <p className="max-w-measure text-sm text-ink-muted">
             Five capabilities, and a status for each, in the platform&rsquo;s own words rather than
             a percentage. All five are present; none is described as more than a command measured,
             and the managed federation substrate is named as documented rather than built.
@@ -152,14 +152,14 @@ export default async function HomePage() {
           {MODULES.map((module) => (
             <li
               key={module.name}
-              className="flex flex-col gap-3 rounded-instrument border border-ink-700 bg-ink-900 p-5"
+              className="flex flex-col gap-3 rounded-card border border-hairline bg-paper-raised p-5"
             >
               <Eyebrow>{module.meaning}</Eyebrow>
               <h3 className="text-xl">{module.name}</h3>
-              <p className="max-w-measure text-sm text-fg-muted">{module.responsibility}</p>
+              <p className="max-w-measure text-sm text-ink-muted">{module.responsibility}</p>
               <p
-                className={`max-w-measure border-t border-ink-700 pt-3 text-sm ${
-                  module.status === 'not implemented' ? 'text-fg-subtle' : 'text-signal-ok'
+                className={`max-w-measure border-t border-hairline pt-3 text-sm ${
+                  module.status === 'not implemented' ? 'text-ink-subtle' : 'text-signal-ok'
                 }`}
               >
                 {module.status}
@@ -169,23 +169,23 @@ export default async function HomePage() {
         </ul>
       </section>
 
-      <footer className="flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-ink-700 pt-6 font-mono text-eyebrow text-fg-subtle uppercase">
+      <footer className="flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-hairline pt-6 font-mono text-eyebrow text-ink-subtle uppercase">
         <span>Version {APP_VERSION}</span>
         <span>{formatCount(MODULES.length)} modules</span>
         <Link
-          className="inline-flex min-h-11 items-center text-accent transition-colors duration-150 hover:text-fg"
+          className="inline-flex min-h-11 items-center text-accent transition-colors duration-150 hover:text-ink"
           href="/healthz"
         >
           Health check
         </Link>
         <Link
-          className="inline-flex min-h-11 items-center text-accent transition-colors duration-150 hover:text-fg"
+          className="inline-flex min-h-11 items-center text-accent transition-colors duration-150 hover:text-ink"
           href="/readyz"
         >
           Readiness
         </Link>
         <Link
-          className="inline-flex min-h-11 items-center text-accent transition-colors duration-150 hover:text-fg"
+          className="inline-flex min-h-11 items-center text-accent transition-colors duration-150 hover:text-ink"
           href="/provenance"
         >
           Data provenance

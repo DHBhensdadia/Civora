@@ -39,9 +39,9 @@ const MOVEMENTS_SHOWN = 12;
 /** How each capture family is drawn, so the words and the colour agree. */
 const CAPTURE_TONES: Readonly<Record<CaptureTone, string>> = {
   extracted: 'border-accent/40 bg-accent/10 text-accent',
-  typed: 'border-ink-600 bg-ink-800 text-fg-muted',
+  typed: 'border-hairline bg-paper-sunken text-ink-muted',
   imported: 'border-violet-500/40 bg-violet-500/10 text-violet-200',
-  generated: 'border-ink-600 bg-ink-900 text-fg-muted',
+  generated: 'border-hairline bg-paper-raised text-ink-muted',
   unknown: 'border-signal-critical/40 bg-signal-critical/10 text-signal-critical',
 };
 
@@ -209,7 +209,7 @@ export default function VisibilityPage() {
   if (payload === null) {
     return (
       <PageHeader spacing="roomy" title="What the district can see">
-        <p className="text-fg-muted">{error ?? 'Reading the district…'}</p>
+        <p className="text-ink-muted">{error ?? 'Reading the district…'}</p>
       </PageHeader>
     );
   }
@@ -253,13 +253,13 @@ export default function VisibilityPage() {
   return (
     <div className="flex flex-col gap-12">
       <PageHeader label="Drishti · visibility" title="What the district can see">
-        <p className="max-w-measure text-fg-muted">
+        <p className="max-w-measure text-ink-muted">
           Live stock positions, bed pressure and attendance for every facility in {district.name},{' '}
           {district.regionName} — and, alongside them, the facilities the platform has heard nothing
           from. Silence is reported as silence: an unreported facility has unknown stock, not full
           shelves.
         </p>
-        <p className="text-sm text-fg-muted">
+        <p className="text-sm text-ink-muted">
           Signed in as {payload.session.label} · reading as of {ledger.asOf} · refreshes every{' '}
           {String(REFRESH_INTERVAL_MS / 1000)} seconds (polling, because the local adapter has no
           change feed)
@@ -311,10 +311,10 @@ export default function VisibilityPage() {
           />
         </div>
         <label className="mt-4 flex max-w-sm flex-col gap-1 text-sm">
-          <span className="text-fg-muted">District</span>
+          <span className="text-ink-muted">District</span>
           <select
             aria-label="District"
-            className="rounded border border-ink-600 bg-ink-900 px-3 py-2"
+            className="rounded border border-hairline bg-paper-raised px-3 py-2"
             onChange={(event) => {
               setDistrictId(event.target.value);
             }}
@@ -327,7 +327,7 @@ export default function VisibilityPage() {
             ))}
           </select>
         </label>
-        <p className="text-sm text-fg-subtle">
+        <p className="text-sm text-ink-subtle">
           The list is scoped: a district officer sees the districts their scope covers and nothing
           else.
         </p>
@@ -358,8 +358,8 @@ export default function VisibilityPage() {
             const stock = reading.stock;
             return [
               <span key="name" className="flex flex-col">
-                <span className="text-fg">{facility.name}</span>
-                <span className="text-xs text-fg-subtle">
+                <span className="text-ink">{facility.name}</span>
+                <span className="text-xs text-ink-subtle">
                   {facility.tierLabel} · {facility.connectivity} connectivity
                   {facility.coldChain ? ' · cold chain' : ''}
                 </span>
@@ -446,7 +446,7 @@ export default function VisibilityPage() {
         description={`Items with less than ${formatCount(thresholds.criticalCoverDays)} days of cover at the current rate of use, across the district. Cover is computed from the ledger, corrected for days on which the shelf was empty — the recorded issue rate during a stock-out measures supply, not need.`}
       >
         {atRisk.length === 0 ? (
-          <p className="text-sm text-fg-muted">
+          <p className="text-sm text-ink-muted">
             No facility with a current reading has an item below{' '}
             {formatCount(thresholds.criticalCoverDays)} days of cover.
           </p>
@@ -464,8 +464,8 @@ export default function VisibilityPage() {
             ]}
             rows={atRisk.map((entry) => [
               <span key="item" className="flex flex-col">
-                <span className="text-fg">{entry.item.name}</span>
-                <span className="font-mono text-xs text-fg-subtle">{entry.item.itemId}</span>
+                <span className="text-ink">{entry.item.name}</span>
+                <span className="font-mono text-xs text-ink-subtle">{entry.item.itemId}</span>
               </span>,
               entry.facility,
               `${formatCount(entry.item.onHand)} ${entry.item.unit}`,
@@ -484,10 +484,10 @@ export default function VisibilityPage() {
         description={`The ${formatCount(MOVEMENTS_SHOWN)} most recent movements across the district, each labelled with the channel that produced it — extracted from a photograph or a voice note, typed by a person, imported from another system, or generated for the demonstration. A capture reads differently from the seeded history it sits beside, and a movement the platform cannot place is labelled with its raw source rather than folded into the nearest known one.`}
       >
         {movements.length === 0 ? (
-          <p className="text-sm text-fg-muted">No movements are held for this district.</p>
+          <p className="text-sm text-ink-muted">No movements are held for this district.</p>
         ) : (
           <ul
-            className="flex flex-col divide-y divide-ink-700 rounded-instrument border border-ink-700"
+            className="flex flex-col divide-y divide-hairline rounded-card border border-hairline"
             data-testid="movement-list"
           >
             {movements.map(({ facility, movement }) => {
@@ -499,7 +499,7 @@ export default function VisibilityPage() {
                   data-testid="movement-row"
                   data-capture={movement.captureSource}
                 >
-                  <span className="text-sm text-fg">
+                  <span className="text-sm text-ink">
                     {facility.name} · {movement.itemName} · {movement.kind}{' '}
                     {formatCount(movement.quantity)} · {movement.occurredOn}
                   </span>
@@ -531,7 +531,7 @@ export default function VisibilityPage() {
         />
       </Panel>
 
-      <footer className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-ink-700 pt-6 text-sm text-fg-subtle">
+      <footer className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-hairline pt-6 text-sm text-ink-subtle">
         <span>
           Generated from seed <code className="font-mono">{store.seed}</code> ·{' '}
           {formatCount(store.facilitiesWithHistory)} facilities with a history · window{' '}

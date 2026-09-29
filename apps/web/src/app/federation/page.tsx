@@ -242,7 +242,7 @@ function LedgerTable({
           formatCount(round.bytesIn),
         ])}
       />
-      <p className="text-xs text-fg-subtle">
+      <p className="text-xs text-ink-subtle">
         Losses are mean squared error in the shared basis, where the target has unit variance: 1 is
         what a model that predicts the pooled mean scores, so{' '}
         <span className="font-mono">1 − loss</span> is the share of the demand&rsquo;s variance the
@@ -295,7 +295,7 @@ export default function FederationPage() {
   if (payload === null) {
     return (
       <div className="flex flex-col gap-12">
-        <p className="text-fg-muted">
+        <p className="text-ink-muted">
           Running the federated rounds over the demonstration world — the partition, two runs and
           the curve. This takes a few seconds, once per server process.
         </p>
@@ -310,7 +310,7 @@ export default function FederationPage() {
   return (
     <div className="flex flex-col gap-12">
       <PageHeader label="Samvad · federation" title="Federated learning across state silos">
-        <p className="max-w-measure text-lg text-fg-muted">
+        <p className="max-w-measure text-lg text-ink-muted">
           Each {payload.world.regionLevelName} is a silo. A model is trained inside each one,
           clipped as it leaves, aggregated with the others, noised, and accounted for — and no
           record ever crosses a silo boundary. The numbers below are measurements from runs this
@@ -371,30 +371,30 @@ export default function FederationPage() {
         title="What was run, and on what"
         description="The world, the partition, the basis and the two seams a reader should know about before reading a single figure."
       >
-        <ul className="flex flex-col gap-2 text-sm text-fg-muted">
+        <ul className="flex flex-col gap-2 text-sm text-ink-muted">
           <li>
-            <span className="text-fg-subtle">World:</span> {payload.world.countryName} at{' '}
+            <span className="text-ink-subtle">World:</span> {payload.world.countryName} at{' '}
             {payload.world.regionLevelName} level · scenario {payload.world.scenarioId} (
             {payload.world.scenarioLabel}) · window {payload.world.window.from} →{' '}
             {payload.world.window.to} · generated from the published seed{' '}
             <span className="font-mono">{payload.world.seed}</span>
           </li>
           <li>
-            <span className="text-fg-subtle">Partition:</span>{' '}
+            <span className="text-ink-subtle">Partition:</span>{' '}
             {formatCount(payload.partition.silos)} silo(s),{' '}
             {formatCount(payload.partition.seriesTooShort)} series too short to use,{' '}
             {formatCount(payload.partition.regionsWithoutHistory)} region(s) with no history at all
             — counted rather than silently emptied.
           </li>
           <li>
-            <span className="text-fg-subtle">Censored demand:</span>{' '}
+            <span className="text-ink-subtle">Censored demand:</span>{' '}
             {formatCount(payload.partition.censoredDaysFound)} day(s) found and{' '}
             {formatCount(payload.partition.censoredDaysImputed)} imputed (
             {payload.partition.imputations.join(', ') || 'no correction needed'}) — a stock-out is
             not low demand, so the history is repaired before it is fitted.
           </li>
           <li>
-            <span className="text-fg-subtle">The basis:</span> {payload.basis.featureCount}{' '}
+            <span className="text-ink-subtle">The basis:</span> {payload.basis.featureCount}{' '}
             feature(s) from Phase 4&rsquo;s own schema, pooled across the silos from sums and counts
             — {formatCount(payload.basis.scaleExchange.payloads)} statistic payload(s),{' '}
             {formatCount(payload.basis.scaleExchange.bytes)} bytes — and the target standardised
@@ -403,7 +403,7 @@ export default function FederationPage() {
             different units is not a model of anything, so the basis is agreed before round one.
           </li>
         </ul>
-        <p className="rounded-instrument border border-ink-700 bg-ink-900 p-4 text-sm text-signal-watch/80">
+        <p className="rounded-card border border-hairline bg-paper-raised p-4 text-sm text-signal-watch/80">
           {payload.basis.paidFor}
         </p>
       </Panel>
@@ -509,7 +509,7 @@ export default function FederationPage() {
           caption="Round ledger of the run with Gaussian noise and a spent privacy budget"
           rounds={priced.rounds}
         />
-        <p className="rounded-instrument border border-signal-watch/40 bg-signal-watch/10 p-4 text-sm text-signal-watch/90">
+        <p className="rounded-card border border-signal-watch/40 bg-signal-watch/10 p-4 text-sm text-signal-watch/90">
           Read the two loss columns together before repeating either. At this cohort size the noise
           the accountant prices is expensive: the curve below is the measurement of what each target
           ε buys, and it is not presented as free anywhere.
@@ -554,14 +554,14 @@ export default function FederationPage() {
             ],
           ]}
         />{' '}
-        <p className="text-sm text-fg-muted">
+        <p className="text-sm text-ink-muted">
           With no mechanism at all the run explained {percent(cost)} of the demand&rsquo;s variance;
           the gap between that row and a priced row is what the privacy costs at that target, and it
           is stated rather than smoothed away. The noise is priced at σ · clip · w_max, and w_max is
           the largest silo&rsquo;s share of the rows — so a cohort with more silos buys less noise
           for the same ε.
         </p>
-        <p className="text-xs text-fg-subtle">
+        <p className="text-xs text-ink-subtle">
           These three points, exactly as drawn here:{' '}
           <span className="font-mono">{curve.curveCommand}</span>. The full-resolution curve — every
           target from 1 to 128, six rounds a point, with both comparison tables and the honest
@@ -572,7 +572,7 @@ export default function FederationPage() {
       </Panel>
 
       <Panel id="diagnostic" title="The non-IID diagnostic" description={payload.diagnostic.note}>
-        <p className="text-sm text-fg-muted">
+        <p className="text-sm text-ink-muted">
           {payload.diagnostic.available && payload.diagnostic.meanDivergence !== null ? (
             <>
               Mean divergence{' '}
@@ -605,7 +605,7 @@ export default function FederationPage() {
         title={`The round narrative — ${payload.narratives.task}`}
         description={`Written through the reasoning port with a schema-locked, grounded prompt: every numeral in a narrative has to appear in the round's own facts, and a citation has to name a fact the round carries. ${payload.narratives.oncePerProcess}`}
       >
-        <p className="text-sm text-fg-muted">
+        <p className="text-sm text-ink-muted">
           {payload.narratives.written === 0
             ? `${String(payload.narratives.refusals)} of ${String(payload.narratives.attempts.length)} round(s) refused a narrative, and no fixture was invented to fill the panel: a summary no model wrote would be the most convincing thing on this page and the least true.`
             : `${String(payload.narratives.written)} of ${String(payload.narratives.attempts.length)} round(s) were written; ${String(payload.narratives.refusals)} refused.`}
@@ -644,7 +644,7 @@ export default function FederationPage() {
             entry.what,
           ])}
         />
-        <p className="text-xs text-fg-subtle">
+        <p className="text-xs text-ink-subtle">
           Round seed <span className="font-mono">{payload.world.roundSeed}</span> · built in{' '}
           {formatCount(payload.timing.buildMs)} ms ({formatCount(payload.timing.runsMs)} ms of it in
           the runs, {formatCount(payload.timing.generatedInMs)} ms generating the world) · computed

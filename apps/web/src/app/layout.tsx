@@ -62,18 +62,18 @@ export default async function RootLayout({ children }: { readonly children: Reac
     <html className={`${sans.variable} ${mono.variable}`} lang={language}>
       <body className="min-h-screen antialiased">
         <a
-          className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:rounded-instrument focus:bg-ink-800 focus:px-3 focus:py-2 focus:text-sm"
+          className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:rounded-card focus:bg-paper-sunken focus:px-3 focus:py-2 focus:text-sm"
           href="#content"
         >
           Skip to content
         </a>
 
-        <header className="sticky top-0 z-30 border-b border-ink-700 bg-ink-950/90 backdrop-blur">
+        <header className="sticky top-0 z-30 border-b border-hairline bg-paper/90 backdrop-blur">
           <div className="mx-auto flex max-w-shell flex-wrap items-center justify-between gap-x-6 gap-y-2 px-5 py-3">
             <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
               <Link className="flex min-h-11 items-center gap-2" href="/">
                 <span className="text-xl">Civora</span>
-                <span className="hidden font-mono text-eyebrow text-fg-subtle uppercase sm:inline">
+                <span className="hidden font-mono text-eyebrow text-ink-subtle uppercase sm:inline">
                   health supply-chain resilience
                 </span>
               </Link>
@@ -98,7 +98,7 @@ export default async function RootLayout({ children }: { readonly children: Reac
                   are. */}
               <span
                 data-testid="active-role"
-                className="inline-flex items-center rounded-full border border-ink-600 px-3 py-1 font-mono text-xs text-fg-muted"
+                className="inline-flex items-center rounded-full border border-hairline px-3 py-1 font-mono text-xs text-ink-muted"
               >
                 {session.label} · {session.role.replace('_', ' ')}
               </span>
@@ -118,9 +118,9 @@ export default async function RootLayout({ children }: { readonly children: Reac
           </main>
         </div>
 
-        <footer className="border-t border-ink-700 px-5 py-10">
+        <footer className="border-t border-hairline px-5 py-10">
           <div className="mx-auto flex max-w-shell flex-col gap-3">
-            <div className="flex flex-wrap items-center gap-x-5 gap-y-1 font-mono text-eyebrow text-fg-subtle uppercase">
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-1 font-mono text-eyebrow text-ink-subtle uppercase">
               <span>Licensed under Apache-2.0</span>
               <span>All figures generated from a seeded world</span>
             </div>
@@ -128,7 +128,10 @@ export default async function RootLayout({ children }: { readonly children: Reac
              * Exactly once, in the shell, so no surface can be reached without
              * it. `e2e/labelling.spec.ts` asserts the count and the wording.
              */}
-            <p data-testid="simulation-disclosure" className="max-w-measure text-xs text-fg-subtle">
+            <p
+              data-testid="simulation-disclosure"
+              className="max-w-measure text-xs text-ink-subtle"
+            >
               All data the platform shows is simulated. Nothing here is a real stock position and
               this is not a deployed federation.
             </p>

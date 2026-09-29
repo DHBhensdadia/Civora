@@ -174,8 +174,8 @@ function HeldLine({
       data-testid="vision-held-line"
     >
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <span className="font-mono text-xs text-fg-subtle">line {line.index}</span>
-        <span className="text-sm text-fg">
+        <span className="font-mono text-xs text-ink-subtle">line {line.index}</span>
+        <span className="text-sm text-ink">
           read “{line.extracted.itemName}” · {formatCount(line.extracted.quantity)}
           {line.line.unit === null ? '' : ` ${line.line.unit}`} · confidence{' '}
           {line.extracted.confidence.toFixed(2)}
@@ -189,7 +189,7 @@ function HeldLine({
         {line.reasons.map((reason) => (
           <li
             key={reason}
-            className="rounded-instrument border border-signal-watch/40 bg-signal-watch/10 px-2 py-1 text-xs text-signal-watch"
+            className="rounded-card border border-signal-watch/40 bg-signal-watch/10 px-2 py-1 text-xs text-signal-watch"
           >
             {REASON_TEXT[reason] ?? reason}
           </li>
@@ -197,16 +197,16 @@ function HeldLine({
       </ul>
 
       {line.line.note === null ? null : (
-        <p className="text-xs text-fg-muted">The reader noted: {line.line.note}</p>
+        <p className="text-xs text-ink-muted">The reader noted: {line.line.note}</p>
       )}
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {options.length === 0 ? null : (
           <label className="flex flex-col gap-1 text-sm">
-            <span className="text-fg-muted">Which medicine is it?</span>
+            <span className="text-ink-muted">Which medicine is it?</span>
             <select
               aria-label={`Catalogue entry for line ${String(line.index)}`}
-              className="min-h-11 rounded-instrument border border-ink-600 bg-ink-900 px-3 py-2"
+              className="min-h-11 rounded-card border border-hairline bg-paper-raised px-3 py-2"
               onChange={(event) => {
                 setItemId(event.target.value);
               }}
@@ -221,10 +221,10 @@ function HeldLine({
           </label>
         )}
         <label className="flex flex-col gap-1 text-sm">
-          <span className="text-fg-muted">Quantity</span>
+          <span className="text-ink-muted">Quantity</span>
           <input
             aria-label={`Quantity for line ${String(line.index)}`}
-            className="min-h-11 rounded-instrument border border-ink-600 bg-ink-900 px-3 py-2"
+            className="min-h-11 rounded-card border border-hairline bg-paper-raised px-3 py-2"
             onChange={(event) => {
               setQuantity(event.target.value);
             }}
@@ -233,10 +233,10 @@ function HeldLine({
           />
         </label>
         <label className="flex flex-col gap-1 text-sm">
-          <span className="text-fg-muted">Batch</span>
+          <span className="text-ink-muted">Batch</span>
           <input
             aria-label={`Batch for line ${String(line.index)}`}
-            className="min-h-11 rounded-instrument border border-ink-600 bg-ink-900 px-3 py-2"
+            className="min-h-11 rounded-card border border-hairline bg-paper-raised px-3 py-2"
             onChange={(event) => {
               setBatchId(event.target.value);
             }}
@@ -245,10 +245,10 @@ function HeldLine({
           />
         </label>
         <label className="flex flex-col gap-1 text-sm">
-          <span className="text-fg-muted">Expires</span>
+          <span className="text-ink-muted">Expires</span>
           <input
             aria-label={`Expiry for line ${String(line.index)}`}
-            className="min-h-11 rounded-instrument border border-ink-600 bg-ink-900 px-3 py-2"
+            className="min-h-11 rounded-card border border-hairline bg-paper-raised px-3 py-2"
             onChange={(event) => {
               setExpiresOn(event.target.value);
             }}
@@ -260,7 +260,7 @@ function HeldLine({
 
       <div className="flex flex-wrap items-center gap-3">
         <button
-          className="rounded-instrument bg-signal-ok px-3 py-2 text-sm font-medium text-ink-950 disabled:opacity-50"
+          className="rounded-card bg-signal-ok px-3 py-2 text-sm font-medium text-paper disabled:opacity-50"
           disabled={busy}
           onClick={() => {
             setBusy(true);
@@ -273,7 +273,7 @@ function HeldLine({
           Accept into the ledger
         </button>
         <button
-          className="min-h-11 rounded-instrument border border-ink-600 px-3 py-2 text-sm text-fg disabled:opacity-50"
+          className="min-h-11 rounded-card border border-hairline px-3 py-2 text-sm text-ink disabled:opacity-50"
           disabled={busy}
           onClick={() => {
             setBusy(true);
@@ -285,7 +285,7 @@ function HeldLine({
         >
           Discard
         </button>
-        <span className="text-xs text-fg-subtle">
+        <span className="text-xs text-ink-subtle">
           {batch.facilityName} · register {batch.registerDate ?? 'undated'} · day {batch.occurredOn}
         </span>
       </div>
@@ -438,7 +438,7 @@ export default function VisionPage() {
   return (
     <div className="flex flex-col gap-12">
       <PageHeader label="Vision intake" title="Read a paper stock register">
-        <p className="max-w-measure text-fg-muted">
+        <p className="max-w-measure text-ink-muted">
           Photograph a register and the platform reads it into ledger lines. The reader is a model;
           everything that decides whether a line may be written is not. A line the platform can
           stand behind goes to the ledger marked as read by vision, and a line it cannot goes to the
@@ -473,10 +473,10 @@ export default function VisionPage() {
       >
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="flex flex-col gap-1 text-sm">
-            <span className="text-fg-muted">Facility</span>
+            <span className="text-ink-muted">Facility</span>
             <select
               aria-label="Facility"
-              className="min-h-11 rounded-instrument border border-ink-600 bg-ink-900 px-3 py-2"
+              className="min-h-11 rounded-card border border-hairline bg-paper-raised px-3 py-2"
               onChange={(event) => {
                 setFacilityId(event.target.value);
               }}
@@ -490,14 +490,14 @@ export default function VisionPage() {
             </select>
           </label>
           <label className="flex flex-col gap-1 text-sm">
-            <span className="text-fg-muted">Photograph</span>
+            <span className="text-ink-muted">Photograph</span>
             <input
               accept="image/*"
               // Named for the act rather than the noun: the section around it is
               // called "Photograph" too, and a label that collides with its own
               // region is a name nothing can address.
               aria-label="Register photograph"
-              className="min-h-11 rounded-instrument border border-ink-600 bg-ink-900 px-3 py-2"
+              className="min-h-11 rounded-card border border-hairline bg-paper-raised px-3 py-2"
               onChange={(event) => {
                 setFile(event.target.files?.[0] ?? null);
               }}
@@ -507,7 +507,7 @@ export default function VisionPage() {
         </div>
         <div className="mt-4 flex flex-wrap items-center gap-3">
           <button
-            className="rounded-instrument bg-accent px-4 py-2 text-sm font-medium text-ink-950 disabled:opacity-50"
+            className="rounded-card bg-accent px-4 py-2 text-sm font-medium text-paper disabled:opacity-50"
             disabled={busy || file === null || facilityId === ''}
             onClick={() => {
               void readPhotograph();
@@ -516,7 +516,7 @@ export default function VisionPage() {
           >
             Read the photograph
           </button>
-          <span className="text-xs text-fg-subtle">
+          <span className="text-xs text-ink-subtle">
             Acting as {session?.session.label ?? '—'} · register day defaults to the page’s own date
           </span>
         </div>
@@ -527,7 +527,7 @@ export default function VisionPage() {
         )}
         {refusal === null ? null : (
           <p
-            className="mt-4 rounded-instrument border border-signal-critical/40 bg-signal-critical/10 px-3 py-2 text-sm text-signal-critical"
+            className="mt-4 rounded-card border border-signal-critical/40 bg-signal-critical/10 px-3 py-2 text-sm text-signal-critical"
             data-testid="vision-refusal"
           >
             {refusal}
@@ -541,9 +541,9 @@ export default function VisionPage() {
         description="Lines the platform could stand behind: read confidently, matched to the catalogue unambiguously, and complete enough to be a movement. They carry captureSource vision, which is how the ledger tells a photographed entry from a typed one."
       >
         {written.length === 0 ? (
-          <p className="text-sm text-fg-muted">Nothing has been read yet.</p>
+          <p className="text-sm text-ink-muted">Nothing has been read yet.</p>
         ) : (
-          <ul className="flex flex-col divide-y divide-ink-700 rounded-instrument border border-ink-700">
+          <ul className="flex flex-col divide-y divide-hairline rounded-card border border-hairline">
             {written.map(({ batch, line }) => (
               <li
                 key={`${batch.id}:${String(line.index)}`}
@@ -551,7 +551,7 @@ export default function VisionPage() {
                 data-testid="vision-written-line"
                 data-provenance="vision"
               >
-                <span className="text-sm text-fg">
+                <span className="text-sm text-ink">
                   {batch.facilityName} · {line.itemName} · {formatCount(line.line.quantity)}
                   {line.line.unit === null ? '' : ` ${line.line.unit}`} · batch{' '}
                   {line.line.batchId ?? '—'} · expires {line.line.expiresOn ?? '—'} ·{' '}
@@ -562,7 +562,7 @@ export default function VisionPage() {
                     AI-extracted ·{' '}
                     {batch.source === 'model' ? `vision · ${batch.model}` : 'reading supplied'}
                   </span>
-                  <span className="font-mono text-xs text-fg-subtle">
+                  <span className="font-mono text-xs text-ink-subtle">
                     {line.receipt?.idempotencyKey ?? '—'}
                   </span>
                 </span>
@@ -578,11 +578,11 @@ export default function VisionPage() {
         description="Nothing on this list has been written. Each line says why it was held back, and where the name could have meant more than one medicine the queue offers them; approving a line runs it back through the platform's own rule, so a line that is still incomplete is refused again rather than written."
       >
         {held.length === 0 ? (
-          <p className="text-sm text-fg-muted" data-testid="vision-empty-queue">
+          <p className="text-sm text-ink-muted" data-testid="vision-empty-queue">
             Nothing is waiting for review.
           </p>
         ) : (
-          <ul className="flex flex-col divide-y divide-ink-700 rounded-instrument border border-ink-700">
+          <ul className="flex flex-col divide-y divide-hairline rounded-card border border-hairline">
             {held.map(({ batch, line }) => (
               <HeldLine
                 key={`${batch.id}:${String(line.index)}`}
@@ -595,9 +595,9 @@ export default function VisionPage() {
           </ul>
         )}
         {batches.some((batch) => batch.pageNotes.length > 0) ? (
-          <div className="mt-4 rounded-instrument border border-ink-700 bg-ink-900 px-3 py-2 text-sm text-fg-muted">
-            <p className="font-medium text-fg">What the reader said about the page</p>
-            <ul className="mt-1 list-inside list-disc text-fg-muted">
+          <div className="mt-4 rounded-card border border-hairline bg-paper-raised px-3 py-2 text-sm text-ink-muted">
+            <p className="font-medium text-ink">What the reader said about the page</p>
+            <ul className="mt-1 list-inside list-disc text-ink-muted">
               {batches.flatMap((batch) =>
                 batch.pageNotes.map((note) => <li key={`${batch.id}:${note}`}>{note}</li>),
               )}
@@ -605,14 +605,14 @@ export default function VisionPage() {
           </div>
         ) : null}
         {batches.some((batch) => batch.lines.some((line) => line.decision === 'discarded')) ? (
-          <p className="mt-3 text-xs text-fg-subtle">
+          <p className="mt-3 text-xs text-ink-subtle">
             Discarded lines stay on the extraction as decisions; they are never written and never
             counted.
           </p>
         ) : null}
       </Panel>
 
-      <p className="text-xs text-fg-subtle">
+      <p className="text-xs text-ink-subtle">
         The queue is held in this process, like the projection and the alert inbox: it is correct
         for the demonstration and it is not a store. Every record written from here is stamped
         simulated by the platform, because the dataset it is added to is generated. Today is{' '}

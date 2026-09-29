@@ -464,7 +464,7 @@ export default function CapturePage() {
   return (
     <div className="flex flex-col gap-12">
       <PageHeader label="Facility capture" title="Capture what the facility counted">
-        <p className="max-w-measure text-fg-muted">
+        <p className="max-w-measure text-ink-muted">
           Every entry is written to this device first and delivered when the platform can be
           reached, so a weak connection delays the sync rather than the record. Nothing is discarded
           on failure and nothing is counted twice: each capture carries a key that survives every
@@ -491,7 +491,7 @@ export default function CapturePage() {
       >
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="flex flex-col gap-1 text-sm">
-            <span className="text-fg-muted">Identity</span>
+            <span className="text-ink-muted">Identity</span>
             {/*
               The field is named here rather than by the label's text, because
               a select's own text content is part of the name a wrapping label
@@ -500,7 +500,7 @@ export default function CapturePage() {
             */}
             <select
               aria-label="Identity"
-              className="min-h-11 rounded-instrument border border-ink-600 bg-ink-900 px-3 py-2"
+              className="min-h-11 rounded-card border border-hairline bg-paper-raised px-3 py-2"
               onChange={(event) => {
                 void fetch('/api/session', {
                   method: 'POST',
@@ -528,10 +528,10 @@ export default function CapturePage() {
             </select>
           </label>
           <label className="flex flex-col gap-1 text-sm">
-            <span className="text-fg-muted">{messageFor(language, 'capture.facility')}</span>
+            <span className="text-ink-muted">{messageFor(language, 'capture.facility')}</span>
             <select
               aria-label="Facility"
-              className="min-h-11 rounded-instrument border border-ink-600 bg-ink-900 px-3 py-2"
+              className="min-h-11 rounded-card border border-hairline bg-paper-raised px-3 py-2"
               onChange={(event) => {
                 setFacilityId(event.target.value);
               }}
@@ -545,10 +545,10 @@ export default function CapturePage() {
             </select>
           </label>
           <label className="flex flex-col gap-1 text-sm">
-            <span className="text-fg-muted">District</span>
+            <span className="text-ink-muted">District</span>
             <select
               aria-label="District"
-              className="min-h-11 rounded-instrument border border-ink-600 bg-ink-900 px-3 py-2"
+              className="min-h-11 rounded-card border border-hairline bg-paper-raised px-3 py-2"
               onChange={(event) => {
                 setDistrictId(event.target.value);
               }}
@@ -561,16 +561,16 @@ export default function CapturePage() {
               ))}
             </select>
           </label>
-          <p className="self-end text-sm text-fg-muted" data-testid="sync-state">
+          <p className="self-end text-sm text-ink-muted" data-testid="sync-state">
             {outbox.online ? 'Connection available' : 'No connection'} ·{' '}
             {outbox.ready
               ? `${formatCount(outbox.pending)} ${outbox.pending === 1 ? 'change' : 'changes'} pending`
               : 'reading the queue'}
           </p>
-          <p className="self-end text-sm text-fg-subtle" data-testid="shell-state">
+          <p className="self-end text-sm text-ink-subtle" data-testid="shell-state">
             {SHELL_STATUS_TEXT[shell]}
           </p>
-          <p className="self-end text-sm text-fg-subtle" data-testid="context-state">
+          <p className="self-end text-sm text-ink-subtle" data-testid="context-state">
             {CONTEXT_STATUS_TEXT[contextStatus]}
           </p>
         </div>
@@ -586,7 +586,7 @@ export default function CapturePage() {
           {RECORD_KINDS.map((option) => (
             <label
               key={option.id}
-              className="flex cursor-pointer flex-col gap-1 min-h-11 rounded-instrument border border-ink-600 px-3 py-2 text-sm has-checked:border-accent has-checked:bg-accent/10"
+              className="flex cursor-pointer flex-col gap-1 min-h-11 rounded-card border border-hairline px-3 py-2 text-sm has-checked:border-accent has-checked:bg-accent/10"
             >
               <span className="flex items-center gap-2">
                 <input
@@ -600,9 +600,9 @@ export default function CapturePage() {
                   type="radio"
                   value={option.id}
                 />
-                <span className="text-fg">{option.label}</span>
+                <span className="text-ink">{option.label}</span>
               </span>
-              <span className="text-xs text-fg-muted">{option.hint}</span>
+              <span className="text-xs text-ink-muted">{option.hint}</span>
             </label>
           ))}
         </fieldset>
@@ -612,9 +612,9 @@ export default function CapturePage() {
           kind !== 'staff_attendance' &&
           kind !== 'footfall_observation' ? (
             <label className="flex flex-col gap-1 text-sm">
-              <span className="text-fg-muted">{messageFor(language, 'capture.occurredOn')}</span>
+              <span className="text-ink-muted">{messageFor(language, 'capture.occurredOn')}</span>
               <input
-                className="min-h-11 rounded-instrument border border-ink-600 bg-ink-900 px-3 py-2"
+                className="min-h-11 rounded-card border border-hairline bg-paper-raised px-3 py-2"
                 onChange={(event) => {
                   setField('occurredOn', event.target.value);
                 }}
@@ -627,10 +627,10 @@ export default function CapturePage() {
           {kind === 'stock_ledger_entry' ? (
             <>
               <label className="flex flex-col gap-1 text-sm">
-                <span className="text-fg-muted">{messageFor(language, 'capture.item')}</span>
+                <span className="text-ink-muted">{messageFor(language, 'capture.item')}</span>
                 <select
                   aria-label="Item"
-                  className="min-h-11 rounded-instrument border border-ink-600 bg-ink-900 px-3 py-2"
+                  className="min-h-11 rounded-card border border-hairline bg-paper-raised px-3 py-2"
                   onChange={(event) => {
                     setField('itemId', event.target.value);
                   }}
@@ -644,10 +644,10 @@ export default function CapturePage() {
                 </select>
               </label>
               <label className="flex flex-col gap-1 text-sm">
-                <span className="text-fg-muted">{messageFor(language, 'capture.kind')}</span>
+                <span className="text-ink-muted">{messageFor(language, 'capture.kind')}</span>
                 <select
                   aria-label="Movement"
-                  className="min-h-11 rounded-instrument border border-ink-600 bg-ink-900 px-3 py-2"
+                  className="min-h-11 rounded-card border border-hairline bg-paper-raised px-3 py-2"
                   onChange={(event) => {
                     setField('ledgerKind', event.target.value as LedgerEntryKind);
                   }}
@@ -663,11 +663,11 @@ export default function CapturePage() {
                 </select>
               </label>
               <label className="flex flex-col gap-1 text-sm">
-                <span className="text-fg-muted">
+                <span className="text-ink-muted">
                   {messageFor(language, 'capture.quantity')} ({selectedItem?.unit ?? 'units'})
                 </span>
                 <input
-                  className="min-h-11 rounded-instrument border border-ink-600 bg-ink-900 px-3 py-2"
+                  className="min-h-11 rounded-card border border-hairline bg-paper-raised px-3 py-2"
                   inputMode="numeric"
                   onChange={(event) => {
                     setField('quantity', event.target.value);
@@ -679,9 +679,9 @@ export default function CapturePage() {
               {fields.ledgerKind === 'receipt' ? (
                 <>
                   <label className="flex flex-col gap-1 text-sm">
-                    <span className="text-fg-muted">{messageFor(language, 'capture.batch')}</span>
+                    <span className="text-ink-muted">{messageFor(language, 'capture.batch')}</span>
                     <input
-                      className="min-h-11 rounded-instrument border border-ink-600 bg-ink-900 px-3 py-2"
+                      className="min-h-11 rounded-card border border-hairline bg-paper-raised px-3 py-2"
                       onChange={(event) => {
                         setField('batchId', event.target.value);
                       }}
@@ -691,11 +691,11 @@ export default function CapturePage() {
                     />
                   </label>
                   <label className="flex flex-col gap-1 text-sm">
-                    <span className="text-fg-muted">
+                    <span className="text-ink-muted">
                       {messageFor(language, 'capture.expiresOn')}
                     </span>
                     <input
-                      className="min-h-11 rounded-instrument border border-ink-600 bg-ink-900 px-3 py-2"
+                      className="min-h-11 rounded-card border border-hairline bg-paper-raised px-3 py-2"
                       onChange={(event) => {
                         setField('expiresOn', event.target.value);
                       }}
@@ -707,10 +707,10 @@ export default function CapturePage() {
               ) : null}
               {fields.ledgerKind === 'adjust' ? (
                 <label className="flex flex-col gap-1 text-sm">
-                  <span className="text-fg-muted">Direction</span>
+                  <span className="text-ink-muted">Direction</span>
                   <select
                     aria-label="Direction"
-                    className="min-h-11 rounded-instrument border border-ink-600 bg-ink-900 px-3 py-2"
+                    className="min-h-11 rounded-card border border-hairline bg-paper-raised px-3 py-2"
                     onChange={(event) => {
                       setField('adjustmentDirection', event.target.value as AdjustmentDirection);
                     }}
@@ -727,9 +727,9 @@ export default function CapturePage() {
           {kind === 'bed_status' ? (
             <>
               <label className="flex flex-col gap-1 text-sm">
-                <span className="text-fg-muted">Beds</span>
+                <span className="text-ink-muted">Beds</span>
                 <input
-                  className="min-h-11 rounded-instrument border border-ink-600 bg-ink-900 px-3 py-2"
+                  className="min-h-11 rounded-card border border-hairline bg-paper-raised px-3 py-2"
                   inputMode="numeric"
                   onChange={(event) => {
                     setField('bedsTotal', event.target.value);
@@ -740,9 +740,9 @@ export default function CapturePage() {
                 />
               </label>
               <label className="flex flex-col gap-1 text-sm">
-                <span className="text-fg-muted">Occupied</span>
+                <span className="text-ink-muted">Occupied</span>
                 <input
-                  className="min-h-11 rounded-instrument border border-ink-600 bg-ink-900 px-3 py-2"
+                  className="min-h-11 rounded-card border border-hairline bg-paper-raised px-3 py-2"
                   inputMode="numeric"
                   onChange={(event) => {
                     setField('bedsOccupied', event.target.value);
@@ -752,9 +752,9 @@ export default function CapturePage() {
                 />
               </label>
               <label className="flex flex-col gap-1 text-sm">
-                <span className="text-fg-muted">Day</span>
+                <span className="text-ink-muted">Day</span>
                 <input
-                  className="min-h-11 rounded-instrument border border-ink-600 bg-ink-900 px-3 py-2"
+                  className="min-h-11 rounded-card border border-hairline bg-paper-raised px-3 py-2"
                   onChange={(event) => {
                     setField('occurredOn', event.target.value);
                   }}
@@ -768,10 +768,10 @@ export default function CapturePage() {
           {kind === 'staff_attendance' ? (
             <>
               <label className="flex flex-col gap-1 text-sm">
-                <span className="text-fg-muted">Cadre</span>
+                <span className="text-ink-muted">Cadre</span>
                 <select
                   aria-label="Cadre"
-                  className="min-h-11 rounded-instrument border border-ink-600 bg-ink-900 px-3 py-2"
+                  className="min-h-11 rounded-card border border-hairline bg-paper-raised px-3 py-2"
                   onChange={(event) => {
                     setField('cadre', event.target.value as Cadre);
                   }}
@@ -785,9 +785,9 @@ export default function CapturePage() {
                 </select>
               </label>
               <label className="flex flex-col gap-1 text-sm">
-                <span className="text-fg-muted">Sanctioned posts</span>
+                <span className="text-ink-muted">Sanctioned posts</span>
                 <input
-                  className="min-h-11 rounded-instrument border border-ink-600 bg-ink-900 px-3 py-2"
+                  className="min-h-11 rounded-card border border-hairline bg-paper-raised px-3 py-2"
                   inputMode="numeric"
                   onChange={(event) => {
                     setField('postsSanctioned', event.target.value);
@@ -797,9 +797,9 @@ export default function CapturePage() {
                 />
               </label>
               <label className="flex flex-col gap-1 text-sm">
-                <span className="text-fg-muted">Posts filled</span>
+                <span className="text-ink-muted">Posts filled</span>
                 <input
-                  className="min-h-11 rounded-instrument border border-ink-600 bg-ink-900 px-3 py-2"
+                  className="min-h-11 rounded-card border border-hairline bg-paper-raised px-3 py-2"
                   inputMode="numeric"
                   onChange={(event) => {
                     setField('postsFilled', event.target.value);
@@ -809,9 +809,9 @@ export default function CapturePage() {
                 />
               </label>
               <label className="flex flex-col gap-1 text-sm">
-                <span className="text-fg-muted">Present today</span>
+                <span className="text-ink-muted">Present today</span>
                 <input
-                  className="min-h-11 rounded-instrument border border-ink-600 bg-ink-900 px-3 py-2"
+                  className="min-h-11 rounded-card border border-hairline bg-paper-raised px-3 py-2"
                   inputMode="numeric"
                   onChange={(event) => {
                     setField('presentToday', event.target.value);
@@ -821,9 +821,9 @@ export default function CapturePage() {
                 />
               </label>
               <label className="flex flex-col gap-1 text-sm">
-                <span className="text-fg-muted">Day</span>
+                <span className="text-ink-muted">Day</span>
                 <input
-                  className="min-h-11 rounded-instrument border border-ink-600 bg-ink-900 px-3 py-2"
+                  className="min-h-11 rounded-card border border-hairline bg-paper-raised px-3 py-2"
                   onChange={(event) => {
                     setField('occurredOn', event.target.value);
                   }}
@@ -837,9 +837,9 @@ export default function CapturePage() {
           {kind === 'footfall_observation' ? (
             <>
               <label className="flex flex-col gap-1 text-sm">
-                <span className="text-fg-muted">Outpatients</span>
+                <span className="text-ink-muted">Outpatients</span>
                 <input
-                  className="min-h-11 rounded-instrument border border-ink-600 bg-ink-900 px-3 py-2"
+                  className="min-h-11 rounded-card border border-hairline bg-paper-raised px-3 py-2"
                   inputMode="numeric"
                   onChange={(event) => {
                     setField('opdCount', event.target.value);
@@ -849,9 +849,9 @@ export default function CapturePage() {
                 />
               </label>
               <label className="flex flex-col gap-1 text-sm">
-                <span className="text-fg-muted">Inpatients</span>
+                <span className="text-ink-muted">Inpatients</span>
                 <input
-                  className="min-h-11 rounded-instrument border border-ink-600 bg-ink-900 px-3 py-2"
+                  className="min-h-11 rounded-card border border-hairline bg-paper-raised px-3 py-2"
                   inputMode="numeric"
                   onChange={(event) => {
                     setField('ipdCount', event.target.value);
@@ -861,9 +861,9 @@ export default function CapturePage() {
                 />
               </label>
               <label className="flex flex-col gap-1 text-sm">
-                <span className="text-fg-muted">Day</span>
+                <span className="text-ink-muted">Day</span>
                 <input
-                  className="min-h-11 rounded-instrument border border-ink-600 bg-ink-900 px-3 py-2"
+                  className="min-h-11 rounded-card border border-hairline bg-paper-raised px-3 py-2"
                   onChange={(event) => {
                     setField('occurredOn', event.target.value);
                   }}
@@ -877,10 +877,10 @@ export default function CapturePage() {
           {kind === 'syndromic_signal' ? (
             <>
               <label className="flex flex-col gap-1 text-sm">
-                <span className="text-fg-muted">Syndrome</span>
+                <span className="text-ink-muted">Syndrome</span>
                 <select
                   aria-label="Syndrome"
-                  className="min-h-11 rounded-instrument border border-ink-600 bg-ink-900 px-3 py-2"
+                  className="min-h-11 rounded-card border border-hairline bg-paper-raised px-3 py-2"
                   onChange={(event) => {
                     setField('syndrome', event.target.value as Syndrome);
                   }}
@@ -894,9 +894,9 @@ export default function CapturePage() {
                 </select>
               </label>
               <label className="flex flex-col gap-1 text-sm">
-                <span className="text-fg-muted">Cases</span>
+                <span className="text-ink-muted">Cases</span>
                 <input
-                  className="min-h-11 rounded-instrument border border-ink-600 bg-ink-900 px-3 py-2"
+                  className="min-h-11 rounded-card border border-hairline bg-paper-raised px-3 py-2"
                   inputMode="numeric"
                   onChange={(event) => {
                     setField('caseCount', event.target.value);
@@ -906,9 +906,9 @@ export default function CapturePage() {
                 />
               </label>
               <label className="flex flex-col gap-1 text-sm">
-                <span className="text-fg-muted">Day</span>
+                <span className="text-ink-muted">Day</span>
                 <input
-                  className="min-h-11 rounded-instrument border border-ink-600 bg-ink-900 px-3 py-2"
+                  className="min-h-11 rounded-card border border-hairline bg-paper-raised px-3 py-2"
                   onChange={(event) => {
                     setField('occurredOn', event.target.value);
                   }}
@@ -922,7 +922,7 @@ export default function CapturePage() {
 
         <div className="mt-6 flex flex-wrap items-center gap-4">
           <button
-            className="inline-flex min-h-11 items-center justify-center rounded-full bg-accent px-5 text-sm font-medium text-ink-950 transition-colors duration-150 hover:bg-accent/85 disabled:pointer-events-none disabled:opacity-40"
+            className="inline-flex min-h-11 items-center justify-center rounded-full bg-accent px-5 text-sm font-medium text-paper transition-colors duration-150 hover:bg-accent/85 disabled:pointer-events-none disabled:opacity-40"
             disabled={busy || submission === null}
             onClick={() => {
               void submit();
@@ -932,13 +932,13 @@ export default function CapturePage() {
             {messageFor(language, 'capture.submit')}
           </button>
           <button
-            className="inline-flex min-h-11 items-center justify-center rounded-full border-2 border-ink-600 px-4 text-sm text-fg transition-colors duration-150 hover:border-accent hover:text-accent"
+            className="inline-flex min-h-11 items-center justify-center rounded-full border-2 border-hairline px-4 text-sm text-ink transition-colors duration-150 hover:border-accent hover:text-accent"
             onClick={outbox.retryNow}
             type="button"
           >
             Retry now
           </button>
-          <span className="text-sm text-fg-muted">
+          <span className="text-sm text-ink-muted">
             {outbox.pending === 0
               ? 'Nothing waiting to sync'
               : `${formatCount(outbox.pending)} waiting to sync`}
@@ -971,9 +971,9 @@ export default function CapturePage() {
         description="The queue as it stands. A capture that the platform refuses stays here with the reason rather than being retried forever, because a disagreement with a stored record needs a person."
       >
         {outbox.items.length === 0 ? (
-          <p className="text-sm text-fg-muted">Nothing has been captured on this device yet.</p>
+          <p className="text-sm text-ink-muted">Nothing has been captured on this device yet.</p>
         ) : (
-          <ul className="flex flex-col divide-y divide-ink-700 rounded-instrument border border-ink-700">
+          <ul className="flex flex-col divide-y divide-hairline rounded-card border border-hairline">
             {outbox.items.map((item) => (
               <li
                 key={item.id}
@@ -982,7 +982,7 @@ export default function CapturePage() {
                 data-testid="outbox-item"
               >
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
-                  <span className="text-sm text-fg">{item.label}</span>
+                  <span className="text-sm text-ink">{item.label}</span>
                   <span
                     className={
                       item.status === 'delivered'
@@ -995,7 +995,7 @@ export default function CapturePage() {
                     {statusWords(language)[item.status]}
                   </span>
                 </div>
-                <span className="text-xs text-fg-subtle">
+                <span className="text-xs text-ink-subtle">
                   captured {item.createdAt} · {formatCount(item.attempts)} attempt
                   {item.attempts === 1 ? '' : 's'}
                   {item.lastError === null ? '' : ` · ${item.lastError}`}
@@ -1005,7 +1005,7 @@ export default function CapturePage() {
           </ul>
         )}
         {outbox.lastSummary === null ? null : (
-          <p className="text-sm text-fg-muted">
+          <p className="text-sm text-ink-muted">
             Last sync: {formatCount(outbox.lastSummary.delivered)} recorded,{' '}
             {formatCount(outbox.lastSummary.refused)} refused,{' '}
             {formatCount(outbox.lastSummary.rejected)} not accepted,{' '}

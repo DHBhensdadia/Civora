@@ -58,20 +58,20 @@ export function ProvenancePanel({ id, view, size = 'full' }: ProvenancePanelProp
           <div
             key={group.key}
             data-testid={id === 'provenance' ? `provenance-${group.key}` : undefined}
-            className="rounded-instrument border border-ink-700 bg-ink-800 p-4"
+            className="rounded-card border border-hairline bg-paper-sunken p-4"
           >
             <h3 className={`text-sm font-medium ${group.tone}`}>{group.title}</h3>
             <ul className="mt-3 flex flex-col gap-3">
               {group.entries.map((layer) => (
                 <li key={layer.layer} className="flex flex-col gap-1 text-sm">
-                  <span className="text-fg">{layer.layer}</span>
+                  <span className="text-ink">{layer.layer}</span>
                   {size === 'full' ? (
                     <>
-                      <span className="text-fg-muted">{layer.detail}</span>
-                      <span className="text-xs text-fg-subtle">{layer.source}</span>
+                      <span className="text-ink-muted">{layer.detail}</span>
+                      <span className="text-xs text-ink-subtle">{layer.source}</span>
                     </>
                   ) : (
-                    <span className="text-xs text-fg-subtle">{layer.source}</span>
+                    <span className="text-xs text-ink-subtle">{layer.source}</span>
                   )}
                 </li>
               ))}
@@ -82,33 +82,33 @@ export function ProvenancePanel({ id, view, size = 'full' }: ProvenancePanelProp
 
       <dl
         data-testid={`${id}-seed`}
-        className="grid gap-x-6 gap-y-2 rounded-instrument border border-ink-700 bg-ink-800 p-4 text-sm sm:grid-cols-2"
+        className="grid gap-x-6 gap-y-2 rounded-card border border-hairline bg-paper-sunken p-4 text-sm sm:grid-cols-2"
       >
         <div>
-          <dt className="text-fg-muted">Active seed</dt>
+          <dt className="text-ink-muted">Active seed</dt>
           <dd className="font-mono text-accent">{view.seed}</dd>
         </div>
         <div>
-          <dt className="text-fg-muted">Dataset fingerprint</dt>
-          <dd className="font-mono text-fg-muted">{view.fingerprint}</dd>
+          <dt className="text-ink-muted">Dataset fingerprint</dt>
+          <dd className="font-mono text-ink-muted">{view.fingerprint}</dd>
         </div>
         <div>
-          <dt className="text-fg-muted">Scenario</dt>
-          <dd className="text-fg-muted">
+          <dt className="text-ink-muted">Scenario</dt>
+          <dd className="text-ink-muted">
             {view.scenarioLabel} <span className="font-mono text-xs">({view.scenarioId})</span>
           </dd>
         </div>
         <div>
-          <dt className="text-fg-muted">Window</dt>
-          <dd className="text-fg-muted">
+          <dt className="text-ink-muted">Window</dt>
+          <dd className="text-ink-muted">
             {view.window.from} → {view.window.to} · {view.window.days} days
           </dd>
         </div>
       </dl>
 
-      <p className="text-sm text-fg-muted">
+      <p className="text-sm text-ink-muted">
         The sources, licences, retrieval dates and every assumption are in{' '}
-        <span className="font-mono text-fg-muted">{view.document}</span> in the repository, and the
+        <span className="font-mono text-ink-muted">{view.document}</span> in the repository, and the
         same values are browsable in the dataset inspector at <code>/dataset</code>.
       </p>
     </Panel>

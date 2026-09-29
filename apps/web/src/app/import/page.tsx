@@ -179,7 +179,7 @@ export default function ImportPage() {
   return (
     <div className="flex flex-col gap-12">
       <PageHeader label="Interoperability · import" title="Bring a file the ministry already has">
-        <p className="max-w-measure text-lg text-fg-muted">
+        <p className="max-w-measure text-lg text-ink-muted">
           A department does not adopt a platform by retyping its returns. This surface reads an
           extract of a system the ministry already runs, shows exactly what it would write before
           anything is written, and then writes it — through the same ingest boundary and the same
@@ -194,10 +194,10 @@ export default function ImportPage() {
       >
         <div className="flex flex-col gap-4">
           <div className="flex flex-wrap items-end gap-3">
-            <label className="flex flex-col gap-1 text-xs text-fg-muted">
+            <label className="flex flex-col gap-1 text-xs text-ink-muted">
               <span>format</span>
               <select
-                className="min-h-11 rounded-instrument border border-ink-600 bg-ink-900 px-2 py-1 text-sm text-fg"
+                className="min-h-11 rounded-card border border-hairline bg-paper-raised px-2 py-1 text-sm text-ink"
                 value={format}
                 onChange={(event) => {
                   setFormat(event.target.value);
@@ -218,7 +218,7 @@ export default function ImportPage() {
               <button
                 type="button"
                 data-testid="import-sample"
-                className="min-h-11 rounded-instrument border border-ink-600 bg-ink-900 px-3 py-1 text-sm text-fg hover:border-accent/40"
+                className="min-h-11 rounded-card border border-hairline bg-paper-raised px-3 py-1 text-sm text-ink hover:border-accent/40"
                 onClick={() => {
                   void loadSample(chosen.sample);
                 }}
@@ -230,7 +230,7 @@ export default function ImportPage() {
               <button
                 type="button"
                 data-testid="import-broken"
-                className="rounded px-3 py-1 text-sm text-fg-muted hover:text-fg"
+                className="rounded px-3 py-1 text-sm text-ink-muted hover:text-ink"
                 onClick={() => {
                   void loadSample(chosen.broken);
                 }}
@@ -238,10 +238,10 @@ export default function ImportPage() {
                 Use the damaged one
               </button>
             )}
-            <label className="flex flex-col gap-1 text-xs text-fg-muted">
+            <label className="flex flex-col gap-1 text-xs text-ink-muted">
               <span>file name</span>
               <input
-                className="min-h-11 rounded-instrument border border-ink-600 bg-ink-900 px-2 py-1 font-mono text-xs text-fg"
+                className="min-h-11 rounded-card border border-hairline bg-paper-raised px-2 py-1 font-mono text-xs text-ink"
                 value={fileName}
                 onChange={(event) => {
                   setFileName(event.target.value);
@@ -250,11 +250,11 @@ export default function ImportPage() {
             </label>
           </div>
 
-          <label className="flex flex-col gap-1 text-xs text-fg-muted">
+          <label className="flex flex-col gap-1 text-xs text-ink-muted">
             <span>the file&rsquo;s text</span>
             <textarea
               data-testid="import-text"
-              className="h-48 w-full min-h-11 rounded-instrument border border-ink-600 bg-ink-950 p-3 font-mono text-xs text-fg"
+              className="h-48 w-full min-h-11 rounded-card border border-hairline bg-paper p-3 font-mono text-xs text-ink"
               value={text}
               onChange={(event) => {
                 setText(event.target.value);
@@ -280,14 +280,14 @@ export default function ImportPage() {
               type="button"
               data-testid="import-accept"
               disabled={text.trim() === '' || busy || preview === null}
-              className="rounded-instrument border border-signal-ok/40 bg-signal-ok/10 px-3 py-1 text-sm text-signal-ok hover:bg-signal-ok/20 disabled:opacity-40"
+              className="rounded-card border border-signal-ok/40 bg-signal-ok/10 px-3 py-1 text-sm text-signal-ok hover:bg-signal-ok/20 disabled:opacity-40"
               onClick={() => {
                 void submit('PUT');
               }}
             >
               Accept the file
             </button>
-            <span className="text-xs text-fg-subtle">
+            <span className="text-xs text-ink-subtle">
               {busy ? 'working…' : 'checking writes nothing; accepting is a separate act'}
             </span>
           </div>
@@ -330,26 +330,26 @@ export default function ImportPage() {
               />
             </div>
 
-            <p className="font-mono text-xs text-fg-subtle">
+            <p className="font-mono text-xs text-ink-subtle">
               {preview.fileName} · {preview.format} · sha256 {preview.digest.slice(0, 16)}…
               {preview.title === null ? '' : ` · ${preview.title}`}
               {preview.retrievedOn === null ? '' : ` · retrieved ${preview.retrievedOn}`}
             </p>
 
             {preview.crosswalk === null ? null : (
-              <div className="rounded-instrument border border-ink-700 bg-ink-900 p-4 text-sm text-fg-muted">
+              <div className="rounded-card border border-hairline bg-paper-raised p-4 text-sm text-ink-muted">
                 <p>
                   {formatCount(preview.crosswalk.matched)} of this platform&rsquo;s districts were
                   given a government code.
                 </p>
                 {preview.crosswalk.unmatchedPlatform.length === 0 ? null : (
-                  <p className="mt-2 text-fg-muted">
+                  <p className="mt-2 text-ink-muted">
                     No government unit matched {preview.crosswalk.unmatchedPlatform.join(', ')} — a
                     renamed district is reported rather than guessed at.
                   </p>
                 )}
                 {preview.crosswalk.unmatchedGovernment.length === 0 ? null : (
-                  <p className="mt-2 text-fg-muted">
+                  <p className="mt-2 text-ink-muted">
                     The directory names {preview.crosswalk.unmatchedGovernment.join(', ')}, which
                     this platform has no district for.
                   </p>
@@ -377,24 +377,24 @@ export default function ImportPage() {
                   </span>,
                   <span
                     key={`${row.subjectId}-outcome`}
-                    className={row.outcome === 'refused' ? 'text-signal-critical' : 'text-fg'}
+                    className={row.outcome === 'refused' ? 'text-signal-critical' : 'text-ink'}
                   >
                     {OUTCOME_LABEL[row.outcome]}
                   </span>,
-                  <span key={`${row.subjectId}-detail`} className="text-xs text-fg-muted">
+                  <span key={`${row.subjectId}-detail`} className="text-xs text-ink-muted">
                     {row.detail}
                   </span>,
                 ])}
               />
             </div>
             {preview.rows.length > 50 ? (
-              <p className="text-xs text-fg-subtle">
+              <p className="text-xs text-ink-subtle">
                 Showing the first fifty of {formatCount(preview.rows.length)} rows.
               </p>
             ) : null}
 
             {preview.notes.length === 0 ? null : (
-              <ul className="flex list-disc flex-col gap-1 pl-5 text-xs text-fg-muted">
+              <ul className="flex list-disc flex-col gap-1 pl-5 text-xs text-ink-muted">
                 {preview.notes.map((note) => (
                   <li key={note}>{note}</li>
                 ))}
@@ -430,7 +430,7 @@ export default function ImportPage() {
         description="Every file the platform has taken, with what it wrote. The register exists so a ledger row can be traced to the file it arrived in without keeping the file itself."
       >
         {imports.length === 0 ? (
-          <p className="text-sm text-fg-muted" data-testid="import-register-empty">
+          <p className="text-sm text-ink-muted" data-testid="import-register-empty">
             No file has been accepted in this process yet.
           </p>
         ) : (
@@ -454,7 +454,7 @@ export default function ImportPage() {
                 <span key={`${record.id}-name`} className="text-xs">
                   {record.fileName}
                   <br />
-                  <span className="font-mono text-fg-subtle">{record.digest.slice(0, 12)}</span>
+                  <span className="font-mono text-ink-subtle">{record.digest.slice(0, 12)}</span>
                 </span>,
                 <span key={`${record.id}-format`} className="font-mono text-xs">
                   {record.format}

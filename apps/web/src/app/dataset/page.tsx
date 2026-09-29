@@ -79,7 +79,7 @@ export default function DatasetPage() {
   return (
     <div className="flex flex-col gap-12">
       <PageHeader label="Dataset inspector" title="What this platform is running on">
-        <p className="max-w-measure text-lg text-fg-muted">
+        <p className="max-w-measure text-lg text-ink-muted">
           The demonstration dataset, counted from the generator that produces it. Every figure below
           is reproducible from one published seed, and every record says in its own fields where it
           came from.
@@ -136,17 +136,17 @@ export default function DatasetPage() {
             hint={`anchors retrieved ${RETRIEVAL_DATE}`}
           />
         </div>
-        <p className="max-w-measure text-sm text-fg-muted">
-          <span className="text-fg-muted">Coverage and depth are separate decisions.</span> The
+        <p className="max-w-measure text-sm text-ink-muted">
+          <span className="text-ink-muted">Coverage and depth are separate decisions.</span> The
           network states the whole country at the profile&rsquo;s width —{' '}
           {formatCount(summary.totals.states)} states, {formatCount(summary.totals.districts)}{' '}
           districts, {formatCount(summary.totals.blocks)} blocks — while a generated{' '}
           <em>history</em> exists for {formatCount(summary.totals.simulatedFacilities)} facilities,
           spread across every state. A figure that could be read either way says which one it is.
         </p>
-        <p className="max-w-measure text-sm text-fg-muted">
+        <p className="max-w-measure text-sm text-ink-muted">
           The run is a scripted perturbation with a named expectation:{' '}
-          <span className="text-fg-muted">{scenario.expectation}</span>
+          <span className="text-ink-muted">{scenario.expectation}</span>
           {scenario.negativeControl
             ? ' This is a negative control, so the correct result is silence.'
             : ''}
@@ -189,20 +189,20 @@ export default function DatasetPage() {
             formatCount(layer.records),
             <ul key="layers" className="flex flex-col gap-0.5">
               {layer.layers.map((each) => (
-                <li key={each.label} className="text-fg-muted">
+                <li key={each.label} className="text-ink-muted">
                   {each.label}{' '}
-                  <span className="font-mono text-fg-subtle">{formatCount(each.count)}</span>
+                  <span className="font-mono text-ink-subtle">{formatCount(each.count)}</span>
                 </li>
               ))}
             </ul>,
-            <ul key="refs" className="flex flex-col gap-0.5 font-mono text-xs text-fg-muted">
+            <ul key="refs" className="flex flex-col gap-0.5 font-mono text-xs text-ink-muted">
               {layer.references.map((reference) => (
                 <li key={reference}>{reference}</li>
               ))}
             </ul>,
           ])}
         />
-        <p className="max-w-measure text-sm text-fg-subtle">
+        <p className="max-w-measure text-sm text-ink-subtle">
           Purchase orders are absent from this table because they are the generator&rsquo;s own
           bookkeeping rather than a record the platform stores. Nothing reads one as evidence yet.
         </p>
@@ -230,20 +230,20 @@ export default function DatasetPage() {
           ]}
           rows={SOURCE_REGISTRY.map((source) => [
             <div key="source" className="flex flex-col gap-1">
-              <span className="text-fg">{source.title}</span>
-              <span className="text-xs text-fg-subtle">{source.publisher}</span>
+              <span className="text-ink">{source.title}</span>
+              <span className="text-xs text-ink-subtle">{source.publisher}</span>
               <details className="max-w-xl">
                 <summary className="cursor-pointer text-xs text-accent">what was obtained</summary>
-                <p className="mt-1 text-xs text-fg-muted">{source.note}</p>
+                <p className="mt-1 text-xs text-ink-muted">{source.note}</p>
               </details>
             </div>,
             <Badge key="status" className={SOURCE_STATUS_TONES[source.status]}>
               {SOURCE_STATUS_LABELS[source.status]}
             </Badge>,
-            <span key="licence" className="text-xs text-fg-muted">
+            <span key="licence" className="text-xs text-ink-muted">
               {source.licence}
             </span>,
-            <span key="date" className="font-mono text-xs text-fg-muted">
+            <span key="date" className="font-mono text-xs text-ink-muted">
               {source.retrievedOn}
             </span>,
           ])}
@@ -317,8 +317,8 @@ export default function DatasetPage() {
           ]}
           rows={summary.byTier.map((tier) => [
             <span key="tier" className="flex flex-col">
-              <span className="text-fg">{tier.tier}</span>
-              <span className="text-xs text-fg-subtle">{tier.label}</span>
+              <span className="text-ink">{tier.tier}</span>
+              <span className="text-xs text-ink-subtle">{tier.label}</span>
             </span>,
             formatCount(tier.facilities),
             formatCount(tier.simulatedFacilities),
@@ -328,7 +328,7 @@ export default function DatasetPage() {
             `${formatCount(tier.normBeds[0])}–${formatCount(tier.normBeds[1])}`,
           ])}
         />
-        <p className="max-w-measure text-sm text-fg-subtle">
+        <p className="max-w-measure text-sm text-ink-subtle">
           A tier with no facilities is still listed: the profile states which tiers it covers, and
           the tier table is where that is visible rather than implied.
         </p>
@@ -479,7 +479,7 @@ export default function DatasetPage() {
         </div>
       </Panel>
 
-      <footer className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-ink-700 pt-6 text-sm text-fg-subtle">
+      <footer className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-hairline pt-6 text-sm text-ink-subtle">
         <Link className="text-accent underline-offset-4 hover:underline" href="/">
           Back to the overview
         </Link>

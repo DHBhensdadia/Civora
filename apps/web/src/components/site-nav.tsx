@@ -59,7 +59,7 @@ export function SiteNav({ session }: SiteNavProps) {
                     className={`inline-flex min-h-11 items-center border-l-2 pl-3 text-sm transition-colors duration-150 ${
                       active
                         ? 'border-accent font-medium text-accent'
-                        : 'border-transparent text-fg-muted hover:border-ink-600 hover:text-fg'
+                        : 'border-transparent text-ink-muted hover:border-hairline hover:text-ink'
                     }`}
                     href={section.href}
                   >

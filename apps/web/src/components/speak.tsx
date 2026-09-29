@@ -81,7 +81,7 @@ export function SpeakButton({ alertId, bodies, language }: SpeakButtonProps) {
     <span className="mt-1 flex flex-wrap items-center gap-2 text-xs">
       <button
         aria-label={`${messageFor(language, reading ? 'alert.listening' : 'alert.listen')} — ${alertId}`}
-        className="inline-flex min-h-11 items-center rounded-full border-2 border-ink-600 px-4 text-xs text-fg-muted transition-colors duration-150 hover:border-accent hover:text-accent disabled:pointer-events-none disabled:opacity-40"
+        className="inline-flex min-h-11 items-center rounded-full border-2 border-hairline px-4 text-xs text-ink-muted transition-colors duration-150 hover:border-accent hover:text-accent disabled:pointer-events-none disabled:opacity-40"
         data-testid={`speak-${alertId}`}
         onClick={reading ? stop : read}
         type="button"

@@ -115,31 +115,31 @@ export default async function CommandPage({
   return (
     <div className="flex flex-col gap-12">
       <PageHeader label="National command plane" spacing="roomy" title="Control tower">
-        <p className="max-w-measure text-lg text-fg-muted">
+        <p className="max-w-measure text-lg text-ink-muted">
           Every figure here is assembled from the same projections the surfaces beside it read — the
           ledger, the scored population, the alert set and the seeded network. Nothing on this page
           is recomputed, so a risk score or a plan seen here is the one the intelligence surface and
           the workbench already carry.
         </p>
-        <dl className="flex flex-wrap items-baseline gap-x-5 gap-y-1 font-mono text-xs text-fg-subtle">
+        <dl className="flex flex-wrap items-baseline gap-x-5 gap-y-1 font-mono text-xs text-ink-subtle">
           <div className="flex items-baseline gap-2">
             <dt className="uppercase">As of</dt>
-            <dd className="text-fg-muted">{tower.asOf}</dd>
+            <dd className="text-ink-muted">{tower.asOf}</dd>
           </div>
           <div className="flex items-baseline gap-2">
             <dt className="uppercase">Scenario</dt>
-            <dd className="text-fg-muted">{tower.scenarioId}</dd>
+            <dd className="text-ink-muted">{tower.scenarioId}</dd>
           </div>
           <div className="flex items-baseline gap-2">
             <dt className="uppercase">Seed</dt>
-            <dd className="text-fg-muted">{tower.seed}</dd>
+            <dd className="text-ink-muted">{tower.seed}</dd>
           </div>
           <div className="flex items-baseline gap-2">
             <dt className="uppercase">Acting as</dt>
-            <dd className="text-fg-muted">{session.role}</dd>
+            <dd className="text-ink-muted">{session.role}</dd>
           </div>
         </dl>
-        <p data-testid="command-scope" className="max-w-measure text-sm text-fg-muted">
+        <p data-testid="command-scope" className="max-w-measure text-sm text-ink-muted">
           {scopeSentence}
         </p>
       </PageHeader>
@@ -215,7 +215,7 @@ export default async function CommandPage({
           />
         </div>
         {tower.change.sample.length === 0 ? (
-          <p className="text-sm text-fg-muted">
+          <p className="text-sm text-ink-muted">
             No movement is recorded on that day yet. The strip fills as captures arrive.
           </p>
         ) : (
@@ -259,14 +259,14 @@ export default async function CommandPage({
               className={
                 option === tier
                   ? 'inline-flex min-h-11 items-center rounded-full border-2 border-accent bg-accent/15 px-4 text-sm text-accent'
-                  : 'inline-flex min-h-11 items-center rounded-full border-2 border-ink-600 px-4 text-sm text-fg-muted transition-colors duration-150 hover:border-accent hover:text-accent'
+                  : 'inline-flex min-h-11 items-center rounded-full border-2 border-hairline px-4 text-sm text-ink-muted transition-colors duration-150 hover:border-accent hover:text-accent'
               }
             >
               {TIER_LABEL[option]}
             </Link>
           ))}
         </nav>
-        <p className="text-sm text-fg-muted">
+        <p className="text-sm text-ink-muted">
           Reading by <span className="font-mono">{tier}</span>:{' '}
           {tier === 'state'
             ? `${formatCount(tower.regions.length)} region row(s)`
@@ -331,7 +331,7 @@ export default async function CommandPage({
                 ? 'no reading'
                 : `${formatCount(Math.round(row.bedOccupancy * 100))}% of sanctioned beds`,
               row.level === 'region' ? (
-                <span key={row.id} className="text-fg-subtle">
+                <span key={row.id} className="text-ink-subtle">
                   drill through its districts
                 </span>
               ) : (
@@ -521,7 +521,7 @@ export default async function CommandPage({
               </div>
 
               {evidenceStep.drivers.length === 0 ? (
-                <p className="text-sm text-fg-muted">
+                <p className="text-sm text-ink-muted">
                   The risk engine recorded no drivers for this pair, which is a result rather than a
                   gap: a pair with no drivers is a pair whose score rests on nothing.
                 </p>
@@ -541,14 +541,14 @@ export default async function CommandPage({
                 />
               )}
 
-              <p data-testid="evidence-count" className="text-sm text-fg-muted">
+              <p data-testid="evidence-count" className="text-sm text-ink-muted">
                 {formatCount(evidenceStep.movements.length)} movement(s) for this item at this
                 facility, newest first; a facility with none is a facility whose every figure above
                 rests on a reading from another item.
               </p>
 
               {evidenceStep.movements.length === 0 ? (
-                <p className="text-sm text-fg-muted">
+                <p className="text-sm text-ink-muted">
                   No movement is recorded for this pair. The position above therefore rests on the
                   facility&rsquo;s other records, and the demand basis says so.
                 </p>

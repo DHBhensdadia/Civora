@@ -176,13 +176,13 @@ function PendingProposal({
       data-testid="voice-pending"
     >
       <div className="flex flex-col gap-1">
-        <span className="font-mono text-xs text-fg-subtle">
+        <span className="font-mono text-xs text-ink-subtle">
           {proposal.id} · spoken by {proposal.spokenBy} · about {proposal.observedOn}
         </span>
-        <p className="text-sm text-fg">
+        <p className="text-sm text-ink">
           Heard “{proposal.command.transcript}” ({proposal.command.language})
         </p>
-        <p className="text-sm text-fg-muted">
+        <p className="text-sm text-ink-muted">
           That would be {INTENT_TEXT[proposal.command.intent] ?? proposal.command.intent}
           {proposal.command.quantity === null
             ? ''
@@ -212,7 +212,7 @@ function PendingProposal({
             {proposal.problems.map((problem) => (
               <li
                 key={problem}
-                className="rounded-instrument border border-signal-watch/40 bg-signal-watch/10 px-2 py-1 text-xs text-signal-watch"
+                className="rounded-card border border-signal-watch/40 bg-signal-watch/10 px-2 py-1 text-xs text-signal-watch"
               >
                 {PROBLEM_TEXT[problem] ?? problem}
               </li>
@@ -222,7 +222,7 @@ function PendingProposal({
       )}
 
       {proposal.command.ambiguities.length === 0 ? null : (
-        <ul className="flex flex-col gap-1 text-xs text-fg-muted">
+        <ul className="flex flex-col gap-1 text-xs text-ink-muted">
           {proposal.command.ambiguities.map((note) => (
             <li key={note}>The reader was unsure: {note}</li>
           ))}
@@ -231,10 +231,10 @@ function PendingProposal({
 
       {options.length === 0 ? null : (
         <label className="flex flex-col gap-1 text-sm">
-          <span className="text-fg-muted">Which medicine was meant?</span>
+          <span className="text-ink-muted">Which medicine was meant?</span>
           <select
             aria-label={`Catalogue entry for ${proposal.id}`}
-            className="min-h-11 rounded-instrument border border-ink-600 bg-ink-900 px-3 py-2"
+            className="min-h-11 rounded-card border border-hairline bg-paper-raised px-3 py-2"
             onChange={(event) => {
               setItemId(event.target.value);
             }}
@@ -253,10 +253,10 @@ function PendingProposal({
       {proposal.command.intent === 'stock_receipt' ? (
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="flex flex-col gap-1 text-sm">
-            <span className="text-fg-muted">Batch</span>
+            <span className="text-ink-muted">Batch</span>
             <input
               aria-label={`Batch for ${proposal.id}`}
-              className="min-h-11 rounded-instrument border border-ink-600 bg-ink-900 px-3 py-2"
+              className="min-h-11 rounded-card border border-hairline bg-paper-raised px-3 py-2"
               onChange={(event) => {
                 setBatchId(event.target.value);
               }}
@@ -265,10 +265,10 @@ function PendingProposal({
             />
           </label>
           <label className="flex flex-col gap-1 text-sm">
-            <span className="text-fg-muted">Expires</span>
+            <span className="text-ink-muted">Expires</span>
             <input
               aria-label={`Expiry for ${proposal.id}`}
-              className="min-h-11 rounded-instrument border border-ink-600 bg-ink-900 px-3 py-2"
+              className="min-h-11 rounded-card border border-hairline bg-paper-raised px-3 py-2"
               onChange={(event) => {
                 setExpiresOn(event.target.value);
               }}
@@ -281,10 +281,10 @@ function PendingProposal({
 
       {proposal.command.intent === 'staff_attendance' ? (
         <label className="flex flex-col gap-1 text-sm">
-          <span className="text-fg-muted">Present today</span>
+          <span className="text-ink-muted">Present today</span>
           <input
             aria-label={`Present for ${proposal.id}`}
-            className="min-h-11 rounded-instrument border border-ink-600 bg-ink-900 px-3 py-2"
+            className="min-h-11 rounded-card border border-hairline bg-paper-raised px-3 py-2"
             onChange={(event) => {
               setPresent(event.target.value);
             }}
@@ -296,7 +296,7 @@ function PendingProposal({
 
       <div className="flex flex-wrap items-center gap-3">
         <button
-          className="rounded-instrument bg-signal-ok px-3 py-2 text-sm font-medium text-ink-950 disabled:opacity-50"
+          className="rounded-card bg-signal-ok px-3 py-2 text-sm font-medium text-paper disabled:opacity-50"
           disabled={busy}
           onClick={() => {
             setBusy(true);
@@ -309,7 +309,7 @@ function PendingProposal({
           That is what I said — write it
         </button>
         <button
-          className="min-h-11 rounded-instrument border border-ink-600 px-3 py-2 text-sm text-fg disabled:opacity-50"
+          className="min-h-11 rounded-card border border-hairline px-3 py-2 text-sm text-ink disabled:opacity-50"
           disabled={busy}
           onClick={() => {
             setBusy(true);
@@ -321,7 +321,7 @@ function PendingProposal({
         >
           That is not what I said
         </button>
-        <span className="text-xs text-fg-subtle">
+        <span className="text-xs text-ink-subtle">
           {proposal.source === 'model'
             ? `parsed by ${proposal.model}`
             : 'parse supplied rather than heard'}
@@ -483,7 +483,7 @@ export default function VoicePage() {
   return (
     <div className="flex flex-col gap-12">
       <PageHeader label="Voice intake" title="Say it, then confirm it">
-        <p className="max-w-measure text-fg-muted">
+        <p className="max-w-measure text-ink-muted">
           Speak a stock, bed or attendance update and the platform parses it into a record it holds
           back. The transcript is shown back to you word for word, the update is named, and every
           question the platform still has is listed — and nothing reaches the ledger until somebody
@@ -517,10 +517,10 @@ export default function VoicePage() {
       >
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="flex flex-col gap-1 text-sm">
-            <span className="text-fg-muted">Facility</span>
+            <span className="text-ink-muted">Facility</span>
             <select
               aria-label="Facility"
-              className="min-h-11 rounded-instrument border border-ink-600 bg-ink-900 px-3 py-2"
+              className="min-h-11 rounded-card border border-hairline bg-paper-raised px-3 py-2"
               onChange={(event) => {
                 setFacilityId(event.target.value);
               }}
@@ -534,13 +534,13 @@ export default function VoicePage() {
             </select>
           </label>
           <label className="flex flex-col gap-1 text-sm">
-            <span className="text-fg-muted">Recording</span>
+            <span className="text-ink-muted">Recording</span>
             <input
               accept="audio/*"
               // Named for the act rather than the noun: the label matcher is a
               // substring match, and this page is mostly about what was said.
               aria-label="Voice note"
-              className="min-h-11 rounded-instrument border border-ink-600 bg-ink-900 px-3 py-2"
+              className="min-h-11 rounded-card border border-hairline bg-paper-raised px-3 py-2"
               onChange={(event) => {
                 setFile(event.target.files?.[0] ?? null);
               }}
@@ -550,7 +550,7 @@ export default function VoicePage() {
         </div>
         <div className="mt-4 flex flex-wrap items-center gap-3">
           <button
-            className="rounded-instrument bg-accent px-4 py-2 text-sm font-medium text-ink-950 disabled:opacity-50"
+            className="rounded-card bg-accent px-4 py-2 text-sm font-medium text-paper disabled:opacity-50"
             disabled={busy || file === null || facilityId === ''}
             onClick={() => {
               void listen();
@@ -559,7 +559,7 @@ export default function VoicePage() {
           >
             Listen and hold for confirmation
           </button>
-          <span className="text-xs text-fg-subtle">
+          <span className="text-xs text-ink-subtle">
             Acting as {session?.session.label ?? '—'} · the day defaults to today, {today()}
           </span>
         </div>
@@ -570,7 +570,7 @@ export default function VoicePage() {
         )}
         {refusal === null ? null : (
           <p
-            className="mt-4 rounded-instrument border border-signal-critical/40 bg-signal-critical/10 px-3 py-2 text-sm text-signal-critical"
+            className="mt-4 rounded-card border border-signal-critical/40 bg-signal-critical/10 px-3 py-2 text-sm text-signal-critical"
             data-testid="voice-refusal"
           >
             {refusal}
@@ -584,11 +584,11 @@ export default function VoicePage() {
         description="Nothing on this list has been written. What was heard is repeated word for word, and the questions below it are the platform's own rule — a proposal that is still incomplete is refused again after the button is pressed rather than written because it was pressed."
       >
         {pending.length === 0 ? (
-          <p className="text-sm text-fg-muted" data-testid="voice-empty-queue">
+          <p className="text-sm text-ink-muted" data-testid="voice-empty-queue">
             Nothing is waiting to be confirmed.
           </p>
         ) : (
-          <ul className="flex flex-col divide-y divide-ink-700 rounded-instrument border border-ink-700">
+          <ul className="flex flex-col divide-y divide-hairline rounded-card border border-hairline">
             {pending.map((proposal) => (
               <PendingProposal
                 key={proposal.id}
@@ -601,7 +601,7 @@ export default function VoicePage() {
           </ul>
         )}
         {rejected.length === 0 ? null : (
-          <p className="mt-3 text-xs text-fg-subtle">
+          <p className="mt-3 text-xs text-ink-subtle">
             {String(rejected.length)} proposal(s) were rejected by the person who spoke:{' '}
             {rejected.map((proposal) => proposal.id).join(', ')}. They are kept as evidence about
             the reader and were never written.
@@ -615,9 +615,9 @@ export default function VoicePage() {
         description="Confirmed proposals that reached the ledger. They carry captureSource voice, which is how the ledger tells a spoken entry from a typed or photographed one."
       >
         {written.length === 0 ? (
-          <p className="text-sm text-fg-muted">Nothing has been confirmed yet.</p>
+          <p className="text-sm text-ink-muted">Nothing has been confirmed yet.</p>
         ) : (
-          <ul className="flex flex-col divide-y divide-ink-700 rounded-instrument border border-ink-700">
+          <ul className="flex flex-col divide-y divide-hairline rounded-card border border-hairline">
             {written.map((proposal) => (
               <li
                 key={proposal.id}
@@ -625,7 +625,7 @@ export default function VoicePage() {
                 data-provenance="voice"
                 data-testid="voice-written-line"
               >
-                <span className="text-sm text-fg">
+                <span className="text-sm text-ink">
                   {proposal.facilityName} · {proposal.item?.name ?? 'report'} ·{' '}
                   {proposal.command.quantity === null
                     ? (INTENT_TEXT[proposal.command.intent] ?? proposal.command.intent)
@@ -641,7 +641,7 @@ export default function VoicePage() {
                     Heard ·{' '}
                     {proposal.source === 'model' ? `voice · ${proposal.model}` : 'parse supplied'}
                   </span>
-                  <span className="font-mono text-xs text-fg-subtle">
+                  <span className="font-mono text-xs text-ink-subtle">
                     {proposal.receipt?.idempotencyKey ?? '—'}
                   </span>
                 </span>
@@ -651,7 +651,7 @@ export default function VoicePage() {
         )}
       </Panel>
 
-      <p className="text-xs text-fg-subtle">
+      <p className="text-xs text-ink-subtle">
         The queue is held in this process, like the projection and the alert inbox: it is correct
         for the demonstration and it is not a store. Every record written from here is stamped
         simulated by the platform, because the dataset it is added to is generated. Today is{' '}

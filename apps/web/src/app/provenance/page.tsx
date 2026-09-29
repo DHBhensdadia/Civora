@@ -24,7 +24,7 @@ export default async function ProvenancePage() {
   return (
     <div className="flex flex-col gap-12">
       <PageHeader label="Where the data comes from" title="Provenance">
-        <p className="max-w-measure text-fg-muted">
+        <p className="max-w-measure text-ink-muted">
           A demonstration of a national platform has one failure mode worse than a wrong figure: a
           right figure mistaken for a real one. This page exists so that cannot happen quietly — it
           names which layers are published values, which are generated from them, and which seed
@@ -36,7 +36,7 @@ export default async function ProvenancePage() {
 
       <section className="flex flex-col gap-3">
         <h2 className="text-xl">What that means for a figure on a surface</h2>
-        <ul className="flex list-disc flex-col gap-2 pl-5 text-sm text-fg-muted">
+        <ul className="flex list-disc flex-col gap-2 pl-5 text-sm text-ink-muted">
           <li>
             Every generated record carries <code className="font-mono">synthetic: true</code> and a
             provenance naming the simulator. A surface that displayed one as a measurement fails the

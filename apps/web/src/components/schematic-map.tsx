@@ -26,14 +26,21 @@ export interface SchematicMapProps {
 }
 
 /**
- * Five shades, dark to hot, shared by the SVG fills and the legend swatches.
+ * Five shades, calm to alarming, shared by the SVG fills and the legend swatches.
+ *
+ * These were a dark-to-hot ramp painted on a near-black ground, which was right
+ * on a dark canvas and is wrong on paper: the fills have to read against the
+ * canvas they sit on, so the ramp now runs pale to strong on a light plate. The
+ * fills carry no text, so they are not held to a contrast floor — the legend and
+ * each marker's title print the value and the band in ink, which is where the
+ * meaning actually lives.
  *
  * Hex rather than Tailwind utility classes because the same value has to paint
  * an SVG shape and a legend chip, and one list is what keeps the legend honest
  * about the map.
  */
-const COLOURS = ['#0c4a6e', '#0369a1', '#0ea5e9', '#f59e0b', '#e11d48'] as const;
-const NO_READING = '#334155';
+const COLOURS = ['#d7f7ec', '#7fe9c8', '#f9f78a', '#f0a48f', '#c8384f'] as const;
+const NO_READING = '#d0d4d8';
 
 const colourFor = (index: number | null): string =>
   index === null ? NO_READING : (COLOURS[Math.min(index, COLOURS.length - 1)] ?? NO_READING);
@@ -45,15 +52,15 @@ export function SchematicMap({ id, map }: SchematicMapProps) {
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h3 id={`${id}-heading`} className="text-sm font-medium text-fg">
+        <h3 id={`${id}-heading`} className="text-sm font-medium text-ink">
           Stock-out risk across the regions this session can read
         </h3>
-        <p data-testid="map-renderer" className="font-mono text-xs text-fg-muted">
+        <p data-testid="map-renderer" className="font-mono text-xs text-ink-muted">
           renderer: {map.renderer}
         </p>
       </div>
 
-      <p data-testid="map-refusal" className="max-w-measure text-xs text-fg-muted">
+      <p data-testid="map-refusal" className="max-w-measure text-xs text-ink-muted">
         {map.renderer === 'google-maps'
           ? 'Google Maps is configured for this deployment; the schematic view below is drawn from the same markers, so the figures do not depend on it.'
           : (map.refusal ??
@@ -66,9 +73,9 @@ export function SchematicMap({ id, map }: SchematicMapProps) {
           viewBox={`-4 -4 ${MAP_EXTENT + 8} ${MAP_EXTENT + 8}`}
           role="img"
           data-testid="schematic-map"
-          className="h-72 w-72 shrink-0 rounded-instrument border border-ink-700 bg-ink-800"
+          className="h-72 w-72 shrink-0 rounded-card border border-hairline bg-paper-sunken"
         >
-          <rect x="0" y="0" width={MAP_EXTENT} height={MAP_EXTENT} fill="#020617" opacity="0.6" />
+          <rect x="0" y="0" width={MAP_EXTENT} height={MAP_EXTENT} fill="#eff0f3" />
           {map.markers.map((marker) => (
             <rect
               key={marker.id}
@@ -90,14 +97,14 @@ export function SchematicMap({ id, map }: SchematicMapProps) {
         </svg>
 
         <div className="flex flex-col gap-3">
-          <p className="text-sm text-fg-muted">
-            Value: <span className="text-fg-muted">{map.valueLabel}</span>, counted from the risk
+          <p className="text-sm text-ink-muted">
+            Value: <span className="text-ink-muted">{map.valueLabel}</span>, counted from the risk
             engine&rsquo;s own bands. A region with no reading is drawn in grey and never as the
             smallest value.
           </p>
-          <ul data-testid="map-legend" className="flex flex-col gap-1 text-xs text-fg-muted">
+          <ul data-testid="map-legend" className="flex flex-col gap-1 text-xs text-ink-muted">
             {bands.length === 0 ? (
-              <li className="font-mono text-fg-muted">no values read</li>
+              <li className="font-mono text-ink-muted">no values read</li>
             ) : (
               bands.map((band, index) => (
                 <li key={band.label} className="flex items-center gap-2">
@@ -119,7 +126,7 @@ export function SchematicMap({ id, map }: SchematicMapProps) {
               <span className="font-mono">no reading</span>
             </li>
           </ul>
-          <p className="text-xs text-fg-subtle">
+          <p className="text-xs text-ink-subtle">
             {map.classes.uniform
               ? 'Every region this session can read carries the same value, so there is one class and nothing to shade.'
               : `${formatCount(map.markers.length)} region markers, placed from facility coordinates. The placement is schematic: good enough to put a marker in the right region, not good enough to navigate by.`}

@@ -1,0 +1,46 @@
+# The demonstration host, declared in one reviewable file.
+#
+# ADR 0008 makes Cloud Run the primary target and requires the non-Google fallback to be
+# **verified by at least one deployment before submission**. No Google Cloud project or
+# billing account exists (Workspace/state/BLOCKERS.md B1), so this is that fallback:
+# the same OCI image, built by Render from this repository, on its free instance type.
+# The decision and its arithmetic are ADR 0010 and docs/DEPLOYMENT.md §8.
+#
+# Nothing here creates anything. Creating a Blueprint from this file in the Render
+# Dashboard is an owner action, and it is where the value of GEMINI_API_KEY is prompted
+# for (`sync: false`) — it is never written into this repository or into the image.
+#
+# Deliberately absent:
+#   - `PORT`. Render injects it (10000 by default) and routes to it; the standalone
+#     server reads it, so the container needs no configuration and no `EXPOSE` change.
+#   - `numInstances` / `scaling`. The free instance type cannot scale past one, and one
+#     process is the shape the in-process store needs — two instances are two worlds.
+#   - `branch`, `repo`. The Blueprint's own repository is the repository.
+
+services:
+  - name: civora-web
+    type: web
+    runtime: docker
+    plan: free
+    region: singapore
+    dockerfilePath: ./infra/Dockerfile
+    dockerContext: .
+    healthCheckPath: /healthz
+    # The judge-facing revision changes when the owner deploys it, not on every push.
+    autoDeployTrigger: off
+    envVars:
+      # The same set that `infra/deploy.sh` §2 sets (its `GEMINI_*` pair arrives there
+      # through `--set-secrets`), so the two paths cannot drift apart in configuration.
+      - key: NODE_ENV
+        value: production
+      - key: CIVORA_DATA_PROVIDER
+        value: in-memory
+      - key: CIVORA_AUTH_PROVIDER
+        value: fixture
+      - key: CIVORA_REASONING_PROVIDER
+        value: gemini
+      - key: GEMINI_MODEL
+        value: gemini-3.1-flash-lite
+      # Prompted for once, at Blueprint creation, and stored by Render — never here.
+      - key: GEMINI_API_KEY
+        sync: false

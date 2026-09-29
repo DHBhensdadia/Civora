@@ -4,7 +4,8 @@
 > no Google Cloud project, no billing account and no running container runtime
 > (`Workspace/state/BLOCKERS.md` B1 and B8, outside this repository), so the steps
 > below are scripted, reviewed and dry-run, but **not one of them has been executed
-> against a real project**. Every statement in this document is either a command that
+> against a real project**, and the non-Google fallback chosen for the demonstration (§8) is
+> declared but not yet created. Every statement in this document is either a command that
 > was run (`infra/*.sh --dry-run`, recorded in §10) or a fact read from the vendor's
 > own page on the date named beside it. Where something is unverified, it says so.
 
@@ -35,14 +36,15 @@ demonstration serves the generated network and says so on every surface.
 
 ## 2. Prerequisites
 
-| Prerequisite                            | Needed for                                           | Notes                                                                                                          |
-| --------------------------------------- | ---------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| `gcloud` (Google Cloud SDK)             | provisioning and deploying                           | **Not installed on the author's machine as of 2026-09-27.** Install per the SDK page, then `gcloud auth login` |
-| A Google Cloud project                  | everything                                           | `infra/provision.sh` creates one if the id is free                                                             |
-| A billing account with a spending limit | Cloud Run, Artifact Registry, Cloud Build            | A project without billing cannot deploy; the scripts say which steps they skipped                              |
-| A Gemini API key                        | the reasoning layer                                  | `GEMINI_API_KEY`; see §6. Phase 5's live evidence is `Workspace/state/RUN_STATE.md` §3f                        |
-| `docker` + a running daemon             | only `infra/check-image.sh` and `CIVORA_BUILD=local` | The cloud build needs no daemon; a daemon is not running on the author's machine (B8)                          |
-| Node 22+ and `pnpm`                     | building locally and running the smoke test          | `pnpm install --frozen-lockfile` first                                                                         |
+| Prerequisite                            | Needed for                                           | Notes                                                                                                                                    |
+| --------------------------------------- | ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `gcloud` (Google Cloud SDK)             | provisioning and deploying                           | **Not installed on the author's machine as of 2026-09-27.** Install per the SDK page, then `gcloud auth login`                           |
+| A Render account (the fallback host)    | only §8 — the non-Google fallback                    | Free, no credit card. The Blueprint is created once, from the Dashboard, which is also where `GEMINI_API_KEY` is prompted for (ADR 0010) |
+| A Google Cloud project                  | everything                                           | `infra/provision.sh` creates one if the id is free                                                                                       |
+| A billing account with a spending limit | Cloud Run, Artifact Registry, Cloud Build            | A project without billing cannot deploy; the scripts say which steps they skipped                                                        |
+| A Gemini API key                        | the reasoning layer                                  | `GEMINI_API_KEY`; see §6. Phase 5's live evidence is `Workspace/state/RUN_STATE.md` §3f                                                  |
+| `docker` + a running daemon             | only `infra/check-image.sh` and `CIVORA_BUILD=local` | The cloud build needs no daemon; a daemon is not running on the author's machine (B8)                                                    |
+| Node 22+ and `pnpm`                     | building locally and running the smoke test          | `pnpm install --frozen-lockfile` first                                                                                                   |
 
 `jq` is convenient for reading JSON output and is not required.
 
@@ -230,8 +232,100 @@ when a deployment exists.
 
 ## 8. The fallback (a non-Google container host)
 
-The image is a standard OCI image and every external boundary is a port
-(ADR 0004), so the same artefact runs on any container host with a managed database:
+The image is a standard OCI image and every external boundary is a port (ADR 0004), so the
+same artefact runs on any container host. **The host chosen for the demonstration is
+Render**, and the choice is declared in one reviewable file at the repository root:
+[`render.yaml`](../render.yaml) (the decision and its arithmetic are ADR 0010, in the
+project workspace).
+
+| Concern        | Render — the demonstration                                                                                           | Cloud Run — the primary target                                               |
+| -------------- | -------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| Build          | Render builds `infra/Dockerfile` from this repository, so **no container runtime is needed on the author's machine** | Cloud Build builds the same Dockerfile from the same context                 |
+| Port           | Render injects `PORT` (10000 by default) and routes to it; the standalone server reads it                            | `--port=3000`, same entry point                                              |
+| Instances      | **one** — the free instance type cannot scale past one, which is the shape the in-process store needs                | `min-instances=0`, `max-instances=2`; two instances are two divergent worlds |
+| Store          | `CIVORA_DATA_PROVIDER=in-memory`, rebuilt per process, deterministic                                                 | same                                                                         |
+| Identity       | `CIVORA_AUTH_PROVIDER=fixture`                                                                                       | same                                                                         |
+| Reasoning      | `CIVORA_REASONING_PROVIDER=gemini`; the key is entered in the Render Dashboard once and stored there                 | Secret Manager, bound with `--set-secrets`                                   |
+| Secrets in git | none — `GEMINI_API_KEY` is declared `sync: false`, so Render prompts for it                                          | none                                                                         |
+| Cost           | $0 on the free instance type                                                                                         | free tier, scale-to-zero                                                     |
+
+**Gemini remains the reasoning layer in every deployment**; the fallback is about the host,
+not about the model. There is no Google-specific runtime dependency in the image.
+
+### 8.1 The owner's steps
+
+1. **Push `Source/` to the repository.** A Blueprint reads the repository, so this comes
+   first — and it is submission artefact 1 anyway.
+2. In the Render Dashboard: **New → Blueprint**, connect the GitHub repository (grant the
+   Render app access to that one repository), and confirm `render.yaml` as the Blueprint
+   file. Render validates the file and creates one web service, `civora-web`.
+3. When prompted for `GEMINI_API_KEY`, paste the AI Studio key. It is stored by Render and
+   never written into the repository.
+4. Wait for the first build, then open the service URL — `https://civora-web.onrender.com`
+   unless the name was taken — and check `/healthz` answers.
+
+Nothing else is required: the image, the port, the health check and the provider bindings
+are all in the Blueprint.
+
+### 8.2 Keep it warm, then warm it
+
+The free instance type **spins down after 15 minutes without inbound traffic** and takes
+about a minute to spin back up. That is not only a latency question: the seeded world is
+rebuilt per process (free, deterministic), but the reads that ask the model are **written once
+per process and cost 16 live calls** — advisories 6, rationales 6, the federation narrative 4
+(`/api/command` is local and free) — against a measured ceiling of **20 calls a day per
+model**. A cold start
+that a reviewer triggers is those 16 calls; two in a day exhausts the day's budget and the
+second surfaces the writer's own refusal.
+
+So the deployed instance is kept warm the same way the presenting machine is:
+
+- **A keep-warm monitor** (a free uptime service, one HTTPS check on `/healthz` every 5–10
+  minutes) holds one process alive. The free instance-hours allowance is 750 a month and a
+  month is 720–744 hours, so an always-on single service fits — with almost no margin, which
+  is why nothing else on the account may run.
+- **A restart is not free.** Do not restart or redeploy the service during the evaluation
+  window unless something is broken; every restart re-pays the 16 calls.
+- **If the model does refuse**, the ledger, the plan, the alerts, the approvals and the audit
+  chain are unaffected — the refusal is displayed with its reason rather than hidden (§6).
+
+Warm the deployed instance by reading the four surfaces once, in this order (they are the
+same reads `warm-up-check.mjs` performs locally):
+
+```bash
+URL=https://civora-web.onrender.com   # the URL the Dashboard prints for the service
+for path in /api/command /api/advisories /api/rationales /api/federation; do
+  curl -sS "$URL$path" >/dev/null && echo "$path ok"
+done
+```
+
+### 8.3 Smoke-test it, then record what was tested
+
+```bash
+CIVORA_LIVE_URL="$URL" pnpm smoke:live
+```
+
+This is the same instrument the primary path uses (§3.6) — `/healthz` and `/readyz`, the
+seeded world and its fingerprint, the alerts the pipeline has raised, and the golden path to
+a recorded decision with the refusals that must not be bypassed. **The URL, the date, the
+region and what was smoke-tested are recorded in `README.md`, `Workspace/state/RUN_STATE.md`
+and `Workspace/state/FEATURES.md` under ADR 0006's rules, and nothing else is claimed.**
+
+### 8.4 What this does and does not prove
+
+- It proves the image builds and runs on a host that is not Google's, that the seeded
+  demonstration serves, and that a reviewer can reach it. That is what ADR 0008 asked the
+  fallback to prove.
+- It does **not** prove the Cloud Run path, the Secret Manager bindings, the budget alert or
+  the Firestore/Firebase adapters — none of which this deployment touches (§10).
+- It does **not** run `infra/check-image.sh`. The host builds the image, so the four
+  assertions of §3.3 (non-root user, `NODE_ENV`, no key in any layer, both probes) are not
+  executed by it; the live smoke test covers adjacent ground and is not the same check.
+  Gate 10 stays `BLOCKED` until a container runtime exists locally.
+
+### 8.5 The same image by hand (offline variant)
+
+With a local container runtime, the identical artefact runs without any host:
 
 ```bash
 docker build --file=infra/Dockerfile --tag=civora-web:local .
@@ -241,14 +335,34 @@ docker run --publish 8080:3000 \
   civora-web:local
 ```
 
-**Gemini remains the reasoning layer in every deployment**; the fallback is about the
-host, not about the model. On a host that offers a container registry from a repository
-this is a configuration change; there is no Google-specific runtime dependency in the
-image.
+**Status: not verified.** `render.yaml` and this section are written and reviewed;
+**no Render account exists, no Blueprint has been created, nothing has been built or
+deployed there, and no URL answers.**
 
-**Status: not verified.** No container runtime has been available (B8), so the fallback
-is documented and scripted, and no instance of it exists. Deploying it once was the
-phase's task 12; it is blocked by the same missing daemon and is named in §10.
+What _was_ executed here, on **2026-09-29**:
+
+- `render.yaml` validated against **Render's own published Blueprint JSON Schema**
+  (`https://render.com/schema/render.yaml.json`, draft 2020-12, sha256
+  `57aa0a1ff9c3b2d0fcb91b790b7b285aef6397adb0c92930e6e601054444cfe5`, fetched that day) with
+  the repository's pinned `ajv` — **zero violations**, so every field name, the `free` plan
+  and the `singapore` region are Render's spellings rather than this document's.
+- `pnpm format:check` over the whole repository — green, so this file cannot fail CI's
+  formatting step.
+- **The Blueprint's environment, verbatim,** on **Render's injected port**: the standalone
+  production build started with `NODE_ENV=production`, `CIVORA_DATA_PROVIDER=in-memory`,
+  `CIVORA_AUTH_PROVIDER=fixture`, `CIVORA_REASONING_PROVIDER=gemini`,
+  `GEMINI_MODEL=gemini-3.1-flash-lite`, `GEMINI_API_KEY` from the environment and `PORT=10000`
+  answered on the first poll after **2 s**: `GET /healthz` **200** with `status: ok` and the
+  adapters `in-memory` / `fixture` / `gemini`, `GET /readyz` **200**, `GET /` **200**. Nothing
+  refused to boot, so the pair the cross-field rule demands (`GEMINI_API_KEY` **and**
+  `GEMINI_MODEL` once `CIVORA_REASONING_PROVIDER=gemini`) is genuinely satisfied by the list
+  above, and the injected port is honoured rather than the image's own `EXPOSE 3000`. **The
+  health checks do not read the model, so this spent no quota.** It is a boot, not a build:
+  Render's builder still has not seen this repository.
+
+Render's CLI and its API's Validate Blueprint endpoint are the _authoritative_ validators and
+**have not been run** (each needs a Render account). Neither the schema check nor the boot above
+is that validation, and neither is a build. §10 carries the remaining gaps.
 
 ## 9. Teardown
 
@@ -271,22 +385,33 @@ be claimed about a deployment, and a URL that no longer responds is not a deploy
 
 Every line here is a gap, not a footnote.
 
-| Unverified                                                    | Why                                                                                                               | What would close it                                                                                   |
-| ------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| Any provisioning step against a real project                  | no `gcloud`, no project, no billing account (B1)                                                                  | Run `infra/provision.sh` twice and record both runs                                                   |
-| The container image building and running                      | no container runtime (B8)                                                                                         | `bash infra/check-image.sh`                                                                           |
-| The Cloud Build path                                          | same as above, plus B1                                                                                            | `bash infra/deploy.sh`                                                                                |
-| A live URL, its cold start, and the live smoke test           | no deployment exists                                                                                              | `CIVORA_LIVE_URL=… pnpm e2e live-smoke.spec.ts`, output recorded in `RUN_STATE.md`                    |
-| The budget alert, and the billing spending limit              | B1                                                                                                                | `gcloud billing budgets list`                                                                         |
-| The fallback instance (§8)                                    | B8                                                                                                                | Deploy once to a non-Google host and run the same smoke test                                          |
-| The Firestore data provider and the Firebase identity adapter | neither adapter is part of this build (`apps/web/src/providers.ts` refuses them by name); a real project needs B1 | Write each behind its port, then provision, seed and run `pnpm test:rules` against the deployed rules |
-| The deployed advisory set surviving a cold start              | no deployment                                                                                                     | Record the counts from `--warm`, then from the first read after an idle period                        |
+| Unverified                                                    | Why                                                                                                                                                                                           | What would close it                                                                                         |
+| ------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| Any provisioning step against a real project                  | no `gcloud`, no project, no billing account (B1)                                                                                                                                              | Run `infra/provision.sh` twice and record both runs                                                         |
+| The image running, and its four runtime assertions            | the image **builds** — CI's `container` job is green on `41af8d1` (2026-09-25) and `594e450` (2026-09-27) — but no container of it has ever started, and `check-image.sh` needs a daemon (B8) | `bash infra/check-image.sh` on a machine with a container runtime                                           |
+| The Cloud Build path                                          | same as above, plus B1                                                                                                                                                                        | `bash infra/deploy.sh`                                                                                      |
+| A live URL, its cold start, and the live smoke test           | no deployment exists                                                                                                                                                                          | `CIVORA_LIVE_URL=… pnpm e2e live-smoke.spec.ts`, output recorded in `RUN_STATE.md`                          |
+| The budget alert, and the billing spending limit              | B1                                                                                                                                                                                            | `gcloud billing budgets list`                                                                               |
+| Render's own validation of `render.yaml`, and its first build | no Render account exists; the file validates against Render's published JSON Schema (2026-09-29, zero violations) and nothing further has been exercised                                      | Create the Blueprint — Render validates the file and builds `infra/Dockerfile` itself, then reports a build |
+| The fallback instance, its URL and its live smoke test (§8)   | nothing has been created on Render, and the push a Blueprint needs has not happened                                                                                                           | Create the Blueprint, warm it (§8.2), then `CIVORA_LIVE_URL=… pnpm smoke:live` and record the output        |
+| The Firestore data provider and the Firebase identity adapter | neither adapter is part of this build (`apps/web/src/providers.ts` refuses them by name); a real project needs B1                                                                             | Write each behind its port, then provision, seed and run `pnpm test:rules` against the deployed rules       |
+| The deployed advisory set surviving a cold start              | no deployment exists; the chosen host spins down after 15 idle minutes, and a cold start re-pays 16 model calls against a measured 20-a-day ceiling                                           | Warm the deployed instance (§8.2), record the counts, then read them again after a deliberate spin-down     |
 
 **What was executed, on 2026-09-27:** all four scripts' `--dry-run` paths (plans printed,
 exit `0`); the missing-prerequisite paths (one sentence, exit `3` for `provision.sh`,
 `deploy.sh` and `check-image.sh`); and the destructive-path refusal
 (`teardown.sh --delete-project` without a confirmation, exit `3`). Nothing was created,
 deployed or charged.
+
+**Also executed, off this machine, on 2026-09-25 and 2026-09-27:** CI's `container` job
+(`docker build -f infra/Dockerfile -t civora-web:ci .`) succeeded on both pushed commits, so
+this repository's image is known to build — on a builder that is not this machine, with no
+container runtime here. That is a **build, not a run**: no container of this image has ever
+started, which is why the table above still lists the running half as a gap.
+
+**What was executed here, on 2026-09-29:** the two commands named in §8.5 — the JSON Schema
+validation of `render.yaml`, and `pnpm format:check` — and nothing else. Nothing was created,
+deployed or charged on that date either.
 
 ## 11. Related documents
 

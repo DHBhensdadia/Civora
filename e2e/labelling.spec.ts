@@ -9,9 +9,10 @@ import type { Session } from './support';
  *
  * This build serves a generated national network, and every surface and payload
  * that shows a figure from it has to say so — not once, on the home page, but
- * wherever a reader lands. The disclosure travels with the shell (the header
- * badge and the footer sentence in `app/layout.tsx`), and each payload carries
- * its own provenance marker beside the data it describes.
+ * wherever a reader lands. The disclosure travels with the shell — **both halves
+ * of it in one fixed bar at the bottom edge** (`app/layout.tsx`), the badge and
+ * the sentence together — and each payload carries its own provenance marker
+ * beside the data it describes.
  *
  * The sweep is the phase-11 gate as a durable instrument rather than a note in a
  * report: it walks every surface and asserts the disclosure is there **exactly
@@ -91,7 +92,7 @@ test.describe('the simulated-data disclosure', () => {
       await expect(badge, `${surface.path} has no simulated-data badge`).toBeVisible();
       await expect(badge).toBeInViewport();
 
-      // And the sentence is in the footer, exactly once.
+      // And the sentence is in the bar with it, exactly once.
       await expect(
         page.getByTestId('simulation-disclosure'),
         `${surface.path} has no disclosure sentence`,

@@ -27,6 +27,13 @@ import type { Session } from '@/lib/session';
  * rendered twice with one copy hidden, because a second copy is a second thing
  * for a journey to match and a second place for the offer rule to go wrong.
  *
+ * **It is a floating plate, not a bordered strip.** The reference's navigation is
+ * a raised 12px-radius bar on the grey wash with a soft shadow, and the same
+ * treatment applies here — one plate, one shadow, no border, whether the groups
+ * are laid out as a column or as a wrapped row. Its seven links fit a single row;
+ * these are thirteen in four groups, so the groups stay and the shell supplies the
+ * frame.
+ *
  * The current surface is marked with a filled plate and the accent, and carries
  * `aria-current`, because a reader who cannot see where they are has to open
  * pages to find out. It was a left rail until this pass: a rail is a border, and
@@ -48,7 +55,10 @@ export function SiteNav({ session }: SiteNavProps) {
   })).filter((group) => group.sections.length > 0);
 
   return (
-    <nav aria-label="Platform sections" className="flex flex-col gap-6">
+    <nav
+      aria-label="Platform sections"
+      className="flex flex-col gap-6 rounded-card bg-paper-raised p-4 shadow-card"
+    >
       {groups.map((group) => (
         <div key={group.key} className="flex flex-col gap-2">
           <Eyebrow>{group.label}</Eyebrow>

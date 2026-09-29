@@ -20,7 +20,11 @@ import { languageLabelOf } from '@civora/i18n';
  *
  * The resolved language is **named beside the control** and stays visible at
  * every breakpoint, because the one reader who most needs to see it is the one
- * looking at a page rendered in a tongue they did not choose.
+ * looking at a page rendered in a tongue they did not choose. That is also why a
+ * `<select>` whose own value already shows the label keeps the label beside it:
+ * the control can render in the operating system's language, and the string next
+ * to it is the platform's own answer. It is set in the body family — it was mono
+ * until the mono stopped being a label style.
  */
 
 export interface LanguagePickerProps {
@@ -75,7 +79,7 @@ export function LanguagePicker({ current, offered }: LanguagePickerProps) {
           ))}
         </select>
       </label>
-      <span data-testid="interface-language" className="font-mono text-ink-subtle">
+      <span data-testid="interface-language" className="text-ink-subtle">
         {languageLabelOf(current)}
       </span>
       {refusal === null ? null : (

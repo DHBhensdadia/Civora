@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 
-import { Notice, Panel, StatCard } from '@/components/ui';
+import { Eyebrow, Notice, Panel, StatCard } from '@/components/ui';
 
 /**
  * Setu: the transfer proposals, the verdict on each, and the decision a person
@@ -426,7 +426,8 @@ export default function RedistributionPage() {
 
   return (
     <div className="flex flex-col gap-12">
-      <header className="flex flex-col gap-3">
+      <header className="flex flex-col gap-5">
+        <Eyebrow tone="accent">Constraint-checked transfers</Eyebrow>
         <h1 className="text-display text-balance">Setu — redistribution workbench</h1>
         <p className="max-w-measure text-sm text-fg-muted">
           Transfers the optimiser proposes, each one judged by a validator that re-derives it from
@@ -649,7 +650,14 @@ export default function RedistributionPage() {
         description="A separate module re-derives the plan from the world rather than believing the solver: every constraint gets its own rule and its own failure message, and a constraint the validator cannot evaluate is reported as unchecked rather than folded into 'passed'. A plan it refuses produces no proposals at all — only the refusal, attributed rule by rule."
       >
         <div
-          className="rounded-instrument border border-ink-700 bg-ink-900 px-3 py-2 text-sm text-fg-muted"
+          // The verdict leads with its status in the same rail language the alert
+          // cards use, so "admitted" and "refused" are told apart before the
+          // sentence under them is read.
+          className={`rounded-instrument border border-l-2 bg-ink-900 px-4 py-3 text-sm text-fg-muted ${
+            payload.verdict.valid
+              ? 'border-ink-700 border-l-signal-ok'
+              : 'border-ink-700 border-l-signal-critical'
+          }`}
           data-testid="plan-verdict"
           data-valid={payload.verdict.valid ? 'yes' : 'no'}
         >
@@ -859,7 +867,7 @@ export default function RedistributionPage() {
                         </label>
                         <button
                           aria-label={`Approve proposal ${row.proposal.id}`}
-                          className="rounded-instrument border border-signal-ok/40 bg-signal-ok/10 px-3 py-1 text-xs text-signal-ok disabled:opacity-40"
+                          className="inline-flex min-h-11 items-center rounded-full border-2 border-signal-ok/40 bg-signal-ok/10 px-4 text-sm text-signal-ok transition-colors duration-150 hover:bg-signal-ok/20 disabled:pointer-events-none disabled:opacity-40"
                           disabled={busy !== null}
                           onClick={() => {
                             void decide(row, 'approved');
@@ -870,7 +878,7 @@ export default function RedistributionPage() {
                         </button>
                         <button
                           aria-label={`Reject proposal ${row.proposal.id}`}
-                          className="rounded-instrument border border-signal-critical/40 bg-signal-critical/10 px-3 py-1 text-xs text-signal-critical disabled:opacity-40"
+                          className="inline-flex min-h-11 items-center rounded-full border-2 border-signal-critical/40 bg-signal-critical/10 px-4 text-sm text-signal-critical transition-colors duration-150 hover:bg-signal-critical/20 disabled:pointer-events-none disabled:opacity-40"
                           disabled={busy !== null}
                           onClick={() => {
                             void decide(row, 'rejected');
@@ -948,7 +956,7 @@ export default function RedistributionPage() {
 
             <div className="flex flex-wrap items-center gap-3">
               <button
-                className="rounded border border-accent/40 bg-accent/10 px-3 py-2 text-sm text-accent disabled:opacity-40"
+                className="inline-flex min-h-11 items-center rounded-full border-2 border-accent/40 bg-accent/10 px-4 text-sm text-accent transition-colors duration-150 hover:bg-accent/20 disabled:pointer-events-none disabled:opacity-40"
                 data-testid="rationale-regenerate"
                 disabled={rationaleBusy}
                 onClick={() => {

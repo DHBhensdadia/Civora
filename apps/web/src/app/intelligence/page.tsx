@@ -5,7 +5,7 @@ import type { MessageKey } from '@civora/i18n';
 import { useCallback, useEffect, useState } from 'react';
 
 import { SpeakButton } from '@/components/speak';
-import { CountList, Notice, Panel, StatCard, formatCount } from '@/components/ui';
+import { CountList, Eyebrow, Notice, Panel, StatCard, formatCount } from '@/components/ui';
 
 /**
  * Poorvadarshan and Chetavani: what the platform expects, and what it is asking
@@ -195,6 +195,21 @@ const BAND_CLASSES: Readonly<Record<IntelligenceRow['band'], string>> = {
   watch: 'border-signal-watch/30 bg-signal-watch/5 text-signal-watch',
   low: 'border-signal-ok/30 bg-signal-ok/5 text-signal-ok',
   unknown: 'border-ink-600 bg-ink-800 text-fg',
+};
+
+/**
+ * The rail an alert card carries, by severity.
+ *
+ * The band colour on a ranked row answers "how bad is this pair"; on the inbox
+ * the same question is asked of a card a reader may act on, and a rail down the
+ * edge of the card answers it before a single word is read. `watch` is the
+ * default rather than nothing, so an unexpected severity still gets a rail
+ * instead of silently losing its colour.
+ */
+const SEVERITY_RAIL: Readonly<Record<string, string>> = {
+  critical: 'border-l-signal-critical',
+  high: 'border-l-signal-high',
+  watch: 'border-l-signal-watch',
 };
 
 /**
@@ -420,7 +435,8 @@ export default function IntelligencePage() {
 
   return (
     <div className="flex flex-col gap-12">
-      <header className="flex flex-col gap-3">
+      <header className="flex flex-col gap-5">
+        <Eyebrow tone="accent">Risk and forecasting</Eyebrow>
         <h1 className="text-display text-balance">Poorvadarshan · Chetavani</h1>
         <p className="max-w-measure text-sm text-fg-muted">
           What the platform expects to happen to each facility&apos;s stock, and what it is asking
@@ -515,13 +531,13 @@ export default function IntelligencePage() {
                 key={alert.id}
                 aria-label={`Alert for ${alert.itemId} at ${alert.facilityId}`}
                 data-testid={`alert-${alert.id}`}
-                className="rounded-instrument border border-ink-700 bg-ink-900 p-4"
+                className={`rounded-instrument border border-l-2 border-ink-700 bg-ink-900 p-4 ${SEVERITY_RAIL[alert.severity] ?? 'border-l-ink-600'}`}
               >
                 <div className="flex flex-wrap items-center gap-2 text-xs">
-                  <span className="rounded-instrument border border-signal-critical/40 bg-signal-critical/10 px-2 py-0.5 text-signal-critical">
+                  <span className="rounded-full border border-signal-critical/40 bg-signal-critical/10 px-2.5 py-0.5 font-mono text-eyebrow text-signal-critical uppercase">
                     {severityLabel(alert.severity, language)}
                   </span>
-                  <span className="min-h-11 rounded-instrument border border-ink-600 px-2 py-0.5 text-fg-muted">
+                  <span className="rounded-full border border-ink-600 px-2.5 py-0.5 font-mono text-eyebrow text-fg-muted uppercase">
                     {stateLabel(alert.state, language)}
                   </span>
                   <span className="text-fg-subtle">
@@ -567,7 +583,7 @@ export default function IntelligencePage() {
                     <button
                       key={move_.to}
                       aria-label={`${move_.label} ${alert.itemId}`}
-                      className="rounded border border-accent/40 bg-accent/10 px-2 py-1 text-xs text-accent disabled:opacity-40"
+                      className="inline-flex min-h-11 items-center rounded-full border-2 border-accent/40 bg-accent/10 px-3 text-xs text-accent transition-colors duration-150 hover:bg-accent/20 disabled:pointer-events-none disabled:opacity-40"
                       disabled={busy !== null}
                       onClick={() => {
                         void move(alert, move_.to);
@@ -738,7 +754,7 @@ export default function IntelligencePage() {
 
             <div className="flex flex-wrap items-center gap-3">
               <button
-                className="rounded border border-accent/40 bg-accent/10 px-3 py-2 text-sm text-accent disabled:opacity-40"
+                className="inline-flex min-h-11 items-center rounded-full border-2 border-accent/40 bg-accent/10 px-4 text-sm text-accent transition-colors duration-150 hover:bg-accent/20 disabled:pointer-events-none disabled:opacity-40"
                 data-testid="advisory-regenerate"
                 disabled={advisoryBusy}
                 onClick={() => {

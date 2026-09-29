@@ -36,7 +36,7 @@ export default async function ProvenancePage() {
       <ProvenancePanel id="provenance" view={provenanceFor(store.info)} />
 
       <section className="flex flex-col gap-3">
-        <h2 className="text-lg font-semibold">What that means for a figure on a surface</h2>
+        <h2 className="text-xl">What that means for a figure on a surface</h2>
         <ul className="flex list-disc flex-col gap-2 pl-5 text-sm text-fg-muted">
           <li>
             Every generated record carries <code className="font-mono">synthetic: true</code> and a

@@ -72,7 +72,7 @@ export default async function RootLayout({ children }: { readonly children: Reac
           <div className="mx-auto flex max-w-shell flex-wrap items-center justify-between gap-x-6 gap-y-2 px-5 py-3">
             <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
               <Link className="flex min-h-11 items-center gap-2" href="/">
-                <span className="text-sm font-semibold tracking-tight">Civora</span>
+                <span className="text-xl">Civora</span>
                 <span className="hidden font-mono text-eyebrow text-fg-subtle uppercase sm:inline">
                   health supply-chain resilience
                 </span>

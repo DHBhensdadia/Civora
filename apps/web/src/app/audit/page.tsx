@@ -224,9 +224,7 @@ export default function AuditPage() {
     <div className="flex flex-col gap-12">
       <header className="flex flex-col gap-3">
         <p className="font-mono text-eyebrow text-accent uppercase">Assurance · audit trail</p>
-        <h1 className="text-4xl font-semibold tracking-tight">
-          What was decided, and whether it holds
-        </h1>
+        <h1 className="text-display text-balance">What was decided, and whether it holds</h1>
         <p className="max-w-measure text-lg text-fg-muted">
           Every consequential act appends an entry carrying the digest of the entry before it.
           Altering one, removing one or reordering two breaks the chain at the point of the change —

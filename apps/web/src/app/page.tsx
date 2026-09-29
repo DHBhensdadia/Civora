@@ -1,5 +1,6 @@
 import Link from 'next/link';
 
+import { PageHeader } from '@/components/page-header';
 import { Eyebrow, StatCard, formatCount } from '@/components/ui';
 import { getEnv } from '@/env';
 import { MODULES } from '@/lib/modules';
@@ -34,14 +35,17 @@ export default async function HomePage() {
 
   return (
     <div className="flex flex-col gap-16">
-      <header className="flex flex-col gap-5">
-        <Eyebrow tone="accent">Health supply-chain resilience</Eyebrow>
-        <h1 className="text-hero text-balance">{env.appName}</h1>
+      <PageHeader
+        label="Health supply-chain resilience"
+        scale="hero"
+        spacing="roomy"
+        title={env.appName}
+      >
         <p className="max-w-measure text-lg text-fg-muted">
           A federated platform for health resource and supply-chain planning across the primary
           health centre network.
         </p>
-      </header>
+      </PageHeader>
 
       {/*
        * The disclosure. Its heading is the sentence a reader must not miss, and

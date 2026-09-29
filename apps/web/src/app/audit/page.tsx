@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { PageHeader } from '@/components/page-header';
 import { DataTable, Notice, Panel, StatCard, formatCount } from '@/components/ui';
 
 /**
@@ -222,15 +223,13 @@ export default function AuditPage() {
 
   return (
     <div className="flex flex-col gap-12">
-      <header className="flex flex-col gap-3">
-        <p className="font-mono text-eyebrow text-accent uppercase">Assurance · audit trail</p>
-        <h1 className="text-display text-balance">What was decided, and whether it holds</h1>
+      <PageHeader label="Assurance · audit trail" title="What was decided, and whether it holds">
         <p className="max-w-measure text-lg text-fg-muted">
           Every consequential act appends an entry carrying the digest of the entry before it.
           Altering one, removing one or reordering two breaks the chain at the point of the change —
           which is what makes this record evidence rather than a log of claims.
         </p>
-      </header>
+      </PageHeader>
 
       <Panel
         id="verification"

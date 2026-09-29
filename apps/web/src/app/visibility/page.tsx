@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 
+import { PageHeader } from '@/components/page-header';
 import { CountList, DataTable, Notice, Panel, StatCard, formatCount } from '@/components/ui';
 import { captureBadge } from '@/lib/capture-label';
 import type { CaptureTone } from '@/lib/capture-label';
@@ -207,10 +208,9 @@ export default function VisibilityPage() {
 
   if (payload === null) {
     return (
-      <div className="flex flex-col gap-12">
-        <h1 className="text-display text-balance">What the district can see</h1>
+      <PageHeader spacing="roomy" title="What the district can see">
         <p className="text-fg-muted">{error ?? 'Reading the district…'}</p>
-      </div>
+      </PageHeader>
     );
   }
 
@@ -252,9 +252,7 @@ export default function VisibilityPage() {
 
   return (
     <div className="flex flex-col gap-12">
-      <header className="flex flex-col gap-3">
-        <p className="font-mono text-eyebrow text-accent uppercase">Drishti · visibility</p>
-        <h1 className="text-display text-balance">What the district can see</h1>
+      <PageHeader label="Drishti · visibility" title="What the district can see">
         <p className="max-w-measure text-fg-muted">
           Live stock positions, bed pressure and attendance for every facility in {district.name},{' '}
           {district.regionName} — and, alongside them, the facilities the platform has heard nothing
@@ -267,7 +265,7 @@ export default function VisibilityPage() {
           change feed)
           {updatedAt === '' ? '' : ` · last read ${updatedAt.slice(11, 19)}Z`}
         </p>
-      </header>
+      </PageHeader>
 
       <Notice id="unknown-not-safe" tone="warning" title="No reading is not a clearance">
         <p>

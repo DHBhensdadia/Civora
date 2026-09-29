@@ -1,3 +1,4 @@
+import { PageHeader } from '@/components/page-header';
 import { ProvenancePanel } from '@/components/provenance-panel';
 import { getLiveStore } from '@/lib/live-store';
 import { provenanceFor } from '@/lib/provenance';
@@ -22,16 +23,14 @@ export default async function ProvenancePage() {
 
   return (
     <div className="flex flex-col gap-12">
-      <header className="flex flex-col gap-3">
-        <p className="font-mono text-eyebrow text-accent uppercase">Where the data comes from</p>
-        <h1 className="text-display text-balance">Provenance</h1>
+      <PageHeader label="Where the data comes from" title="Provenance">
         <p className="max-w-measure text-fg-muted">
           A demonstration of a national platform has one failure mode worse than a wrong figure: a
           right figure mistaken for a real one. This page exists so that cannot happen quietly — it
           names which layers are published values, which are generated from them, and which seed
           produces this exact world.
         </p>
-      </header>
+      </PageHeader>
 
       <ProvenancePanel id="provenance" view={provenanceFor(store.info)} />
 

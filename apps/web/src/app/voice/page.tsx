@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 
+import { PageHeader } from '@/components/page-header';
 import { Notice, Panel, formatCount } from '@/components/ui';
 
 /**
@@ -481,9 +482,7 @@ export default function VoicePage() {
 
   return (
     <div className="flex flex-col gap-12">
-      <header className="flex flex-col gap-3">
-        <p className="font-mono text-eyebrow text-accent uppercase">Voice intake</p>
-        <h1 className="text-display text-balance">Say it, then confirm it</h1>
+      <PageHeader label="Voice intake" title="Say it, then confirm it">
         <p className="max-w-measure text-fg-muted">
           Speak a stock, bed or attendance update and the platform parses it into a record it holds
           back. The transcript is shown back to you word for word, the update is named, and every
@@ -491,7 +490,7 @@ export default function VoicePage() {
           says that is what was said. Speech is the one input with no page to check it against, so
           the confirmation is the check.
         </p>
-      </header>
+      </PageHeader>
 
       <Notice
         id="voice-reader"

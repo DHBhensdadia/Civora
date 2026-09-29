@@ -5,7 +5,8 @@ import type { MessageKey } from '@civora/i18n';
 import { useCallback, useEffect, useState } from 'react';
 
 import { SpeakButton } from '@/components/speak';
-import { CountList, Eyebrow, Notice, Panel, StatCard, formatCount } from '@/components/ui';
+import { PageHeader } from '@/components/page-header';
+import { CountList, Notice, Panel, StatCard, formatCount } from '@/components/ui';
 
 /**
  * Poorvadarshan and Chetavani: what the platform expects, and what it is asking
@@ -420,14 +421,13 @@ export default function IntelligencePage() {
 
   if (payload === null) {
     return (
-      <div className="flex flex-col gap-6">
-        <h1 className="text-display text-balance">Poorvadarshan · Chetavani</h1>
+      <PageHeader spacing="roomy" title="Poorvadarshan · Chetavani">
         <p className="text-sm text-fg-muted">
           {error === null
             ? 'Scoring the demonstration dataset — forecast, surge lift, nine drivers, alerts…'
             : `The intelligence read failed: ${error}`}
         </p>
-      </div>
+      </PageHeader>
     );
   }
 
@@ -435,9 +435,7 @@ export default function IntelligencePage() {
 
   return (
     <div className="flex flex-col gap-12">
-      <header className="flex flex-col gap-5">
-        <Eyebrow tone="accent">Risk and forecasting</Eyebrow>
-        <h1 className="text-display text-balance">Poorvadarshan · Chetavani</h1>
+      <PageHeader label="Risk and forecasting" spacing="roomy" title="Poorvadarshan · Chetavani">
         <p className="max-w-measure text-sm text-fg-muted">
           What the platform expects to happen to each facility&apos;s stock, and what it is asking
           somebody to do about it. Every pair is scored from one run at one day, so two readers
@@ -450,7 +448,7 @@ export default function IntelligencePage() {
           context and never raise an alarm on their own. Refreshes every 5 seconds (polling, because
           the local adapter has no change feed). Last read {updatedAt}.
         </p>
-      </header>
+      </PageHeader>
 
       <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard

@@ -12,6 +12,7 @@ import { messageFor } from '@civora/i18n';
 import type { MessageKey } from '@civora/i18n';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { PageHeader } from '@/components/page-header';
 import { Notice, Panel, formatCount } from '@/components/ui';
 import { enqueue } from '@/lib/outbox';
 import type { OutboxItem } from '@/lib/outbox';
@@ -462,16 +463,14 @@ export default function CapturePage() {
 
   return (
     <div className="flex flex-col gap-12">
-      <header className="flex flex-col gap-3">
-        <p className="font-mono text-eyebrow text-accent uppercase">Facility capture</p>
-        <h1 className="text-display text-balance">Capture what the facility counted</h1>
+      <PageHeader label="Facility capture" title="Capture what the facility counted">
         <p className="max-w-measure text-fg-muted">
           Every entry is written to this device first and delivered when the platform can be
           reached, so a weak connection delays the sync rather than the record. Nothing is discarded
           on failure and nothing is counted twice: each capture carries a key that survives every
           retry.
         </p>
-      </header>
+      </PageHeader>
 
       <Notice
         id="capture-simulation"

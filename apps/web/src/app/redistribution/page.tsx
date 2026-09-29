@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useState } from 'react';
 
-import { Eyebrow, Notice, Panel, StatCard } from '@/components/ui';
+import { PageHeader } from '@/components/page-header';
+import { Notice, Panel, StatCard } from '@/components/ui';
 
 /**
  * Setu: the transfer proposals, the verdict on each, and the decision a person
@@ -405,14 +406,13 @@ export default function RedistributionPage() {
 
   if (payload === null) {
     return (
-      <div className="flex flex-col gap-6">
-        <h1 className="text-display text-balance">Setu — redistribution workbench</h1>
+      <PageHeader spacing="roomy" title="Setu — redistribution workbench">
         <p className="text-sm text-fg-muted">
           {error === null
             ? 'Planning transfers from the demonstration dataset — graph, rankings, four weightings, validator, impact…'
             : `The redistribution read failed: ${error}`}
         </p>
-      </div>
+      </PageHeader>
     );
   }
 
@@ -426,9 +426,11 @@ export default function RedistributionPage() {
 
   return (
     <div className="flex flex-col gap-12">
-      <header className="flex flex-col gap-5">
-        <Eyebrow tone="accent">Constraint-checked transfers</Eyebrow>
-        <h1 className="text-display text-balance">Setu — redistribution workbench</h1>
+      <PageHeader
+        label="Constraint-checked transfers"
+        spacing="roomy"
+        title="Setu — redistribution workbench"
+      >
         <p className="max-w-measure text-sm text-fg-muted">
           Transfers the optimiser proposes, each one judged by a validator that re-derives it from
           the world rather than trusting the solver, priced by an estimator that prints its
@@ -443,7 +445,7 @@ export default function RedistributionPage() {
           <code className="font-mono">pnpm worker:propose</code> recomputes it from the same inputs
           and prints a digest of it. Last read {updatedAt}.
         </p>
-      </header>
+      </PageHeader>
 
       <div data-testid="ui-honesty">
         <Notice id="honesty" tone="info" title="A transfer is a proposal, not a command">

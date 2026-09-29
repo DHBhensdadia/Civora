@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 
+import { PageHeader } from '@/components/page-header';
 import { Notice, Panel, formatCount } from '@/components/ui';
 
 /**
@@ -436,16 +437,14 @@ export default function VisionPage() {
 
   return (
     <div className="flex flex-col gap-12">
-      <header className="flex flex-col gap-3">
-        <p className="font-mono text-eyebrow text-accent uppercase">Vision intake</p>
-        <h1 className="text-display text-balance">Read a paper stock register</h1>
+      <PageHeader label="Vision intake" title="Read a paper stock register">
         <p className="max-w-measure text-fg-muted">
           Photograph a register and the platform reads it into ledger lines. The reader is a model;
           everything that decides whether a line may be written is not. A line the platform can
           stand behind goes to the ledger marked as read by vision, and a line it cannot goes to the
           queue below with the reasons it was held back.
         </p>
-      </header>
+      </PageHeader>
 
       <Notice
         id="vision-reader"

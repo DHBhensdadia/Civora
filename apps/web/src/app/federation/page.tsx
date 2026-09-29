@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 
+import { PageHeader } from '@/components/page-header';
 import { DataTable, Notice, Panel, StatCard, formatCount } from '@/components/ui';
 
 /**
@@ -308,16 +309,14 @@ export default function FederationPage() {
 
   return (
     <div className="flex flex-col gap-12">
-      <header className="flex flex-col gap-3">
-        <p className="font-mono text-eyebrow text-accent uppercase">Samvad · federation</p>
-        <h1 className="text-display text-balance">Federated learning across state silos</h1>
+      <PageHeader label="Samvad · federation" title="Federated learning across state silos">
         <p className="max-w-measure text-lg text-fg-muted">
           Each {payload.world.regionLevelName} is a silo. A model is trained inside each one,
           clipped as it leaves, aggregated with the others, noised, and accounted for — and no
           record ever crosses a silo boundary. The numbers below are measurements from runs this
           page performed.
         </p>
-      </header>
+      </PageHeader>
 
       <Notice
         id="honesty"

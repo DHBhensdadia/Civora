@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 
+import { PageHeader } from '@/components/page-header';
 import { DataTable, Notice, Panel, StatCard, formatCount } from '@/components/ui';
 
 /**
@@ -177,16 +178,14 @@ export default function ImportPage() {
 
   return (
     <div className="flex flex-col gap-12">
-      <header className="flex flex-col gap-3">
-        <p className="font-mono text-eyebrow text-accent uppercase">Interoperability · import</p>
-        <h1 className="text-display text-balance">Bring a file the ministry already has</h1>
+      <PageHeader label="Interoperability · import" title="Bring a file the ministry already has">
         <p className="max-w-measure text-lg text-fg-muted">
           A department does not adopt a platform by retyping its returns. This surface reads an
           extract of a system the ministry already runs, shows exactly what it would write before
           anything is written, and then writes it — through the same ingest boundary and the same
           audit chain a nurse&rsquo;s phone uses.
         </p>
-      </header>
+      </PageHeader>
 
       <Panel
         id="file"

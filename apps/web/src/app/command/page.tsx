@@ -1,7 +1,8 @@
 import { cookies } from 'next/headers';
 import Link from 'next/link';
 
-import { Notice, Panel, StatCard, DataTable, Eyebrow, formatCount } from '@/components/ui';
+import { PageHeader } from '@/components/page-header';
+import { Notice, Panel, StatCard, DataTable, formatCount } from '@/components/ui';
 import { ProvenancePanel } from '@/components/provenance-panel';
 import { SchematicMap } from '@/components/schematic-map';
 import {
@@ -113,9 +114,7 @@ export default async function CommandPage({
 
   return (
     <div className="flex flex-col gap-12">
-      <header className="flex flex-col gap-5">
-        <Eyebrow tone="accent">National command plane</Eyebrow>
-        <h1 className="text-display text-balance">Control tower</h1>
+      <PageHeader label="National command plane" spacing="roomy" title="Control tower">
         <p className="max-w-measure text-lg text-fg-muted">
           Every figure here is assembled from the same projections the surfaces beside it read — the
           ledger, the scored population, the alert set and the seeded network. Nothing on this page
@@ -143,7 +142,7 @@ export default async function CommandPage({
         <p data-testid="command-scope" className="max-w-measure text-sm text-fg-muted">
           {scopeSentence}
         </p>
-      </header>
+      </PageHeader>
 
       {presentation ? (
         <Notice id="command-presentation" tone="info" title="Presentation mode">

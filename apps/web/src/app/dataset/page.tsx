@@ -5,6 +5,7 @@ import type { ProvenanceKind } from '@civora/domain';
 import { DEMO_SEED } from '@civora/simulator';
 import type { SourceStatus } from '@civora/simulator';
 
+import { PageHeader } from '@/components/page-header';
 import { CountList, DataTable, Notice, Panel, StatCard, formatCount } from '@/components/ui';
 import { RETRIEVAL_DATE, SOURCE_REGISTRY, getDemoDataset } from '@/lib/dataset';
 
@@ -77,15 +78,13 @@ export default function DatasetPage() {
 
   return (
     <div className="flex flex-col gap-12">
-      <header className="flex flex-col gap-3">
-        <p className="font-mono text-eyebrow text-accent uppercase">Dataset inspector</p>
-        <h1 className="text-display text-balance">What this platform is running on</h1>
+      <PageHeader label="Dataset inspector" title="What this platform is running on">
         <p className="max-w-measure text-lg text-fg-muted">
           The demonstration dataset, counted from the generator that produces it. Every figure below
           is reproducible from one published seed, and every record says in its own fields where it
           came from.
         </p>
-      </header>
+      </PageHeader>
 
       <Notice id="simulated" tone="warning" title="Everything the platform observes is simulated">
         <p>

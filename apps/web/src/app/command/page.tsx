@@ -1,7 +1,7 @@
 import { cookies } from 'next/headers';
 import Link from 'next/link';
 
-import { Notice, Panel, StatCard, DataTable, formatCount } from '@/components/ui';
+import { Notice, Panel, StatCard, DataTable, Eyebrow, formatCount } from '@/components/ui';
 import { ProvenancePanel } from '@/components/provenance-panel';
 import { SchematicMap } from '@/components/schematic-map';
 import {
@@ -72,7 +72,7 @@ export default async function CommandPage({
 
   if (!access.allowed) {
     return (
-      <main className="mx-auto flex max-w-4xl flex-col gap-6 px-6 py-16">
+      <div className="flex flex-col gap-12">
         <Notice
           id="command-refused"
           tone="warning"
@@ -84,7 +84,7 @@ export default async function CommandPage({
             answers with, so a hidden address is not an open one.
           </p>
         </Notice>
-      </main>
+      </div>
     );
   }
 
@@ -112,25 +112,35 @@ export default async function CommandPage({
     : `This session is scoped: ${formatCount(tower.counts.districts)} district(s) are read and the rest are neither counted nor shown.`;
 
   return (
-    <main className="mx-auto flex max-w-6xl flex-col gap-10 px-6 py-12">
-      <header className="flex flex-col gap-3">
-        <p className="text-sm font-medium tracking-widest text-sky-400 uppercase">
-          National command plane
-        </p>
-        <h1 className="text-3xl font-semibold tracking-tight">Control tower</h1>
-        <p className="max-w-3xl text-slate-300">
+    <div className="flex flex-col gap-12">
+      <header className="flex flex-col gap-5">
+        <Eyebrow tone="accent">National command plane</Eyebrow>
+        <h1 className="text-display text-balance">Control tower</h1>
+        <p className="max-w-measure text-lg text-fg-muted">
           Every figure here is assembled from the same projections the surfaces beside it read — the
           ledger, the scored population, the alert set and the seeded network. Nothing on this page
           is recomputed, so a risk score or a plan seen here is the one the intelligence surface and
           the workbench already carry.
         </p>
-        <p className="text-sm text-slate-400">
-          As of <span className="font-mono text-slate-300">{tower.asOf}</span> · scenario{' '}
-          <span className="font-mono text-slate-300">{tower.scenarioId}</span> · seed{' '}
-          <span className="font-mono text-slate-300">{tower.seed}</span> · acting as{' '}
-          <span className="font-mono text-slate-300">{session.role}</span>
-        </p>
-        <p data-testid="command-scope" className="text-sm text-slate-400">
+        <dl className="flex flex-wrap items-baseline gap-x-5 gap-y-1 font-mono text-xs text-fg-subtle">
+          <div className="flex items-baseline gap-2">
+            <dt className="uppercase">As of</dt>
+            <dd className="text-fg-muted">{tower.asOf}</dd>
+          </div>
+          <div className="flex items-baseline gap-2">
+            <dt className="uppercase">Scenario</dt>
+            <dd className="text-fg-muted">{tower.scenarioId}</dd>
+          </div>
+          <div className="flex items-baseline gap-2">
+            <dt className="uppercase">Seed</dt>
+            <dd className="text-fg-muted">{tower.seed}</dd>
+          </div>
+          <div className="flex items-baseline gap-2">
+            <dt className="uppercase">Acting as</dt>
+            <dd className="text-fg-muted">{session.role}</dd>
+          </div>
+        </dl>
+        <p data-testid="command-scope" className="max-w-measure text-sm text-fg-muted">
           {scopeSentence}
         </p>
       </header>
@@ -206,7 +216,7 @@ export default async function CommandPage({
           />
         </div>
         {tower.change.sample.length === 0 ? (
-          <p className="text-sm text-slate-400">
+          <p className="text-sm text-fg-muted">
             No movement is recorded on that day yet. The strip fills as captures arrive.
           </p>
         ) : (
@@ -249,15 +259,15 @@ export default async function CommandPage({
               aria-current={option === tier ? 'page' : undefined}
               className={
                 option === tier
-                  ? 'rounded-full border border-sky-500/60 bg-sky-500/10 px-3 py-1 text-sm text-sky-200'
-                  : 'rounded-full border border-slate-700 px-3 py-1 text-sm text-slate-300 hover:border-slate-500'
+                  ? 'inline-flex min-h-11 items-center rounded-full border-2 border-accent bg-accent/15 px-4 text-sm text-accent'
+                  : 'inline-flex min-h-11 items-center rounded-full border-2 border-ink-600 px-4 text-sm text-fg-muted transition-colors duration-150 hover:border-accent hover:text-accent'
               }
             >
               {TIER_LABEL[option]}
             </Link>
           ))}
         </nav>
-        <p className="text-sm text-slate-400">
+        <p className="text-sm text-fg-muted">
           Reading by <span className="font-mono">{tier}</span>:{' '}
           {tier === 'state'
             ? `${formatCount(tower.regions.length)} region row(s)`
@@ -291,7 +301,7 @@ export default async function CommandPage({
               formatCount(fact.openAlerts),
               <Link
                 key={fact.facility.id}
-                className="text-sky-400 underline-offset-4 hover:underline"
+                className="text-accent underline-offset-4 hover:underline"
                 href={`/command${query({ tier, district: fact.districtId, facility: fact.facility.id })}`}
               >
                 Open
@@ -322,13 +332,13 @@ export default async function CommandPage({
                 ? 'no reading'
                 : `${formatCount(Math.round(row.bedOccupancy * 100))}% of sanctioned beds`,
               row.level === 'region' ? (
-                <span key={row.id} className="text-slate-500">
+                <span key={row.id} className="text-fg-subtle">
                   drill through its districts
                 </span>
               ) : (
                 <Link
                   key={row.id}
-                  className="text-sky-400 underline-offset-4 hover:underline"
+                  className="text-accent underline-offset-4 hover:underline"
                   href={`/command${query({ tier, district: row.id })}`}
                 >
                   Open district
@@ -353,10 +363,7 @@ export default async function CommandPage({
                 The district's facilities, attention first: what the platform cannot see, then the
                 worst risk. Each row opens the facility's items, and each item opens the movements
                 behind its figure.{' '}
-                <Link
-                  className="text-sky-400 underline-offset-4 hover:underline"
-                  href="/visibility"
-                >
+                <Link className="text-accent underline-offset-4 hover:underline" href="/visibility">
                   The visibility surface
                 </Link>{' '}
                 reads the same district in full.
@@ -391,7 +398,7 @@ export default async function CommandPage({
                   : `${formatCount(Math.round(fact.bedOccupancy * 100))}% occupied`,
                 <Link
                   key={fact.facility.id}
-                  className="text-sky-400 underline-offset-4 hover:underline"
+                  className="text-accent underline-offset-4 hover:underline"
                   href={`/command${query({
                     tier,
                     district: fact.districtId,
@@ -442,7 +449,7 @@ export default async function CommandPage({
               item.band ?? 'not scored',
               <Link
                 key={item.itemId}
-                className="text-sky-400 underline-offset-4 hover:underline"
+                className="text-accent underline-offset-4 hover:underline"
                 href={`/command${query({
                   tier,
                   district: facilityStep.facility.districtId,
@@ -472,14 +479,11 @@ export default async function CommandPage({
                 movement belongs to, the day it reached the platform, the batch and its expiry, how
                 it was captured and whether the record is simulated. A stock figure and a forecast
                 are derivations; this is what they were derived from. The same movements are on the{' '}
-                <Link
-                  className="text-sky-400 underline-offset-4 hover:underline"
-                  href="/visibility"
-                >
+                <Link className="text-accent underline-offset-4 hover:underline" href="/visibility">
                   visibility surface
                 </Link>{' '}
                 and the seeded records are browsable in the{' '}
-                <Link className="text-sky-400 underline-offset-4 hover:underline" href="/dataset">
+                <Link className="text-accent underline-offset-4 hover:underline" href="/dataset">
                   dataset inspector
                 </Link>
                 .
@@ -518,7 +522,7 @@ export default async function CommandPage({
               </div>
 
               {evidenceStep.drivers.length === 0 ? (
-                <p className="text-sm text-slate-400">
+                <p className="text-sm text-fg-muted">
                   The risk engine recorded no drivers for this pair, which is a result rather than a
                   gap: a pair with no drivers is a pair whose score rests on nothing.
                 </p>
@@ -538,14 +542,14 @@ export default async function CommandPage({
                 />
               )}
 
-              <p data-testid="evidence-count" className="text-sm text-slate-400">
+              <p data-testid="evidence-count" className="text-sm text-fg-muted">
                 {formatCount(evidenceStep.movements.length)} movement(s) for this item at this
                 facility, newest first; a facility with none is a facility whose every figure above
                 rests on a reading from another item.
               </p>
 
               {evidenceStep.movements.length === 0 ? (
-                <p className="text-sm text-slate-400">
+                <p className="text-sm text-fg-muted">
                   No movement is recorded for this pair. The position above therefore rests on the
                   facility&rsquo;s other records, and the demand basis says so.
                 </p>
@@ -580,6 +584,6 @@ export default async function CommandPage({
       ) : null}
 
       <ProvenancePanel id="command-provenance" view={provenanceFor(store.info)} size="compact" />
-    </main>
+    </div>
   );
 }

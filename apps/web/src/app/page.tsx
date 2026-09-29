@@ -1,5 +1,6 @@
 import Link from 'next/link';
 
+import { Eyebrow, StatCard, formatCount } from '@/components/ui';
 import { getEnv } from '@/env';
 import { MODULES } from '@/lib/modules';
 import { APP_VERSION } from '@/lib/version';
@@ -7,6 +8,19 @@ import { getProviders } from '@/providers';
 
 export const dynamic = 'force-dynamic';
 
+/**
+ * The platform's front door.
+ *
+ * It is a status page and it says so. The one thing a reader has to leave with is
+ * the sentence in the banner: the loop closes end to end in this build and no
+ * live deployment exists. That banner is the only element on the page carrying a
+ * full tint, deliberately — a page that spends its loudest treatment on a
+ * heading has nothing left to say the thing that matters.
+ *
+ * Everything else is three groups read in order: what the process is running on
+ * (adapters), what it can do (modules), and where to look next (the footer). The
+ * navigation beside it is the shell's, not this page's.
+ */
 export default async function HomePage() {
   const env = getEnv();
   const providers = getProviders();
@@ -19,168 +33,160 @@ export default async function HomePage() {
   ];
 
   return (
-    <main className="mx-auto flex max-w-4xl flex-col gap-10 px-6 py-16">
-      <header className="flex flex-col gap-3">
-        <p className="text-sm font-medium tracking-widest text-sky-400 uppercase">
-          Health supply-chain resilience
-        </p>
-        <h1 className="text-4xl font-semibold tracking-tight">{env.appName}</h1>
-        <p className="max-w-2xl text-lg text-slate-300">
+    <div className="flex flex-col gap-16">
+      <header className="flex flex-col gap-5">
+        <Eyebrow tone="accent">Health supply-chain resilience</Eyebrow>
+        <h1 className="text-hero text-balance">{env.appName}</h1>
+        <p className="max-w-measure text-lg text-fg-muted">
           A federated platform for health resource and supply-chain planning across the primary
           health centre network.
         </p>
       </header>
 
+      {/*
+       * The disclosure. Its heading is the sentence a reader must not miss, and
+       * it keeps the only full tint in the interface for that reason.
+       */}
       <section
         aria-labelledby="status-heading"
-        className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-6"
+        className="rounded-instrument border border-signal-watch/40 bg-signal-watch/10 p-6 sm:p-8"
       >
-        <h2 id="status-heading" className="text-lg font-semibold text-amber-200">
+        <h2 id="status-heading" className="max-w-measure text-2xl text-balance text-signal-watch">
           The platform proposes redistribution — and executes none of it
         </h2>
-        <p className="mt-2 text-amber-100/90">
-          The loop closes end to end in this build — capture, visibility, forecast, alert, a
-          constraint-checked transfer proposal, a person&rsquo;s decision and the audit trail behind
-          it — but <strong>no live deployment exists yet</strong>: the deployment is scripted and
-          the demonstration runs locally. A facility can record stock, beds, attendance and footfall{' '}
-          <Link className="underline underline-offset-4" href="/capture">
-            offline
-          </Link>
-          ; the platform accepts it idempotently and scoped to the facility that sent it; and a
-          district officer can see{' '}
-          <Link className="underline underline-offset-4" href="/visibility">
-            what the district can see
-          </Link>{' '}
-          — including, explicitly, the facilities it cannot. The dataset behind all of it is
-          browsable in the{' '}
-          <Link className="underline underline-offset-4" href="/dataset">
-            dataset inspector
-          </Link>
-          .
-        </p>
-        <p className="mt-2 text-amber-100/90">
-          Paper is still how most of it is recorded, so a register can be{' '}
-          <Link className="underline underline-offset-4" href="/vision">
-            photographed
-          </Link>{' '}
-          and a stock, bed or attendance update can be{' '}
-          <Link className="underline underline-offset-4" href="/voice">
-            spoken
-          </Link>
-          . Neither becomes a record on the platform&rsquo;s own judgement: a reading is checked
-          against the catalogue and the ledger&rsquo;s rules, a spoken update is shown back to the
-          person who spoke it, and what cannot be settled waits for a human instead of being
-          guessed.
-        </p>
-        <p className="mt-2 text-amber-100/90">
-          Forecasts and risk scores are computed from that same generated world, and a district
-          officer can work the ranked list and the alert inbox on the{' '}
-          <Link className="underline underline-offset-4" href="/intelligence">
-            intelligence surface
-          </Link>
-          . Setu goes one step further: the{' '}
-          <Link className="underline underline-offset-4" href="/redistribution">
-            redistribution workbench
-          </Link>{' '}
-          shows what the optimiser proposes under hard safety constraints, the independent
-          validator&rsquo;s verdict on every proposal, and what each transfer is expected to buy —
-          with the assumptions printed beside the figure — and an officer approves or rejects it
-          with a reason that is recorded in a hash-chained trail. Nothing there executes a transfer,
-          and that is deliberate.
-        </p>
-        <p className="mt-2 text-amber-100/90">
-          Samvad federates a model across the states without moving a record: each state trains its
-          own rows, what crosses the boundary is a clipped parameter update, a count and a loss, and
-          the noise that buys the privacy guarantee is priced by a Rényi accountant. The{' '}
-          <Link className="underline underline-offset-4" href="/federation">
-            federation console
-          </Link>{' '}
-          shows the rounds, the budget spent, the non-IID diagnostic, and what the guarantee costs —
-          which, at this cohort size, is a great deal. The substrate a real deployment would run on
-          is cited there rather than implied.
-        </p>
+        <div className="mt-4 flex max-w-measure flex-col gap-4 text-base text-signal-watch/90">
+          <p>
+            The loop closes end to end in this build — capture, visibility, forecast, alert, a
+            constraint-checked transfer proposal, a person&rsquo;s decision and the audit trail
+            behind it — but{' '}
+            <strong className="font-medium text-signal-watch">no live deployment exists yet</strong>
+            : the deployment is scripted and the demonstration runs locally. A facility can record
+            stock, beds, attendance and footfall{' '}
+            <Link className="text-signal-watch underline underline-offset-4" href="/capture">
+              offline
+            </Link>
+            ; the platform accepts it idempotently and scoped to the facility that sent it; and a
+            district officer can see{' '}
+            <Link className="text-signal-watch underline underline-offset-4" href="/visibility">
+              what the district can see
+            </Link>{' '}
+            — including, explicitly, the facilities it cannot.
+          </p>
+          <p>
+            Paper is still how most of it is recorded, so a register can be{' '}
+            <Link className="text-signal-watch underline underline-offset-4" href="/vision">
+              photographed
+            </Link>{' '}
+            and a stock, bed or attendance update can be{' '}
+            <Link className="text-signal-watch underline underline-offset-4" href="/voice">
+              spoken
+            </Link>
+            . Neither becomes a record on the platform&rsquo;s own judgement: a reading is checked
+            against the catalogue and the ledger&rsquo;s rules, a spoken update is shown back to the
+            person who spoke it, and what cannot be settled waits for a human instead of being
+            guessed.
+          </p>
+          <p>
+            Setu shows what the optimiser proposes under hard safety constraints, the independent
+            validator&rsquo;s verdict on every proposal, and what each transfer is expected to buy —
+            with the assumptions printed beside the figure — and an officer approves or rejects it
+            with a reason that is recorded in a hash-chained trail. Nothing there executes a
+            transfer, and that is deliberate. Samvad federates a model across the states without
+            moving a record: what crosses the boundary is a clipped parameter update, a count and a
+            loss, and the noise that buys the privacy guarantee is priced by a Rényi accountant. The
+            substrate a real deployment would run on is cited rather than implied —{' '}
+            <Link className="text-signal-watch underline underline-offset-4" href="/redistribution">
+              the workbench
+            </Link>{' '}
+            and the{' '}
+            <Link className="text-signal-watch underline underline-offset-4" href="/federation">
+              federation console
+            </Link>{' '}
+            are where both are shown.
+          </p>
+        </div>
       </section>
 
-      <section aria-labelledby="adapters-heading" className="flex flex-col gap-3">
-        <h2 id="adapters-heading" className="text-lg font-semibold">
-          Active adapters
-        </h2>
-        <p className="text-slate-400">
-          Every external boundary is a port. With no cloud credentials configured the process runs
-          against local adapters, which is how the platform stays testable and demoable offline.
-        </p>
-        <ul className="grid gap-2 sm:grid-cols-3">
+      <section aria-labelledby="adapters-heading" className="flex flex-col gap-5">
+        <div className="flex flex-col gap-2">
+          <Eyebrow>Sensing plane</Eyebrow>
+          <h2 id="adapters-heading" className="text-2xl">
+            Active adapters
+          </h2>
+          <p className="max-w-measure text-sm text-fg-muted">
+            Every external boundary is a port. With no cloud credentials configured the process runs
+            against local adapters, which is how the platform stays testable and demoable offline.
+          </p>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-3">
           {adapters.map((adapter) => (
-            <li
-              key={adapter.port}
-              className="rounded-lg border border-slate-800 bg-slate-900/60 px-4 py-3"
-            >
-              <p className="text-xs tracking-wider text-slate-400 uppercase">{adapter.port}</p>
-              <p className="font-mono text-sm text-sky-300">{adapter.kind}</p>
-            </li>
+            <StatCard key={adapter.port} label={adapter.port} value={adapter.kind} />
           ))}
-        </ul>
-        <p className="text-sm text-slate-500">
-          Data adapter health: {data.ok ? 'reachable' : 'unreachable'}
+        </div>
+        <p className="text-sm text-fg-subtle">
+          Data adapter health:{' '}
+          <span className={data.ok ? 'text-signal-ok' : 'text-signal-critical'}>
+            {data.ok ? 'reachable' : 'unreachable'}
+          </span>
           {data.detail === undefined ? '' : ` — ${data.detail}`}
         </p>
       </section>
 
-      <section aria-labelledby="modules-heading" className="flex flex-col gap-3">
-        <h2 id="modules-heading" className="text-lg font-semibold">
-          Modules
-        </h2>
-        <p className="text-slate-400">
-          Five capabilities, and a status for each, in the platform&rsquo;s own words rather than a
-          percentage. All five are implemented; none is described as more than a command measured,
-          and the managed federation substrate is named as documented rather than built.
-        </p>
-        <ul className="flex flex-col divide-y divide-slate-800 rounded-lg border border-slate-800">
+      <section aria-labelledby="modules-heading" className="flex flex-col gap-5">
+        <div className="flex flex-col gap-2">
+          <Eyebrow>Capabilities</Eyebrow>
+          <h2 id="modules-heading" className="text-2xl">
+            Modules
+          </h2>
+          <p className="max-w-measure text-sm text-fg-muted">
+            Five capabilities, and a status for each, in the platform&rsquo;s own words rather than
+            a percentage. All five are present; none is described as more than a command measured,
+            and the managed federation substrate is named as documented rather than built.
+          </p>
+        </div>
+        <ul className="grid gap-4 lg:grid-cols-2">
           {MODULES.map((module) => (
-            <li key={module.name} className="flex flex-col gap-1 px-5 py-4">
-              <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-                <span className="font-medium">{module.name}</span>
-                <span
-                  className={
-                    module.status === 'not implemented'
-                      ? 'font-mono text-xs text-slate-500'
-                      : 'font-mono text-xs text-emerald-300'
-                  }
-                >
-                  {module.status}
-                </span>
-              </div>
-              <p className="text-sm text-slate-400">
-                <span className="mr-2 text-slate-500 italic">{module.meaning}</span>
-                {module.responsibility}
+            <li
+              key={module.name}
+              className="flex flex-col gap-3 rounded-instrument border border-ink-700 bg-ink-900 p-5"
+            >
+              <Eyebrow>{module.meaning}</Eyebrow>
+              <h3 className="text-xl">{module.name}</h3>
+              <p className="max-w-measure text-sm text-fg-muted">{module.responsibility}</p>
+              <p
+                className={`max-w-measure border-t border-ink-700 pt-3 text-sm ${
+                  module.status === 'not implemented' ? 'text-fg-subtle' : 'text-signal-ok'
+                }`}
+              >
+                {module.status}
               </p>
             </li>
           ))}
         </ul>
       </section>
 
-      <footer className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-slate-800 pt-6 text-sm text-slate-500">
+      <footer className="flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-ink-700 pt-6 font-mono text-eyebrow text-fg-subtle uppercase">
         <span>Version {APP_VERSION}</span>
-        <Link className="text-sky-400 underline-offset-4 hover:underline" href="/capture">
-          Capture
-        </Link>
-        <Link className="text-sky-400 underline-offset-4 hover:underline" href="/visibility">
-          Visibility
-        </Link>
-        <Link className="text-sky-400 underline-offset-4 hover:underline" href="/dataset">
-          Dataset inspector
-        </Link>
-        <Link className="text-sky-400 underline-offset-4 hover:underline" href="/redistribution">
-          Redistribution
-        </Link>
-        <Link className="text-sky-400 underline-offset-4 hover:underline" href="/federation">
-          Federation
-        </Link>
-        <Link className="text-sky-400 underline-offset-4 hover:underline" href="/healthz">
+        <span>{formatCount(MODULES.length)} modules</span>
+        <Link
+          className="inline-flex min-h-11 items-center text-accent transition-colors duration-150 hover:text-fg"
+          href="/healthz"
+        >
           Health check
         </Link>
-        <span>Licensed under Apache-2.0</span>
+        <Link
+          className="inline-flex min-h-11 items-center text-accent transition-colors duration-150 hover:text-fg"
+          href="/readyz"
+        >
+          Readiness
+        </Link>
+        <Link
+          className="inline-flex min-h-11 items-center text-accent transition-colors duration-150 hover:text-fg"
+          href="/provenance"
+        >
+          Data provenance
+        </Link>
       </footer>
-    </main>
+    </div>
   );
 }

@@ -403,7 +403,7 @@ export default function FederationPage() {
             different units is not a model of anything, so the basis is agreed before round one.
           </li>
         </ul>
-        <p className="rounded-card border border-hairline bg-paper-raised p-4 text-sm text-signal-watch/80">
+        <p className="rounded-card bg-paper-raised p-4 text-sm text-ink-muted">
           {payload.basis.paidFor}
         </p>
       </Panel>
@@ -509,7 +509,7 @@ export default function FederationPage() {
           caption="Round ledger of the run with Gaussian noise and a spent privacy budget"
           rounds={priced.rounds}
         />
-        <p className="rounded-card border border-signal-watch/40 bg-signal-watch/10 p-4 text-sm text-signal-watch/90">
+        <p className="rounded-card bg-sun/50 p-4 text-sm text-ink">
           Read the two loss columns together before repeating either. At this cohort size the noise
           the accountant prices is expensive: the curve below is the measurement of what each target
           ε buys, and it is not presented as free anywhere.

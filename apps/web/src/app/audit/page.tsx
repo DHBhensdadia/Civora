@@ -268,8 +268,8 @@ export default function AuditPage() {
               data-valid={trail.report.valid ? 'true' : 'false'}
               className={
                 trail.report.valid
-                  ? 'rounded-card border border-signal-ok/30 bg-signal-ok/5 px-4 py-3 text-sm text-signal-ok'
-                  : 'rounded-card border border-signal-critical/40 bg-signal-critical/10 px-4 py-3 text-sm text-signal-critical'
+                  ? 'rounded-card bg-mint/40 px-4 py-3 text-sm text-ink'
+                  : 'rounded-card bg-coral/45 px-4 py-3 text-sm text-ink'
               }
             >
               {trail.report.detail}
@@ -279,7 +279,7 @@ export default function AuditPage() {
               <button
                 type="button"
                 data-testid="audit-verify"
-                className="rounded border border-accent/40 bg-accent/10 px-3 py-1 text-sm text-accent hover:bg-accent/20"
+                className="rounded-control bg-accent/12 px-3 py-1 text-sm text-ink hover:bg-accent/20"
                 onClick={() => {
                   setNonce((current) => current + 1);
                 }}
@@ -368,14 +368,14 @@ export default function AuditPage() {
           <button
             type="submit"
             data-testid="audit-apply"
-            className="min-h-11 rounded-card border border-hairline bg-paper-raised px-3 py-1 text-sm text-ink hover:border-accent/40"
+            className="min-h-11 rounded-card bg-paper-raised px-3 py-1 text-sm text-ink hover:bg-hairline"
           >
             Apply
           </button>
           <button
             type="button"
             data-testid="audit-clear"
-            className="rounded px-3 py-1 text-sm text-ink-muted hover:text-ink"
+            className="rounded-control px-3 py-1 text-sm text-ink-muted hover:text-ink"
             onClick={() => {
               setDraft(NO_FILTERS);
               setApplied(NO_FILTERS);

@@ -27,9 +27,12 @@ import type { Session } from '@/lib/session';
  * rendered twice with one copy hidden, because a second copy is a second thing
  * for a journey to match and a second place for the offer rule to go wrong.
  *
- * The current surface is marked with a rail and the accent, and carries
+ * The current surface is marked with a filled plate and the accent, and carries
  * `aria-current`, because a reader who cannot see where they are has to open
- * pages to find out.
+ * pages to find out. It was a left rail until this pass: a rail is a border, and
+ * thirteen of them on every one of thirteen surfaces was the largest single
+ * block of the border count this language is trying to reach zero on. A plate is
+ * the same information carried by a fill instead.
  */
 
 export interface SiteNavProps {
@@ -56,10 +59,10 @@ export function SiteNav({ session }: SiteNavProps) {
                 <li key={section.href}>
                   <Link
                     aria-current={active ? 'page' : undefined}
-                    className={`inline-flex min-h-11 items-center border-l-2 pl-3 text-sm transition-colors duration-150 ${
+                    className={`inline-flex min-h-11 items-center rounded-control px-3 text-sm transition-colors duration-150 ${
                       active
-                        ? 'border-accent font-medium text-accent'
-                        : 'border-transparent text-ink-muted hover:border-hairline hover:text-ink'
+                        ? 'bg-accent/12 font-medium text-ink'
+                        : 'text-ink-muted hover:bg-paper-raised hover:text-ink'
                     }`}
                     href={section.href}
                   >

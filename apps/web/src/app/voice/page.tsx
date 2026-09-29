@@ -200,20 +200,17 @@ function PendingProposal({
       </div>
 
       {proposal.problems.length === 0 ? (
-        <p className="text-sm text-signal-ok">
+        <p className="text-sm text-ink-muted">
           {proposal.item === null
             ? 'Nothing is outstanding: this can be written.'
             : `Nothing is outstanding: this would be written against ${proposal.item.name} ${proposal.item.strength}.`}
         </p>
       ) : (
         <div className="flex flex-col gap-2">
-          <p className="text-sm text-signal-watch">Before this is written, the platform needs:</p>
+          <p className="text-sm text-ink-muted">Before this is written, the platform needs:</p>
           <ul className="flex flex-wrap gap-2">
             {proposal.problems.map((problem) => (
-              <li
-                key={problem}
-                className="rounded-card border border-signal-watch/40 bg-signal-watch/10 px-2 py-1 text-xs text-signal-watch"
-              >
+              <li key={problem} className="rounded-card bg-sun/50 px-2 py-1 text-xs text-ink">
                 {PROBLEM_TEXT[problem] ?? problem}
               </li>
             ))}
@@ -296,7 +293,7 @@ function PendingProposal({
 
       <div className="flex flex-wrap items-center gap-3">
         <button
-          className="rounded-card bg-signal-ok px-3 py-2 text-sm font-medium text-paper disabled:opacity-50"
+          className="rounded-control bg-accent px-3 py-2 text-sm font-medium text-paper disabled:opacity-50"
           disabled={busy}
           onClick={() => {
             setBusy(true);
@@ -309,7 +306,7 @@ function PendingProposal({
           That is what I said — write it
         </button>
         <button
-          className="min-h-11 rounded-card border border-hairline px-3 py-2 text-sm text-ink disabled:opacity-50"
+          className="min-h-11 rounded-card bg-paper-raised px-3 py-2 text-sm text-ink disabled:opacity-50"
           disabled={busy}
           onClick={() => {
             setBusy(true);
@@ -564,13 +561,11 @@ export default function VoicePage() {
           </span>
         </div>
         {message === null ? null : (
-          <p className="mt-4 rounded border border-accent/40 bg-accent/10 px-3 py-2 text-sm text-accent">
-            {message}
-          </p>
+          <p className="mt-4 rounded-control bg-accent/12 px-3 py-2 text-sm text-ink">{message}</p>
         )}
         {refusal === null ? null : (
           <p
-            className="mt-4 rounded-card border border-signal-critical/40 bg-signal-critical/10 px-3 py-2 text-sm text-signal-critical"
+            className="mt-4 rounded-card bg-coral/25 px-3 py-2 text-sm text-ink"
             data-testid="voice-refusal"
           >
             {refusal}
@@ -588,7 +583,7 @@ export default function VoicePage() {
             Nothing is waiting to be confirmed.
           </p>
         ) : (
-          <ul className="flex flex-col divide-y divide-hairline rounded-card border border-hairline">
+          <ul className="flex flex-col divide-y divide-hairline rounded-card">
             {pending.map((proposal) => (
               <PendingProposal
                 key={proposal.id}
@@ -617,7 +612,7 @@ export default function VoicePage() {
         {written.length === 0 ? (
           <p className="text-sm text-ink-muted">Nothing has been confirmed yet.</p>
         ) : (
-          <ul className="flex flex-col divide-y divide-hairline rounded-card border border-hairline">
+          <ul className="flex flex-col divide-y divide-hairline rounded-card">
             {written.map((proposal) => (
               <li
                 key={proposal.id}
@@ -637,7 +632,7 @@ export default function VoicePage() {
                   · {proposal.observedOn} · confirmed by {proposal.confirmedBy ?? '—'}
                 </span>
                 <span className="flex items-center gap-2">
-                  <span className="rounded border border-accent/40 bg-accent/10 px-2 py-1 text-xs text-accent">
+                  <span className="rounded-control bg-accent/12 px-2 py-1 text-xs text-ink">
                     Heard ·{' '}
                     {proposal.source === 'model' ? `voice · ${proposal.model}` : 'parse supplied'}
                   </span>

@@ -295,9 +295,9 @@ interface RationaleSetView {
 }
 
 const ASSESSMENT_CLASSES: Readonly<Record<string, string>> = {
-  beneficial: 'border-signal-ok/40 bg-signal-ok/10 text-signal-ok',
-  marginal: 'border-signal-watch/40 bg-signal-watch/10 text-signal-watch',
-  negative: 'border-signal-critical/40 bg-signal-critical/10 text-signal-critical',
+  beneficial: 'bg-mint/40 text-ink',
+  marginal: 'bg-sun/50 text-ink',
+  negative: 'bg-coral/45 text-ink',
 };
 
 const number = (value: number): string => value.toLocaleString('en-IN');
@@ -519,7 +519,7 @@ export default function RedistributionPage() {
         description="Four stated weightings, judged rather than trusted: each is run through the solver and then through the validator, and one is selected. With no reasoning provider configured the selection is the deterministic fallback — the shipped path — which ranks only validator-admitted strategies by unmet demand avoided per unit-kilometre and names the figure it ranked on."
       >
         <div
-          className="flex flex-col gap-1 rounded-card border border-hairline bg-paper-raised px-3 py-2 text-sm text-ink-muted"
+          className="flex flex-col gap-1 rounded-card bg-paper-raised px-3 py-2 text-sm text-ink-muted"
           data-testid="chosen-strategy"
         >
           <p>
@@ -540,7 +540,7 @@ export default function RedistributionPage() {
 
         {payload.chosen.refusals.length === 0 ? null : (
           <ul
-            className="mt-3 flex flex-col gap-1 text-xs text-signal-watch"
+            className="mt-3 flex flex-col gap-1 text-xs text-ink-muted"
             data-testid="strategy-refusals"
           >
             {payload.chosen.refusals.map((strategyRefusal, index) => (
@@ -555,7 +555,7 @@ export default function RedistributionPage() {
           </ul>
         )}
 
-        <div className="mt-4 overflow-x-auto rounded-card border border-hairline">
+        <div className="mt-4 overflow-x-auto rounded-card">
           <table className="w-full border-collapse text-sm">
             <caption className="sr-only">
               The four stated weightings, with the strategy that was selected
@@ -598,7 +598,7 @@ export default function RedistributionPage() {
                     {strategy.name}
                     {strategy.chosen ? (
                       <span
-                        className="ml-2 rounded border border-accent/40 bg-accent/10 px-2 py-0.5 text-xs text-accent"
+                        className="ml-2 rounded-control bg-accent/12 px-2 py-0.5 text-xs text-ink"
                         data-testid="strategy-chosen"
                       >
                         chosen
@@ -625,9 +625,9 @@ export default function RedistributionPage() {
                   </td>
                   <td className="px-4 py-2 text-xs">
                     {strategy.acceptable ? (
-                      <span className="text-signal-ok">admitted by the validator</span>
+                      <span className="text-ink-muted">admitted by the validator</span>
                     ) : (
-                      <span className="text-signal-watch">
+                      <span className="text-ink-muted">
                         refused:{' '}
                         {strategy.refusal ?? strategy.violations.map((v) => v.rule).join(', ')}
                       </span>
@@ -655,21 +655,19 @@ export default function RedistributionPage() {
           // The verdict leads with its status in the same rail language the alert
           // cards use, so "admitted" and "refused" are told apart before the
           // sentence under them is read.
-          className={`rounded-card border border-l-2 bg-paper-raised px-4 py-3 text-sm text-ink-muted ${
-            payload.verdict.valid
-              ? 'border-hairline border-l-signal-ok'
-              : 'border-hairline border-l-signal-critical'
+          className={`rounded-card border-l-2 bg-paper-raised px-4 py-3 text-sm text-ink-muted ${
+            payload.verdict.valid ? 'border-l-signal-ok' : 'border-l-signal-critical'
           }`}
           data-testid="plan-verdict"
           data-valid={payload.verdict.valid ? 'yes' : 'no'}
         >
           <p>
             {payload.verdict.valid ? (
-              <span className="text-signal-ok">
+              <span className="text-ink-muted">
                 The plan this page shows was admitted by the validator.
               </span>
             ) : (
-              <span className="text-signal-critical">The validator refused the plan.</span>
+              <span className="text-ink-muted">The validator refused the plan.</span>
             )}{' '}
             It moved {number(payload.verdict.measured.transfers)} transfer(s),{' '}
             {number(payload.verdict.measured.units)} unit(s),{' '}
@@ -677,7 +675,7 @@ export default function RedistributionPage() {
           </p>
           <p className="mt-1 text-xs text-ink-muted">Unchecked: {unchecked}</p>
           {payload.refused.length === 0 ? null : (
-            <ul className="mt-2 flex flex-col gap-1 text-xs text-signal-critical">
+            <ul className="mt-2 flex flex-col gap-1 text-xs text-ink-muted">
               {payload.refused.map((violation, index) => (
                 <li key={`${violation.rule}:${String(index)}`}>
                   <span className="font-mono">{violation.rule}</span> — {violation.detail}
@@ -713,7 +711,7 @@ export default function RedistributionPage() {
                   aria-label={`Transfer of ${row.item.name} from ${row.donor.name} to ${row.receiver.name}`}
                   data-proposal={row.proposal.id}
                   data-testid="proposal"
-                  className="rounded-card border border-hairline bg-paper-raised p-4"
+                  className="rounded-card bg-paper-raised p-4"
                 >
                   <div className="flex flex-wrap items-baseline gap-2">
                     <span className="text-sm font-medium text-ink">
@@ -737,8 +735,8 @@ export default function RedistributionPage() {
                   <p
                     className={
                       row.proposal.verdict === 'proposed'
-                        ? 'mt-2 text-xs text-signal-ok'
-                        : 'mt-2 text-xs text-signal-critical'
+                        ? 'mt-2 text-xs text-ink-muted'
+                        : 'mt-2 text-xs text-ink-muted'
                     }
                     data-testid="proposal-verdict"
                   >
@@ -762,7 +760,7 @@ export default function RedistributionPage() {
                         ) : (
                           <>
                             <span
-                              className={`ml-2 rounded border px-2 py-0.5 ${ASSESSMENT_CLASSES[row.impact.assessment] ?? ''}`}
+                              className={`ml-2 rounded-control px-2 py-1 ${ASSESSMENT_CLASSES[row.impact.assessment] ?? ''}`}
                               data-testid="impact-assessment"
                             >
                               {row.impact.assessment}
@@ -843,7 +841,7 @@ export default function RedistributionPage() {
                           </p>
                         </>
                       ) : (
-                        <p className="text-xs text-signal-watch" data-testid="rationale-refusal">
+                        <p className="text-xs text-ink-muted" data-testid="rationale-refusal">
                           No rationale was written: {rationale.refusal}
                         </p>
                       )}
@@ -869,7 +867,7 @@ export default function RedistributionPage() {
                         </label>
                         <button
                           aria-label={`Approve proposal ${row.proposal.id}`}
-                          className="inline-flex min-h-11 items-center rounded-full border-2 border-signal-ok/40 bg-signal-ok/10 px-4 text-sm text-signal-ok transition-colors duration-150 hover:bg-signal-ok/20 disabled:pointer-events-none disabled:opacity-40"
+                          className="inline-flex min-h-11 items-center rounded-control bg-accent px-4 text-sm font-medium text-paper transition-colors duration-150 hover:bg-accent/85 disabled:pointer-events-none disabled:opacity-40"
                           disabled={busy !== null}
                           onClick={() => {
                             void decide(row, 'approved');
@@ -880,7 +878,7 @@ export default function RedistributionPage() {
                         </button>
                         <button
                           aria-label={`Reject proposal ${row.proposal.id}`}
-                          className="inline-flex min-h-11 items-center rounded-full border-2 border-signal-critical/40 bg-signal-critical/10 px-4 text-sm text-signal-critical transition-colors duration-150 hover:bg-signal-critical/20 disabled:pointer-events-none disabled:opacity-40"
+                          className="inline-flex min-h-11 items-center rounded-control bg-coral/45 px-4 text-sm font-medium text-ink transition-colors duration-150 hover:bg-coral/60 disabled:pointer-events-none disabled:opacity-40"
                           disabled={busy !== null}
                           onClick={() => {
                             void decide(row, 'rejected');
@@ -898,8 +896,8 @@ export default function RedistributionPage() {
                         <span
                           className={
                             row.decision.decision === 'approved'
-                              ? 'rounded-card border border-signal-ok/40 bg-signal-ok/10 px-2 py-0.5 text-signal-ok'
-                              : 'rounded-card border border-signal-critical/40 bg-signal-critical/10 px-2 py-0.5 text-signal-critical'
+                              ? 'rounded-control bg-mint/40 px-2 py-0.5 text-xs text-ink'
+                              : 'rounded-control bg-coral/45 px-2 py-0.5 text-xs text-ink'
                           }
                         >
                           {row.decision.decision}
@@ -931,7 +929,7 @@ export default function RedistributionPage() {
         ) : (
           <div className="flex flex-col gap-3">
             <div
-              className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-card border border-hairline bg-paper-raised px-3 py-2 text-sm text-ink-muted"
+              className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-card bg-paper-raised px-3 py-2 text-sm text-ink-muted"
               data-testid="rationale-summary"
             >
               <span>
@@ -943,10 +941,10 @@ export default function RedistributionPage() {
               <span>
                 attempted <span className="font-mono">{number(rationales.attempted)}</span>
               </span>
-              <span className="text-signal-ok">
+              <span className="text-ink-muted">
                 written <span className="font-mono">{number(rationales.written)}</span>
               </span>
-              <span className="text-signal-watch">
+              <span className="text-ink-muted">
                 refused <span className="font-mono">{number(rationales.refused)}</span>
               </span>
               <span className="text-xs text-ink-subtle">
@@ -958,7 +956,7 @@ export default function RedistributionPage() {
 
             <div className="flex flex-wrap items-center gap-3">
               <button
-                className="inline-flex min-h-11 items-center rounded-full border-2 border-accent/40 bg-accent/10 px-4 text-sm text-accent transition-colors duration-150 hover:bg-accent/20 disabled:pointer-events-none disabled:opacity-40"
+                className="inline-flex min-h-11 items-center rounded-control bg-accent px-4 text-sm font-medium text-paper transition-colors duration-150 hover:bg-accent/85 disabled:pointer-events-none disabled:opacity-40"
                 data-testid="rationale-regenerate"
                 disabled={rationaleBusy}
                 onClick={() => {
@@ -992,15 +990,15 @@ export default function RedistributionPage() {
         description="The decisions people have taken, in a hash-chained record: each entry carries the digest of the one before it, so removing an entry or altering a reason breaks the chain at the point of the change. The chain is recomputed here rather than asserted — a reader is shown whether the trail holds, not told that it does."
       >
         <div
-          className="rounded-card border border-hairline bg-paper-raised px-3 py-2 text-sm text-ink-muted"
+          className="rounded-card bg-paper-raised px-3 py-2 text-sm text-ink-muted"
           data-testid="audit-chain"
           data-valid={payload.audit.valid ? 'yes' : 'no'}
         >
           <p>
             {payload.audit.valid ? (
-              <span className="text-signal-ok">The chain holds.</span>
+              <span className="text-ink-muted">The chain holds.</span>
             ) : (
-              <span className="text-signal-critical">
+              <span className="text-ink-muted">
                 The chain is broken at {payload.audit.brokenAt ?? 'an unknown entry'}.
               </span>
             )}{' '}
@@ -1020,7 +1018,7 @@ export default function RedistributionPage() {
                 key={event.id}
                 data-audit-action={event.action}
                 data-testid="audit-event"
-                className="rounded-card border border-hairline bg-paper/60 px-3 py-2 text-xs text-ink-muted"
+                className="rounded-card bg-paper/60 px-3 py-2 text-xs text-ink-muted"
               >
                 <p>
                   <span className="font-mono text-ink">{event.id}</span> · {event.action} ·{' '}
@@ -1047,7 +1045,7 @@ export default function RedistributionPage() {
         description="The plan is a choice, and a choice is only explainable if the rejected candidates are visible: donors that could not help, receivers nothing could serve, and the graph's own account of the pairs it removed and why. What happens if nothing moves is the baseline objective beside the plan's."
       >
         <div className="grid gap-3 lg:grid-cols-2">
-          <div className="rounded-card border border-hairline bg-paper-raised px-3 py-2 text-xs text-ink-muted">
+          <div className="rounded-card bg-paper-raised px-3 py-2 text-xs text-ink-muted">
             <p className="text-ink-muted">
               Graph: {number(payload.graph.candidates)} candidate pair(s) →{' '}
               {number(payload.graph.edges)} feasible edge(s)

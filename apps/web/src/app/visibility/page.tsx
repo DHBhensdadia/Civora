@@ -38,11 +38,11 @@ const MOVEMENTS_SHOWN = 12;
 
 /** How each capture family is drawn, so the words and the colour agree. */
 const CAPTURE_TONES: Readonly<Record<CaptureTone, string>> = {
-  extracted: 'border-accent/40 bg-accent/10 text-accent',
-  typed: 'border-hairline bg-paper-sunken text-ink-muted',
-  imported: 'border-violet-500/40 bg-violet-500/10 text-violet-200',
+  extracted: 'bg-accent/12 text-ink',
+  typed: 'bg-paper-sunken text-ink-muted',
+  imported: 'bg-hairline text-ink',
   generated: 'border-hairline bg-paper-raised text-ink-muted',
-  unknown: 'border-signal-critical/40 bg-signal-critical/10 text-signal-critical',
+  unknown: 'bg-coral/45 text-ink',
 };
 
 interface ReadItem {
@@ -142,9 +142,9 @@ const STATUS_WORDS: Readonly<Record<FacilityView['reading']['status'], string>> 
 };
 
 const STATUS_CLASSES: Readonly<Record<FacilityView['reading']['status'], string>> = {
-  current: 'border-signal-ok/40 bg-signal-ok/10 text-signal-ok',
-  stale: 'border-signal-watch/40 bg-signal-watch/10 text-signal-watch',
-  'never-heard': 'border-signal-critical/40 bg-signal-critical/10 text-signal-critical',
+  current: 'bg-mint/40 text-ink',
+  stale: 'bg-sun/50 text-ink',
+  'never-heard': 'bg-coral/45 text-ink',
 };
 
 const UNKNOWN = 'unknown';
@@ -278,9 +278,7 @@ export default function VisibilityPage() {
       </Notice>
 
       {error === null ? null : (
-        <p className="rounded border border-signal-critical/40 bg-signal-critical/10 px-3 py-2 text-sm text-signal-critical">
-          {error}
-        </p>
+        <p className="rounded-control bg-coral/25 px-3 py-2 text-sm text-ink">{error}</p>
       )}
 
       <Panel
@@ -314,7 +312,7 @@ export default function VisibilityPage() {
           <span className="text-ink-muted">District</span>
           <select
             aria-label="District"
-            className="rounded border border-hairline bg-paper-raised px-3 py-2"
+            className="rounded-control border border-hairline bg-paper-raised px-3 py-2"
             onChange={(event) => {
               setDistrictId(event.target.value);
             }}
@@ -367,7 +365,7 @@ export default function VisibilityPage() {
               facility.tier,
               <span
                 key="status"
-                className={`inline-block rounded-full border px-2 py-0.5 font-mono text-xs whitespace-nowrap ${STATUS_CLASSES[reading.status]}`}
+                className={`inline-block rounded-control px-2 py-1 text-xs whitespace-nowrap ${STATUS_CLASSES[reading.status]}`}
               >
                 {STATUS_WORDS[reading.status]}
               </span>,
@@ -401,7 +399,7 @@ export default function VisibilityPage() {
       >
         {neverHeard.length === 0 && stale.length === 0 ? (
           <p
-            className="rounded border border-signal-ok/40 bg-signal-ok/10 px-3 py-2 text-sm text-signal-ok"
+            className="rounded-control bg-mint/40 px-3 py-2 text-sm text-ink"
             data-testid="no-gaps"
           >
             Every facility in this district has reported within the last{' '}
@@ -487,7 +485,7 @@ export default function VisibilityPage() {
           <p className="text-sm text-ink-muted">No movements are held for this district.</p>
         ) : (
           <ul
-            className="flex flex-col divide-y divide-hairline rounded-card border border-hairline"
+            className="flex flex-col divide-y divide-hairline rounded-card"
             data-testid="movement-list"
           >
             {movements.map(({ facility, movement }) => {
@@ -504,7 +502,7 @@ export default function VisibilityPage() {
                     {formatCount(movement.quantity)} · {movement.occurredOn}
                   </span>
                   <span
-                    className={`rounded border px-2 py-1 text-xs whitespace-nowrap ${CAPTURE_TONES[badge.tone]}`}
+                    className={`rounded-control px-2 py-1 text-xs whitespace-nowrap ${CAPTURE_TONES[badge.tone]}`}
                   >
                     {badge.label}
                   </span>

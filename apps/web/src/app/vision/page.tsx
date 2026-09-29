@@ -181,16 +181,13 @@ function HeldLine({
           {line.extracted.confidence.toFixed(2)}
         </span>
         {line.itemId === null ? null : (
-          <span className="text-sm text-signal-ok">matches {line.itemName}</span>
+          <span className="text-sm text-ink-muted">matches {line.itemName}</span>
         )}
       </div>
 
       <ul className="flex flex-wrap gap-2">
         {line.reasons.map((reason) => (
-          <li
-            key={reason}
-            className="rounded-card border border-signal-watch/40 bg-signal-watch/10 px-2 py-1 text-xs text-signal-watch"
-          >
+          <li key={reason} className="rounded-card bg-sun/50 px-2 py-1 text-xs text-ink">
             {REASON_TEXT[reason] ?? reason}
           </li>
         ))}
@@ -260,7 +257,7 @@ function HeldLine({
 
       <div className="flex flex-wrap items-center gap-3">
         <button
-          className="rounded-card bg-signal-ok px-3 py-2 text-sm font-medium text-paper disabled:opacity-50"
+          className="rounded-control bg-accent px-3 py-2 text-sm font-medium text-paper disabled:opacity-50"
           disabled={busy}
           onClick={() => {
             setBusy(true);
@@ -273,7 +270,7 @@ function HeldLine({
           Accept into the ledger
         </button>
         <button
-          className="min-h-11 rounded-card border border-hairline px-3 py-2 text-sm text-ink disabled:opacity-50"
+          className="min-h-11 rounded-card bg-paper-raised px-3 py-2 text-sm text-ink disabled:opacity-50"
           disabled={busy}
           onClick={() => {
             setBusy(true);
@@ -521,13 +518,11 @@ export default function VisionPage() {
           </span>
         </div>
         {message === null ? null : (
-          <p className="mt-4 rounded border border-accent/40 bg-accent/10 px-3 py-2 text-sm text-accent">
-            {message}
-          </p>
+          <p className="mt-4 rounded-control bg-accent/12 px-3 py-2 text-sm text-ink">{message}</p>
         )}
         {refusal === null ? null : (
           <p
-            className="mt-4 rounded-card border border-signal-critical/40 bg-signal-critical/10 px-3 py-2 text-sm text-signal-critical"
+            className="mt-4 rounded-card bg-coral/25 px-3 py-2 text-sm text-ink"
             data-testid="vision-refusal"
           >
             {refusal}
@@ -543,7 +538,7 @@ export default function VisionPage() {
         {written.length === 0 ? (
           <p className="text-sm text-ink-muted">Nothing has been read yet.</p>
         ) : (
-          <ul className="flex flex-col divide-y divide-hairline rounded-card border border-hairline">
+          <ul className="flex flex-col divide-y divide-hairline rounded-card">
             {written.map(({ batch, line }) => (
               <li
                 key={`${batch.id}:${String(line.index)}`}
@@ -558,7 +553,7 @@ export default function VisionPage() {
                   {batch.occurredOn}
                 </span>
                 <span className="flex items-center gap-2">
-                  <span className="rounded border border-accent/40 bg-accent/10 px-2 py-1 text-xs text-accent">
+                  <span className="rounded-control bg-accent/12 px-2 py-1 text-xs text-ink">
                     AI-extracted ·{' '}
                     {batch.source === 'model' ? `vision · ${batch.model}` : 'reading supplied'}
                   </span>
@@ -582,7 +577,7 @@ export default function VisionPage() {
             Nothing is waiting for review.
           </p>
         ) : (
-          <ul className="flex flex-col divide-y divide-hairline rounded-card border border-hairline">
+          <ul className="flex flex-col divide-y divide-hairline rounded-card">
             {held.map(({ batch, line }) => (
               <HeldLine
                 key={`${batch.id}:${String(line.index)}`}
@@ -595,7 +590,7 @@ export default function VisionPage() {
           </ul>
         )}
         {batches.some((batch) => batch.pageNotes.length > 0) ? (
-          <div className="mt-4 rounded-card border border-hairline bg-paper-raised px-3 py-2 text-sm text-ink-muted">
+          <div className="mt-4 rounded-card bg-paper-raised px-3 py-2 text-sm text-ink-muted">
             <p className="font-medium text-ink">What the reader said about the page</p>
             <ul className="mt-1 list-inside list-disc text-ink-muted">
               {batches.flatMap((batch) =>

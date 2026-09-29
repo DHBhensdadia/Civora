@@ -184,9 +184,9 @@ export default async function CommandPage({
         description={
           <>
             One marker per region, sized by nothing and shaded by the same classes the legend names.
-            The value is <strong>{tower.map.valueLabel}</strong> — a count of pairs the risk engine
-            already put in an alerting band, read from the scored population rather than recomputed
-            here.
+            The value is <strong className="font-medium">{tower.map.valueLabel}</strong> — a count
+            of pairs the risk engine already put in an alerting band, read from the scored
+            population rather than recomputed here.
           </>
         }
       >
@@ -258,8 +258,8 @@ export default async function CommandPage({
               aria-current={option === tier ? 'page' : undefined}
               className={
                 option === tier
-                  ? 'inline-flex min-h-11 items-center rounded-full border-2 border-accent bg-accent/15 px-4 text-sm text-accent'
-                  : 'inline-flex min-h-11 items-center rounded-full border-2 border-hairline px-4 text-sm text-ink-muted transition-colors duration-150 hover:border-accent hover:text-accent'
+                  ? 'inline-flex min-h-11 items-center rounded-control bg-accent px-4 text-sm font-medium text-paper'
+                  : 'inline-flex min-h-11 items-center rounded-control bg-paper-sunken px-4 text-sm text-ink-muted transition-colors duration-150 hover:bg-hairline hover:text-ink'
               }
             >
               {TIER_LABEL[option]}

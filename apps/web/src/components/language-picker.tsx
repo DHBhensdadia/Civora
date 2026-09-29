@@ -61,7 +61,7 @@ export function LanguagePicker({ current, offered }: LanguagePickerProps) {
         <span className="sr-only">Interface language</span>
         <select
           aria-label="Interface language"
-          className="min-h-11 rounded-full border border-hairline bg-paper-raised px-3 text-xs text-ink transition-colors duration-150 hover:border-accent disabled:opacity-40"
+          className="min-h-11 rounded-control border border-hairline bg-paper-raised px-3 text-xs text-ink transition-colors duration-150 hover:border-accent disabled:opacity-40"
           disabled={busy}
           onChange={(event) => {
             void choose(event.target.value);
@@ -79,7 +79,7 @@ export function LanguagePicker({ current, offered }: LanguagePickerProps) {
         {languageLabelOf(current)}
       </span>
       {refusal === null ? null : (
-        <span data-testid="language-refusal" className="text-signal-watch">
+        <span data-testid="language-refusal" className="text-ink-muted">
           {refusal}
         </span>
       )}

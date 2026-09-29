@@ -51,38 +51,35 @@ export default async function HomePage() {
        * The disclosure. Its heading is the sentence a reader must not miss, and
        * it keeps the only full tint in the interface for that reason.
        */}
-      <section
-        aria-labelledby="status-heading"
-        className="rounded-card border border-signal-watch/40 bg-signal-watch/10 p-6 sm:p-8"
-      >
-        <h2 id="status-heading" className="max-w-measure text-2xl text-balance text-signal-watch">
+      <section aria-labelledby="status-heading" className="rounded-card bg-sun/30 p-6 sm:p-8">
+        <h2 id="status-heading" className="max-w-measure text-2xl text-balance text-ink">
           The platform proposes redistribution — and executes none of it
         </h2>
-        <div className="mt-4 flex max-w-measure flex-col gap-4 text-base text-signal-watch/90">
+        <div className="mt-4 flex max-w-measure flex-col gap-4 text-base text-ink-muted">
           <p>
             The loop closes end to end in this build — capture, visibility, forecast, alert, a
             constraint-checked transfer proposal, a person&rsquo;s decision and the audit trail
             behind it — but{' '}
-            <strong className="font-medium text-signal-watch">no live deployment exists yet</strong>
-            : the deployment is scripted and the demonstration runs locally. A facility can record
-            stock, beds, attendance and footfall{' '}
-            <Link className="text-signal-watch underline underline-offset-4" href="/capture">
+            <strong className="font-medium text-ink">no live deployment exists yet</strong>: the
+            deployment is scripted and the demonstration runs locally. A facility can record stock,
+            beds, attendance and footfall{' '}
+            <Link className="text-ink underline underline-offset-4" href="/capture">
               offline
             </Link>
             ; the platform accepts it idempotently and scoped to the facility that sent it; and a
             district officer can see{' '}
-            <Link className="text-signal-watch underline underline-offset-4" href="/visibility">
+            <Link className="text-ink underline underline-offset-4" href="/visibility">
               what the district can see
             </Link>{' '}
             — including, explicitly, the facilities it cannot.
           </p>
           <p>
             Paper is still how most of it is recorded, so a register can be{' '}
-            <Link className="text-signal-watch underline underline-offset-4" href="/vision">
+            <Link className="text-ink underline underline-offset-4" href="/vision">
               photographed
             </Link>{' '}
             and a stock, bed or attendance update can be{' '}
-            <Link className="text-signal-watch underline underline-offset-4" href="/voice">
+            <Link className="text-ink underline underline-offset-4" href="/voice">
               spoken
             </Link>
             . Neither becomes a record on the platform&rsquo;s own judgement: a reading is checked
@@ -99,11 +96,11 @@ export default async function HomePage() {
             moving a record: what crosses the boundary is a clipped parameter update, a count and a
             loss, and the noise that buys the privacy guarantee is priced by a Rényi accountant. The
             substrate a real deployment would run on is cited rather than implied —{' '}
-            <Link className="text-signal-watch underline underline-offset-4" href="/redistribution">
+            <Link className="text-ink underline underline-offset-4" href="/redistribution">
               the workbench
             </Link>{' '}
             and the{' '}
-            <Link className="text-signal-watch underline underline-offset-4" href="/federation">
+            <Link className="text-ink underline underline-offset-4" href="/federation">
               federation console
             </Link>{' '}
             are where both are shown.
@@ -129,7 +126,7 @@ export default async function HomePage() {
         </div>
         <p className="text-sm text-ink-subtle">
           Data adapter health:{' '}
-          <span className={data.ok ? 'text-signal-ok' : 'text-signal-critical'}>
+          <span className={data.ok ? 'text-ink' : 'text-ink font-medium'}>
             {data.ok ? 'reachable' : 'unreachable'}
           </span>
           {data.detail === undefined ? '' : ` — ${data.detail}`}
@@ -150,16 +147,13 @@ export default async function HomePage() {
         </div>
         <ul className="grid gap-4 lg:grid-cols-2">
           {MODULES.map((module) => (
-            <li
-              key={module.name}
-              className="flex flex-col gap-3 rounded-card border border-hairline bg-paper-raised p-5"
-            >
+            <li key={module.name} className="flex flex-col gap-3 rounded-card bg-paper-raised p-5">
               <Eyebrow>{module.meaning}</Eyebrow>
               <h3 className="text-xl">{module.name}</h3>
               <p className="max-w-measure text-sm text-ink-muted">{module.responsibility}</p>
               <p
                 className={`max-w-measure border-t border-hairline pt-3 text-sm ${
-                  module.status === 'not implemented' ? 'text-ink-subtle' : 'text-signal-ok'
+                  module.status === 'not implemented' ? 'text-ink-subtle' : 'text-ink'
                 }`}
               >
                 {module.status}
@@ -169,7 +163,7 @@ export default async function HomePage() {
         </ul>
       </section>
 
-      <footer className="flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-hairline pt-6 font-mono text-eyebrow text-ink-subtle uppercase">
+      <footer className="flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-hairline pt-6 text-eyebrow text-ink-subtle">
         <span>Version {APP_VERSION}</span>
         <span>{formatCount(MODULES.length)} modules</span>
         <Link

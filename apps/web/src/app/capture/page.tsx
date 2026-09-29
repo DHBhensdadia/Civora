@@ -922,7 +922,7 @@ export default function CapturePage() {
 
         <div className="mt-6 flex flex-wrap items-center gap-4">
           <button
-            className="inline-flex min-h-11 items-center justify-center rounded-full bg-accent px-5 text-sm font-medium text-paper transition-colors duration-150 hover:bg-accent/85 disabled:pointer-events-none disabled:opacity-40"
+            className="inline-flex min-h-11 items-center justify-center rounded-control bg-accent px-5 text-sm font-medium text-paper transition-colors duration-150 hover:bg-accent/85 disabled:pointer-events-none disabled:opacity-40"
             disabled={busy || submission === null}
             onClick={() => {
               void submit();
@@ -932,7 +932,7 @@ export default function CapturePage() {
             {messageFor(language, 'capture.submit')}
           </button>
           <button
-            className="inline-flex min-h-11 items-center justify-center rounded-full border-2 border-hairline px-4 text-sm text-ink transition-colors duration-150 hover:border-accent hover:text-accent"
+            className="inline-flex min-h-11 items-center justify-center rounded-control bg-paper-sunken px-4 text-sm text-ink transition-colors duration-150 hover:bg-hairline"
             onClick={outbox.retryNow}
             type="button"
           >
@@ -946,13 +946,13 @@ export default function CapturePage() {
         </div>
 
         {queued !== null ? (
-          <p className="mt-4 rounded border border-accent/40 bg-accent/10 px-3 py-2 text-sm text-accent">
+          <p className="mt-4 rounded-control bg-accent/12 px-3 py-2 text-sm text-ink">
             Queued on this device: {queued}
           </p>
         ) : null}
 
         {issues.length > 0 ? (
-          <div className="mt-4 rounded border border-signal-critical/40 bg-signal-critical/10 px-3 py-2 text-sm text-signal-critical">
+          <div className="mt-4 rounded-control bg-coral/25 px-3 py-2 text-sm text-ink">
             <p className="font-medium">The platform would refuse this capture:</p>
             <ul className="mt-1 list-inside list-disc">
               {issues.map((issue) => (
@@ -973,7 +973,7 @@ export default function CapturePage() {
         {outbox.items.length === 0 ? (
           <p className="text-sm text-ink-muted">Nothing has been captured on this device yet.</p>
         ) : (
-          <ul className="flex flex-col divide-y divide-hairline rounded-card border border-hairline">
+          <ul className="flex flex-col divide-y divide-hairline rounded-card">
             {outbox.items.map((item) => (
               <li
                 key={item.id}
@@ -986,10 +986,10 @@ export default function CapturePage() {
                   <span
                     className={
                       item.status === 'delivered'
-                        ? 'font-mono text-xs text-signal-ok'
+                        ? 'font-mono text-xs text-ink-muted'
                         : item.status === 'pending'
-                          ? 'font-mono text-xs text-signal-watch'
-                          : 'font-mono text-xs text-signal-critical'
+                          ? 'font-mono text-xs text-ink-muted'
+                          : 'font-mono text-xs text-ink-muted'
                     }
                   >
                     {statusWords(language)[item.status]}

@@ -52,7 +52,7 @@ const INSET = 'rounded-control bg-paper';
 
 export interface EyebrowProps {
   readonly children: ReactNode;
-  readonly tone?: 'muted' | 'accent' | 'signal';
+  readonly tone?: 'muted' | 'accent';
 }
 
 /**
@@ -68,7 +68,6 @@ export function Eyebrow({ children, tone = 'muted' }: EyebrowProps) {
   const tones: Readonly<Record<NonNullable<EyebrowProps['tone']>, string>> = {
     muted: 'text-ink-subtle',
     accent: 'text-accent',
-    signal: 'text-signal-watch',
   };
   return <p className={`text-eyebrow ${tones[tone]}`}>{children}</p>;
 }
@@ -260,7 +259,7 @@ export interface NoticeProps {
 
 const NOTICE_TONES: Readonly<Record<NoticeTone, { plate: string; title: string }>> = {
   warning: { plate: 'bg-sun/30', title: 'text-ink' },
-  info: { plate: 'bg-paper-raised', title: 'text-accent' },
+  info: { plate: 'bg-paper-raised', title: 'text-ink' },
 };
 
 /**

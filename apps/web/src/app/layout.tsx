@@ -19,8 +19,12 @@ import './globals.css';
  * that cannot reach the font host still renders in a real interface font rather
  * than in the browser's default serif.
  *
- * A grotesque for the interface and a mono for the labels: the mono is what makes
- * an eyebrow read as instrumentation rather than as small print.
+ * A grotesque for the interface and a mono for the things that are literally
+ * machine text: digests, seeds, fingerprints, commands and code. The mono is
+ * **no longer a label style** — a mono uppercase tracked eyebrow is the
+ * instrument idiom V2 was built on and the one the owner rejected, so a label is
+ * now the body family in sentence case. What the mono is kept for is the two
+ * places the plan allows it: a column of tabular figures, and `audit`'s digests.
  */
 const sans = Manrope({ subsets: ['latin'], variable: '--font-manrope', display: 'swap' });
 const mono = JetBrains_Mono({ subsets: ['latin'], variable: '--font-mono-code', display: 'swap' });
@@ -73,7 +77,7 @@ export default async function RootLayout({ children }: { readonly children: Reac
             <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
               <Link className="flex min-h-11 items-center gap-2" href="/">
                 <span className="text-xl">Civora</span>
-                <span className="hidden font-mono text-eyebrow text-ink-subtle uppercase sm:inline">
+                <span className="hidden text-eyebrow text-ink-subtle sm:inline">
                   health supply-chain resilience
                 </span>
               </Link>
@@ -85,7 +89,7 @@ export default async function RootLayout({ children }: { readonly children: Reac
                */}
               <span
                 data-testid="simulated-badge"
-                className="inline-flex min-h-7 items-center rounded-full border border-signal-watch/50 bg-signal-watch/10 px-2.5 font-mono text-eyebrow text-signal-watch uppercase"
+                className="inline-flex min-h-7 items-center rounded-control bg-sun/50 px-2.5 text-eyebrow text-ink"
               >
                 simulated data
               </span>
@@ -98,7 +102,7 @@ export default async function RootLayout({ children }: { readonly children: Reac
                   are. */}
               <span
                 data-testid="active-role"
-                className="inline-flex items-center rounded-full border border-hairline px-3 py-1 font-mono text-xs text-ink-muted"
+                className="inline-flex items-center rounded-control bg-paper-sunken px-3 py-1 text-xs text-ink-muted"
               >
                 {session.label} · {session.role.replace('_', ' ')}
               </span>
@@ -120,7 +124,7 @@ export default async function RootLayout({ children }: { readonly children: Reac
 
         <footer className="border-t border-hairline px-5 py-10">
           <div className="mx-auto flex max-w-shell flex-col gap-3">
-            <div className="flex flex-wrap items-center gap-x-5 gap-y-1 font-mono text-eyebrow text-ink-subtle uppercase">
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-eyebrow text-ink-subtle">
               <span>Licensed under Apache-2.0</span>
               <span>All figures generated from a seeded world</span>
             </div>

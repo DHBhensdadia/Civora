@@ -31,7 +31,7 @@ export interface PageHeaderProps {
   readonly title: string;
   /** `hero` on the surface that opens the product; `display` on the other twelve. */
   readonly scale?: 'hero' | 'display';
-  /** `accent` for a page's own title; `muted` for a heading inside another surface's flow. */
+  /** `muted` is the label's own tone (the plan's ink at 70%); `accent` is for a label that must read as a link. */
   readonly labelTone?: 'accent' | 'muted';
   /** The gap the surfaces already carried: `compact` is 12px, `roomy` is 20px. */
   readonly spacing?: 'compact' | 'roomy';
@@ -43,7 +43,7 @@ export function PageHeader({
   label,
   title,
   scale = 'display',
-  labelTone = 'accent',
+  labelTone = 'muted',
   spacing = 'compact',
   children,
 }: PageHeaderProps) {

@@ -191,11 +191,11 @@ interface TelemetryPayload {
 }
 
 const BAND_CLASSES: Readonly<Record<IntelligenceRow['band'], string>> = {
-  critical: 'border-signal-critical/40 bg-signal-critical/10 text-signal-critical',
-  high: 'border-signal-high/40 bg-signal-high/10 text-signal-high',
-  watch: 'border-signal-watch/30 bg-signal-watch/5 text-signal-watch',
-  low: 'border-signal-ok/30 bg-signal-ok/5 text-signal-ok',
-  unknown: 'border-hairline bg-paper-sunken text-ink',
+  critical: 'bg-coral/45 text-ink',
+  high: 'bg-coral/25 text-ink',
+  watch: 'bg-sun/50 text-ink',
+  low: 'bg-mint/40 text-ink',
+  unknown: 'bg-paper-sunken text-ink',
 };
 
 /**
@@ -206,6 +206,12 @@ const BAND_CLASSES: Readonly<Record<IntelligenceRow['band'], string>> = {
  * edge of the card answers it before a single word is read. `watch` is the
  * default rather than nothing, so an unexpected severity still gets a rail
  * instead of silently losing its colour.
+ *
+ * A rail is a **legible depth** and not one of the pastels, and that is
+ * arithmetic rather than taste: this mark is two pixels wide, and at two pixels
+ * the sun pastel is 1.3:1 against paper — an invisible rail. The pastels are for
+ * plates, where forty pixels of fill and an ink label carry the meaning. Both are
+ * marks; neither is ever text.
  */
 const SEVERITY_RAIL: Readonly<Record<string, string>> = {
   critical: 'border-l-signal-critical',
@@ -529,13 +535,13 @@ export default function IntelligencePage() {
                 key={alert.id}
                 aria-label={`Alert for ${alert.itemId} at ${alert.facilityId}`}
                 data-testid={`alert-${alert.id}`}
-                className={`rounded-card border border-l-2 border-hairline bg-paper-raised p-4 ${SEVERITY_RAIL[alert.severity] ?? 'border-l-hairline'}`}
+                className={`rounded-card border-l-2 bg-paper-raised p-4 ${SEVERITY_RAIL[alert.severity] ?? 'border-l-hairline'}`}
               >
                 <div className="flex flex-wrap items-center gap-2 text-xs">
-                  <span className="rounded-full border border-signal-critical/40 bg-signal-critical/10 px-2.5 py-0.5 font-mono text-eyebrow text-signal-critical uppercase">
+                  <span className="rounded-control bg-coral/45 px-2.5 py-1 text-xs text-ink">
                     {severityLabel(alert.severity, language)}
                   </span>
-                  <span className="rounded-full border border-hairline px-2.5 py-0.5 font-mono text-eyebrow text-ink-muted uppercase">
+                  <span className="rounded-control bg-paper-sunken px-2.5 py-1 text-xs text-ink-muted">
                     {stateLabel(alert.state, language)}
                   </span>
                   <span className="text-ink-subtle">
@@ -581,7 +587,7 @@ export default function IntelligencePage() {
                     <button
                       key={move_.to}
                       aria-label={`${move_.label} ${alert.itemId}`}
-                      className="inline-flex min-h-11 items-center rounded-full border-2 border-accent/40 bg-accent/10 px-3 text-xs text-accent transition-colors duration-150 hover:bg-accent/20 disabled:pointer-events-none disabled:opacity-40"
+                      className="inline-flex min-h-11 items-center justify-center rounded-control bg-accent px-3 text-xs font-medium text-paper transition-colors duration-150 hover:bg-accent/85 disabled:pointer-events-none disabled:opacity-40"
                       disabled={busy !== null}
                       onClick={() => {
                         void move(alert, move_.to);
@@ -619,7 +625,7 @@ export default function IntelligencePage() {
               </p>
             ) : null}
             <div
-              className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-card border border-hairline bg-paper-raised px-3 py-2 text-sm text-ink-muted"
+              className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-card bg-paper-raised px-3 py-2 text-sm text-ink-muted"
               data-testid="advisory-summary"
             >
               <span>
@@ -632,10 +638,10 @@ export default function IntelligencePage() {
               <span>
                 attempted <span className="font-mono">{String(advisories.attempted)}</span>
               </span>
-              <span className="text-signal-ok">
+              <span className="text-ink-muted">
                 written <span className="font-mono">{String(advisories.written)}</span>
               </span>
-              <span className="text-signal-watch">
+              <span className="text-ink-muted">
                 refused <span className="font-mono">{String(advisories.refused)}</span>
               </span>
               <span className="text-xs text-ink-subtle">
@@ -671,12 +677,12 @@ export default function IntelligencePage() {
               {advisories.alerts.map((alert) => (
                 <li
                   key={alert.alertId}
-                  className="rounded-card border border-hairline bg-paper-raised p-3"
+                  className="rounded-card bg-paper-raised p-3"
                   data-testid="advisory-alert"
                 >
                   <p className="text-sm text-ink">
                     {alert.facilityName} · {alert.itemName} ·{' '}
-                    <span className="text-signal-critical">
+                    <span className="text-ink-muted">
                       {' '}
                       {severityLabel(alert.severity, language)}
                     </span>{' '}
@@ -687,7 +693,7 @@ export default function IntelligencePage() {
                     {alert.languages.map((language) => (
                       <li
                         key={`${alert.alertId}:${language.language}`}
-                        className="rounded-card border border-hairline bg-paper/60 px-3 py-2"
+                        className="rounded-card bg-paper/60 px-3 py-2"
                         data-language={language.language}
                         data-status={language.status}
                         data-testid="advisory-language"
@@ -697,8 +703,8 @@ export default function IntelligencePage() {
                           <span
                             className={
                               language.status === 'written'
-                                ? 'rounded-card border border-signal-ok/40 bg-signal-ok/10 px-2 py-0.5 text-signal-ok'
-                                : 'rounded-card border border-signal-watch/40 bg-signal-watch/10 px-2 py-0.5 text-signal-watch'
+                                ? 'rounded-control bg-mint/40 px-2 py-0.5 text-xs text-ink'
+                                : 'rounded-control bg-sun/50 px-2 py-0.5 text-xs text-ink'
                             }
                             data-testid="advisory-status"
                           >
@@ -736,10 +742,7 @@ export default function IntelligencePage() {
                         </p>
 
                         {language.refusal === null ? null : (
-                          <p
-                            className="mt-1 text-xs text-signal-watch"
-                            data-testid="advisory-refusal"
-                          >
+                          <p className="mt-1 text-xs text-ink-muted" data-testid="advisory-refusal">
                             No prose was written: {language.refusal}
                           </p>
                         )}
@@ -752,7 +755,7 @@ export default function IntelligencePage() {
 
             <div className="flex flex-wrap items-center gap-3">
               <button
-                className="inline-flex min-h-11 items-center rounded-full border-2 border-accent/40 bg-accent/10 px-4 text-sm text-accent transition-colors duration-150 hover:bg-accent/20 disabled:pointer-events-none disabled:opacity-40"
+                className="inline-flex min-h-11 items-center rounded-control bg-accent px-4 text-sm font-medium text-paper transition-colors duration-150 hover:bg-accent/85 disabled:pointer-events-none disabled:opacity-40"
                 data-testid="advisory-regenerate"
                 disabled={advisoryBusy}
                 onClick={() => {
@@ -792,7 +795,7 @@ export default function IntelligencePage() {
         ) : (
           <div className="flex flex-col gap-4">
             <div
-              className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-card border border-hairline bg-paper-raised px-3 py-2 text-sm text-ink-muted"
+              className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-card bg-paper-raised px-3 py-2 text-sm text-ink-muted"
               data-testid="telemetry-provider"
               data-provider={telemetry.provider}
               data-reported={telemetry.reported ? 'yes' : 'no'}
@@ -825,7 +828,7 @@ export default function IntelligencePage() {
                   <span>
                     from cache <span className="font-mono">{formatCount(telemetry.cacheHits)}</span>
                   </span>
-                  <span className="text-signal-watch">
+                  <span className="text-ink-muted">
                     refused <span className="font-mono">{formatCount(telemetry.failures)}</span>
                   </span>
                   <span>
@@ -844,7 +847,7 @@ export default function IntelligencePage() {
                     attribute. A panel of zeros here would be a claim; this is not one.
                   </p>
                 ) : (
-                  <div className="overflow-x-auto rounded-card border border-hairline">
+                  <div className="overflow-x-auto rounded-card">
                     <table className="w-full border-collapse text-sm">
                       <caption className="sr-only">
                         Requests made, per task, with attempts, refusals and time
@@ -905,7 +908,7 @@ export default function IntelligencePage() {
                             <td className="px-4 py-2 text-right font-mono text-ink-muted">
                               {formatCount(task.cacheHits)}
                             </td>
-                            <td className="px-4 py-2 text-right font-mono text-signal-watch">
+                            <td className="px-4 py-2 text-right font-mono text-ink-muted">
                               {formatCount(task.failures)}
                             </td>
                             <td className="px-4 py-2 text-right font-mono text-ink-muted">
@@ -922,7 +925,7 @@ export default function IntelligencePage() {
                 )}
               </>
             ) : (
-              <p className="text-sm text-signal-watch" data-testid="telemetry-unavailable">
+              <p className="text-sm text-ink-muted" data-testid="telemetry-unavailable">
                 This adapter keeps no count of what it has been asked, so there is nothing to show —
                 which is not the same as nothing having happened, and is precisely why the panel
                 says it rather than drawing a zero.
@@ -930,7 +933,7 @@ export default function IntelligencePage() {
             )}
 
             <div
-              className="rounded-card border border-hairline bg-paper-raised px-3 py-2 text-sm text-ink-muted"
+              className="rounded-card bg-paper-raised px-3 py-2 text-sm text-ink-muted"
               data-testid="telemetry-projection"
             >
               <p>
@@ -956,7 +959,7 @@ export default function IntelligencePage() {
             </div>
 
             {telemetry.provider === 'fixture' ? (
-              <p className="text-xs text-signal-watch" data-testid="telemetry-caveat">
+              <p className="text-xs text-ink-muted" data-testid="telemetry-caveat">
                 These counters describe this process under a replay adapter: every request was
                 answered from a recording, nothing was sent anywhere, so attempts stays at zero
                 while calls climbs and no tokens are reported. They are true about this process and
@@ -982,7 +985,7 @@ export default function IntelligencePage() {
         title="Risk-ranked list"
         description="Every scored pair, worst first, with the driver contributions behind the order. The index ranks and bands; it is not a probability, which is why the forecast's own measured probability and the window it was measured over are shown beside it."
       >
-        <div className="overflow-x-auto rounded-card border border-hairline">
+        <div className="overflow-x-auto rounded-card">
           <table className="w-full border-collapse text-sm">
             <caption className="sr-only">
               Facility-item pairs ranked by stock-out risk, with drivers
@@ -1014,9 +1017,7 @@ export default function IntelligencePage() {
                   className="align-top"
                 >
                   <td className="px-4 py-2">
-                    <span
-                      className={`rounded border px-2 py-0.5 text-xs ${BAND_CLASSES[row.band]}`}
-                    >
+                    <span className={`rounded-control px-2 py-1 text-xs ${BAND_CLASSES[row.band]}`}>
                       {row.band}
                     </span>
                   </td>
@@ -1052,7 +1053,7 @@ export default function IntelligencePage() {
                         ))}
                       </ul>
                       {row.missing.length === 0 ? null : (
-                        <p className="mt-2 text-xs text-signal-watch">
+                        <p className="mt-2 text-xs text-ink-muted">
                           Could not be measured: {row.missing.join('; ')}
                         </p>
                       )}
@@ -1078,10 +1079,7 @@ export default function IntelligencePage() {
         ) : (
           <ul className="flex flex-col gap-3">
             {payload.events.map((event) => (
-              <li
-                key={event.id}
-                className="rounded-card border border-hairline bg-paper-raised p-4 text-sm"
-              >
+              <li key={event.id} className="rounded-card bg-paper-raised p-4 text-sm">
                 <p className="text-ink">
                   {event.syndrome} · {event.facilityName} · {event.districtName}
                 </p>

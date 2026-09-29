@@ -29,13 +29,13 @@ export function ProvenancePanel({ id, view, size = 'full' }: ProvenancePanelProp
     {
       key: 'real',
       title: 'Retrieved from published sources',
-      tone: 'text-signal-ok',
+      tone: 'text-ink-muted',
       entries: view.realLayers,
     },
     {
       key: 'simulated',
       title: 'Generated from those sources',
-      tone: 'text-signal-watch',
+      tone: 'text-ink-muted',
       entries: view.simulatedLayers,
     },
   ];
@@ -58,7 +58,7 @@ export function ProvenancePanel({ id, view, size = 'full' }: ProvenancePanelProp
           <div
             key={group.key}
             data-testid={id === 'provenance' ? `provenance-${group.key}` : undefined}
-            className="rounded-card border border-hairline bg-paper-sunken p-4"
+            className="rounded-card bg-paper-sunken p-4"
           >
             <h3 className={`text-sm font-medium ${group.tone}`}>{group.title}</h3>
             <ul className="mt-3 flex flex-col gap-3">
@@ -82,7 +82,7 @@ export function ProvenancePanel({ id, view, size = 'full' }: ProvenancePanelProp
 
       <dl
         data-testid={`${id}-seed`}
-        className="grid gap-x-6 gap-y-2 rounded-card border border-hairline bg-paper-sunken p-4 text-sm sm:grid-cols-2"
+        className="grid gap-x-6 gap-y-2 rounded-card bg-paper-sunken p-4 text-sm sm:grid-cols-2"
       >
         <div>
           <dt className="text-ink-muted">Active seed</dt>

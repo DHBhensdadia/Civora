@@ -73,7 +73,7 @@ export function SchematicMap({ id, map }: SchematicMapProps) {
           viewBox={`-4 -4 ${MAP_EXTENT + 8} ${MAP_EXTENT + 8}`}
           role="img"
           data-testid="schematic-map"
-          className="h-72 w-72 shrink-0 rounded-card border border-hairline bg-paper-sunken"
+          className="h-72 w-72 shrink-0 rounded-card bg-paper-sunken"
         >
           <rect x="0" y="0" width={MAP_EXTENT} height={MAP_EXTENT} fill="#eff0f3" />
           {map.markers.map((marker) => (
@@ -110,7 +110,7 @@ export function SchematicMap({ id, map }: SchematicMapProps) {
                 <li key={band.label} className="flex items-center gap-2">
                   <span
                     aria-hidden="true"
-                    className="inline-block h-3 w-3 rounded-sm"
+                    className="inline-block h-3 w-3 rounded-control"
                     style={{ backgroundColor: colourFor(index) }}
                   />
                   <span className="font-mono">{band.label}</span>
@@ -120,7 +120,7 @@ export function SchematicMap({ id, map }: SchematicMapProps) {
             <li className="flex items-center gap-2">
               <span
                 aria-hidden="true"
-                className="inline-block h-3 w-3 rounded-sm"
+                className="inline-block h-3 w-3 rounded-control"
                 style={{ backgroundColor: NO_READING }}
               />
               <span className="font-mono">no reading</span>

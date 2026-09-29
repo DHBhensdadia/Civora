@@ -218,7 +218,7 @@ export default function ImportPage() {
               <button
                 type="button"
                 data-testid="import-sample"
-                className="min-h-11 rounded-card border border-hairline bg-paper-raised px-3 py-1 text-sm text-ink hover:border-accent/40"
+                className="min-h-11 rounded-card bg-paper-raised px-3 py-1 text-sm text-ink hover:bg-hairline"
                 onClick={() => {
                   void loadSample(chosen.sample);
                 }}
@@ -230,7 +230,7 @@ export default function ImportPage() {
               <button
                 type="button"
                 data-testid="import-broken"
-                className="rounded px-3 py-1 text-sm text-ink-muted hover:text-ink"
+                className="rounded-control px-3 py-1 text-sm text-ink-muted hover:text-ink"
                 onClick={() => {
                   void loadSample(chosen.broken);
                 }}
@@ -269,7 +269,7 @@ export default function ImportPage() {
               type="button"
               data-testid="import-check"
               disabled={text.trim() === '' || busy}
-              className="inline-flex min-h-11 items-center rounded-full border-2 border-accent/40 bg-accent/10 px-4 text-sm text-accent transition-colors duration-150 hover:bg-accent/25 disabled:pointer-events-none disabled:opacity-40"
+              className="inline-flex min-h-11 items-center justify-center rounded-control bg-accent px-4 text-sm font-medium text-paper transition-colors duration-150 hover:bg-accent/85 disabled:pointer-events-none disabled:opacity-40"
               onClick={() => {
                 void submit('POST');
               }}
@@ -280,7 +280,7 @@ export default function ImportPage() {
               type="button"
               data-testid="import-accept"
               disabled={text.trim() === '' || busy || preview === null}
-              className="rounded-card border border-signal-ok/40 bg-signal-ok/10 px-3 py-1 text-sm text-signal-ok hover:bg-signal-ok/20 disabled:opacity-40"
+              className="rounded-control bg-accent px-3 py-1 text-sm font-medium text-paper hover:bg-accent/85 disabled:opacity-40"
               onClick={() => {
                 void submit('PUT');
               }}
@@ -337,7 +337,7 @@ export default function ImportPage() {
             </p>
 
             {preview.crosswalk === null ? null : (
-              <div className="rounded-card border border-hairline bg-paper-raised p-4 text-sm text-ink-muted">
+              <div className="rounded-card bg-paper-raised p-4 text-sm text-ink-muted">
                 <p>
                   {formatCount(preview.crosswalk.matched)} of this platform&rsquo;s districts were
                   given a government code.
@@ -377,7 +377,7 @@ export default function ImportPage() {
                   </span>,
                   <span
                     key={`${row.subjectId}-outcome`}
-                    className={row.outcome === 'refused' ? 'text-signal-critical' : 'text-ink'}
+                    className={row.outcome === 'refused' ? 'text-ink-muted' : 'text-ink'}
                   >
                     {OUTCOME_LABEL[row.outcome]}
                   </span>,

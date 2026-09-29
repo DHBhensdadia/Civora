@@ -22,9 +22,9 @@ export default async function ProvenancePage() {
   const store = await getLiveStore();
 
   return (
-    <div className="flex flex-col gap-12">
-      <PageHeader label="Where the data comes from" title="Provenance">
-        <p className="max-w-measure text-ink-muted">
+    <div className="flex flex-col gap-20">
+      <PageHeader layout="split" label="Where the data comes from" title="Provenance">
+        <p className="text-lead text-ink-muted">
           A demonstration of a national platform has one failure mode worse than a wrong figure: a
           right figure mistaken for a real one. This page exists so that cannot happen quietly — it
           names which layers are published values, which are generated from them, and which seed

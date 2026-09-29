@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import { PageHeader } from '@/components/page-header';
-import { Notice, Panel, formatCount } from '@/components/ui';
+import { CONTROL_PRIMARY, CONTROL_QUIET, FIELD, Notice, Panel, formatCount } from '@/components/ui';
 
 /**
  * Say it, see it, confirm it.
@@ -231,7 +231,7 @@ function PendingProposal({
           <span className="text-ink-muted">Which medicine was meant?</span>
           <select
             aria-label={`Catalogue entry for ${proposal.id}`}
-            className="min-h-11 rounded-card border border-hairline bg-paper-raised px-3 py-2"
+            className={FIELD}
             onChange={(event) => {
               setItemId(event.target.value);
             }}
@@ -248,12 +248,12 @@ function PendingProposal({
       )}
 
       {proposal.command.intent === 'stock_receipt' ? (
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid gap-5 sm:grid-cols-2">
           <label className="flex flex-col gap-1 text-sm">
             <span className="text-ink-muted">Batch</span>
             <input
               aria-label={`Batch for ${proposal.id}`}
-              className="min-h-11 rounded-card border border-hairline bg-paper-raised px-3 py-2"
+              className={FIELD}
               onChange={(event) => {
                 setBatchId(event.target.value);
               }}
@@ -265,7 +265,7 @@ function PendingProposal({
             <span className="text-ink-muted">Expires</span>
             <input
               aria-label={`Expiry for ${proposal.id}`}
-              className="min-h-11 rounded-card border border-hairline bg-paper-raised px-3 py-2"
+              className={FIELD}
               onChange={(event) => {
                 setExpiresOn(event.target.value);
               }}
@@ -281,7 +281,7 @@ function PendingProposal({
           <span className="text-ink-muted">Present today</span>
           <input
             aria-label={`Present for ${proposal.id}`}
-            className="min-h-11 rounded-card border border-hairline bg-paper-raised px-3 py-2"
+            className={FIELD}
             onChange={(event) => {
               setPresent(event.target.value);
             }}
@@ -293,7 +293,7 @@ function PendingProposal({
 
       <div className="flex flex-wrap items-center gap-3">
         <button
-          className="rounded-control bg-accent px-3 py-2 text-sm font-medium text-paper disabled:opacity-50"
+          className={CONTROL_PRIMARY}
           disabled={busy}
           onClick={() => {
             setBusy(true);
@@ -306,7 +306,7 @@ function PendingProposal({
           That is what I said — write it
         </button>
         <button
-          className="min-h-11 rounded-card bg-paper-raised px-3 py-2 text-sm text-ink disabled:opacity-50"
+          className={CONTROL_QUIET}
           disabled={busy}
           onClick={() => {
             setBusy(true);
@@ -478,9 +478,9 @@ export default function VoicePage() {
   );
 
   return (
-    <div className="flex flex-col gap-12">
-      <PageHeader label="Voice intake" title="Say it, then confirm it">
-        <p className="max-w-measure text-ink-muted">
+    <div className="flex flex-col gap-20">
+      <PageHeader layout="split" label="Voice intake" title="Say it, then confirm it">
+        <p className="text-lead text-ink-muted">
           Speak a stock, bed or attendance update and the platform parses it into a record it holds
           back. The transcript is shown back to you word for word, the update is named, and every
           question the platform still has is listed — and nothing reaches the ledger until somebody
@@ -512,12 +512,12 @@ export default function VoicePage() {
         title="Speak an update"
         description="The recording goes to the reader as it is: the platform does not transcribe first, because how a drug name was said is often what tells two of them apart."
       >
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid gap-5 sm:grid-cols-2">
           <label className="flex flex-col gap-1 text-sm">
             <span className="text-ink-muted">Facility</span>
             <select
               aria-label="Facility"
-              className="min-h-11 rounded-card border border-hairline bg-paper-raised px-3 py-2"
+              className={FIELD}
               onChange={(event) => {
                 setFacilityId(event.target.value);
               }}
@@ -537,7 +537,7 @@ export default function VoicePage() {
               // Named for the act rather than the noun: the label matcher is a
               // substring match, and this page is mostly about what was said.
               aria-label="Voice note"
-              className="min-h-11 rounded-card border border-hairline bg-paper-raised px-3 py-2"
+              className={FIELD}
               onChange={(event) => {
                 setFile(event.target.files?.[0] ?? null);
               }}
@@ -547,7 +547,7 @@ export default function VoicePage() {
         </div>
         <div className="mt-4 flex flex-wrap items-center gap-3">
           <button
-            className="rounded-card bg-accent px-4 py-2 text-sm font-medium text-paper disabled:opacity-50"
+            className={CONTROL_PRIMARY}
             disabled={busy || file === null || facilityId === ''}
             onClick={() => {
               void listen();

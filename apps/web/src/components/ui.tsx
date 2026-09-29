@@ -300,18 +300,48 @@ export function Notice({ id, tone, title, testId, children }: NoticeProps) {
  * panel it sits on; the reference fills the primary action and leaves nothing
  * else to look at.
  */
+/*
+ * The base carries everything a control shares and **no size**, which is deliberate: `text-sm` and
+ * `text-xs` are the same specificity, so a variant that added `text-xs` on top of a `text-sm` base
+ * would lose the argument to whichever class Tailwind emits later. Each variant declares its own
+ * size, which is why `CONTROL_SMALL` renders at the size it says it does.
+ */
 const CONTROL =
-  'inline-flex min-h-11 items-center justify-center gap-2 rounded-control px-4 py-2 text-sm font-medium transition-colors duration-150 disabled:pointer-events-none disabled:opacity-40';
+  'inline-flex min-h-11 items-center justify-center gap-2 rounded-control px-4 py-2 font-medium transition-colors duration-150 disabled:pointer-events-none disabled:opacity-40';
 
 /** The action a page is asking for. */
-export const CONTROL_PRIMARY = `${CONTROL} bg-accent text-paper hover:bg-accent/85`;
+export const CONTROL_PRIMARY = `${CONTROL} text-sm bg-accent text-paper hover:bg-accent/85`;
 
 /** A secondary action beside a primary one. */
-export const CONTROL_QUIET = `${CONTROL} bg-paper-sunken text-ink-muted hover:bg-hairline hover:text-ink`;
+export const CONTROL_QUIET = `${CONTROL} text-sm bg-paper-sunken text-ink-muted hover:bg-hairline hover:text-ink`;
 
 /** In-place, per-row actions, which are visually lighter than a page action. */
-export const CONTROL_SMALL = `${CONTROL} min-h-11 bg-paper-sunken px-3 text-xs text-ink-muted hover:bg-hairline hover:text-ink`;
+export const CONTROL_SMALL = `${CONTROL} px-3 text-xs bg-paper-sunken text-ink-muted hover:bg-hairline hover:text-ink`;
 
-/** A field a person types into. */
+/** The filled action on a row of a list, where a page-sized control would dominate. */
+export const CONTROL_PRIMARY_SMALL = `${CONTROL} px-3 text-xs bg-accent text-paper hover:bg-accent/85`;
+
+/**
+ * The action that refuses something — rejecting a proposal.
+ *
+ * It is a pastel plate with ink text, which is the same recipe every label in this product uses, and
+ * that is the point: a destructive action is the worst possible place to invent a fourth red, and
+ * the label on the button says what the button does.
+ */
+export const CONTROL_DANGER = `${CONTROL} text-sm bg-coral/45 text-ink hover:bg-coral/60`;
+
+/*
+ * A field a person types into.
+ *
+ * This is the recipe the application was already rendering — 36 `<input>`s and `<select>`s agreed on
+ * it, copied — so adopting it here changed nothing on screen and removed 36 copies. Two things about
+ * it are decisions rather than transcription: it is `rounded-control` and not `rounded-card`, because
+ * a field is a control and the shape vocabulary has two radii for a reason; and it declares **no
+ * width**, because a field fills the container the layout gives it and `w-full` here would stretch a
+ * field that is deliberately narrow in a row of controls.
+ *
+ * The fill is the panel's own, which is why the hairline is load-bearing — see the note in §8c of the
+ * phase file on the boundary a control is required to keep.
+ */
 export const FIELD =
-  'min-h-11 w-full rounded-control border border-hairline bg-paper px-3 py-2 text-sm text-ink placeholder:text-ink-subtle';
+  'min-h-11 rounded-control border border-hairline bg-paper-raised px-3 py-2 text-sm text-ink placeholder:text-ink-subtle';

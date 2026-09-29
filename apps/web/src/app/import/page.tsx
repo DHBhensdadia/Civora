@@ -3,7 +3,15 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import { PageHeader } from '@/components/page-header';
-import { DataTable, Notice, Panel, StatCard, formatCount } from '@/components/ui';
+import {
+  CONTROL_PRIMARY,
+  CONTROL_QUIET,
+  DataTable,
+  Notice,
+  Panel,
+  StatCard,
+  formatCount,
+} from '@/components/ui';
 
 /**
  * Handing the platform a file a ministry already produces.
@@ -177,9 +185,13 @@ export default function ImportPage() {
   const chosen = FORMATS.find((entry) => entry.format === format) ?? FORMATS[0];
 
   return (
-    <div className="flex flex-col gap-12">
-      <PageHeader label="Interoperability · import" title="Bring a file the ministry already has">
-        <p className="max-w-measure text-lg text-ink-muted">
+    <div className="flex flex-col gap-20">
+      <PageHeader
+        layout="split"
+        label="Interoperability · import"
+        title="Bring a file the ministry already has"
+      >
+        <p className="text-lead text-ink-muted">
           A department does not adopt a platform by retyping its returns. This surface reads an
           extract of a system the ministry already runs, shows exactly what it would write before
           anything is written, and then writes it — through the same ingest boundary and the same
@@ -218,7 +230,7 @@ export default function ImportPage() {
               <button
                 type="button"
                 data-testid="import-sample"
-                className="min-h-11 rounded-card bg-paper-raised px-3 py-1 text-sm text-ink hover:bg-hairline"
+                className={CONTROL_QUIET}
                 onClick={() => {
                   void loadSample(chosen.sample);
                 }}
@@ -230,7 +242,7 @@ export default function ImportPage() {
               <button
                 type="button"
                 data-testid="import-broken"
-                className="rounded-control px-3 py-1 text-sm text-ink-muted hover:text-ink"
+                className={CONTROL_QUIET}
                 onClick={() => {
                   void loadSample(chosen.broken);
                 }}
@@ -269,7 +281,7 @@ export default function ImportPage() {
               type="button"
               data-testid="import-check"
               disabled={text.trim() === '' || busy}
-              className="inline-flex min-h-11 items-center justify-center rounded-control bg-accent px-4 text-sm font-medium text-paper transition-colors duration-150 hover:bg-accent/85 disabled:pointer-events-none disabled:opacity-40"
+              className={CONTROL_PRIMARY}
               onClick={() => {
                 void submit('POST');
               }}
@@ -280,7 +292,7 @@ export default function ImportPage() {
               type="button"
               data-testid="import-accept"
               disabled={text.trim() === '' || busy || preview === null}
-              className="rounded-control bg-accent px-3 py-1 text-sm font-medium text-paper hover:bg-accent/85 disabled:opacity-40"
+              className={CONTROL_PRIMARY}
               onClick={() => {
                 void submit('PUT');
               }}
@@ -311,7 +323,7 @@ export default function ImportPage() {
           description="Read from the file's own rows, decided against what the ledger already holds. The counts are what a reader can check; the table names the rows and the platform’s sentence for each."
         >
           <div className="flex flex-col gap-4">
-            <div className="grid gap-3 sm:grid-cols-4">
+            <div className="grid gap-5 sm:grid-cols-4">
               <StatCard label="rows in the file" value={formatCount(preview.rowsRead)} />
               <StatCard
                 label={outcome === null ? 'would be written' : 'written'}

@@ -13,7 +13,7 @@ import type { MessageKey } from '@civora/i18n';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { PageHeader } from '@/components/page-header';
-import { Notice, Panel, formatCount } from '@/components/ui';
+import { CONTROL_PRIMARY, CONTROL_QUIET, FIELD, Notice, Panel, formatCount } from '@/components/ui';
 import { enqueue } from '@/lib/outbox';
 import type { OutboxItem } from '@/lib/outbox';
 import { warmOfflineShell } from '@/lib/shell-cache';
@@ -462,9 +462,9 @@ export default function CapturePage() {
   const facility = visibility?.facilities.find((candidate) => candidate.id === facilityId);
 
   return (
-    <div className="flex flex-col gap-12">
-      <PageHeader label="Facility capture" title="Capture what the facility counted">
-        <p className="max-w-measure text-ink-muted">
+    <div className="flex flex-col gap-20">
+      <PageHeader layout="split" label="Facility capture" title="Capture what the facility counted">
+        <p className="text-lead text-ink-muted">
           Every entry is written to this device first and delivered when the platform can be
           reached, so a weak connection delays the sync rather than the record. Nothing is discarded
           on failure and nothing is counted twice: each capture carries a key that survives every
@@ -489,7 +489,7 @@ export default function CapturePage() {
         title="Acting as"
         description="Fixture identities for the demonstration. The platform authorises every submission against the scope below, and refuses anything outside it."
       >
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid gap-5 sm:grid-cols-2">
           <label className="flex flex-col gap-1 text-sm">
             <span className="text-ink-muted">Identity</span>
             {/*
@@ -500,7 +500,7 @@ export default function CapturePage() {
             */}
             <select
               aria-label="Identity"
-              className="min-h-11 rounded-card border border-hairline bg-paper-raised px-3 py-2"
+              className={FIELD}
               onChange={(event) => {
                 void fetch('/api/session', {
                   method: 'POST',
@@ -531,7 +531,7 @@ export default function CapturePage() {
             <span className="text-ink-muted">{messageFor(language, 'capture.facility')}</span>
             <select
               aria-label="Facility"
-              className="min-h-11 rounded-card border border-hairline bg-paper-raised px-3 py-2"
+              className={FIELD}
               onChange={(event) => {
                 setFacilityId(event.target.value);
               }}
@@ -548,7 +548,7 @@ export default function CapturePage() {
             <span className="text-ink-muted">District</span>
             <select
               aria-label="District"
-              className="min-h-11 rounded-card border border-hairline bg-paper-raised px-3 py-2"
+              className={FIELD}
               onChange={(event) => {
                 setDistrictId(event.target.value);
               }}
@@ -614,7 +614,7 @@ export default function CapturePage() {
             <label className="flex flex-col gap-1 text-sm">
               <span className="text-ink-muted">{messageFor(language, 'capture.occurredOn')}</span>
               <input
-                className="min-h-11 rounded-card border border-hairline bg-paper-raised px-3 py-2"
+                className={FIELD}
                 onChange={(event) => {
                   setField('occurredOn', event.target.value);
                 }}
@@ -630,7 +630,7 @@ export default function CapturePage() {
                 <span className="text-ink-muted">{messageFor(language, 'capture.item')}</span>
                 <select
                   aria-label="Item"
-                  className="min-h-11 rounded-card border border-hairline bg-paper-raised px-3 py-2"
+                  className={FIELD}
                   onChange={(event) => {
                     setField('itemId', event.target.value);
                   }}
@@ -647,7 +647,7 @@ export default function CapturePage() {
                 <span className="text-ink-muted">{messageFor(language, 'capture.kind')}</span>
                 <select
                   aria-label="Movement"
-                  className="min-h-11 rounded-card border border-hairline bg-paper-raised px-3 py-2"
+                  className={FIELD}
                   onChange={(event) => {
                     setField('ledgerKind', event.target.value as LedgerEntryKind);
                   }}
@@ -667,7 +667,7 @@ export default function CapturePage() {
                   {messageFor(language, 'capture.quantity')} ({selectedItem?.unit ?? 'units'})
                 </span>
                 <input
-                  className="min-h-11 rounded-card border border-hairline bg-paper-raised px-3 py-2"
+                  className={FIELD}
                   inputMode="numeric"
                   onChange={(event) => {
                     setField('quantity', event.target.value);
@@ -681,7 +681,7 @@ export default function CapturePage() {
                   <label className="flex flex-col gap-1 text-sm">
                     <span className="text-ink-muted">{messageFor(language, 'capture.batch')}</span>
                     <input
-                      className="min-h-11 rounded-card border border-hairline bg-paper-raised px-3 py-2"
+                      className={FIELD}
                       onChange={(event) => {
                         setField('batchId', event.target.value);
                       }}
@@ -695,7 +695,7 @@ export default function CapturePage() {
                       {messageFor(language, 'capture.expiresOn')}
                     </span>
                     <input
-                      className="min-h-11 rounded-card border border-hairline bg-paper-raised px-3 py-2"
+                      className={FIELD}
                       onChange={(event) => {
                         setField('expiresOn', event.target.value);
                       }}
@@ -710,7 +710,7 @@ export default function CapturePage() {
                   <span className="text-ink-muted">Direction</span>
                   <select
                     aria-label="Direction"
-                    className="min-h-11 rounded-card border border-hairline bg-paper-raised px-3 py-2"
+                    className={FIELD}
                     onChange={(event) => {
                       setField('adjustmentDirection', event.target.value as AdjustmentDirection);
                     }}
@@ -729,7 +729,7 @@ export default function CapturePage() {
               <label className="flex flex-col gap-1 text-sm">
                 <span className="text-ink-muted">Beds</span>
                 <input
-                  className="min-h-11 rounded-card border border-hairline bg-paper-raised px-3 py-2"
+                  className={FIELD}
                   inputMode="numeric"
                   onChange={(event) => {
                     setField('bedsTotal', event.target.value);
@@ -742,7 +742,7 @@ export default function CapturePage() {
               <label className="flex flex-col gap-1 text-sm">
                 <span className="text-ink-muted">Occupied</span>
                 <input
-                  className="min-h-11 rounded-card border border-hairline bg-paper-raised px-3 py-2"
+                  className={FIELD}
                   inputMode="numeric"
                   onChange={(event) => {
                     setField('bedsOccupied', event.target.value);
@@ -754,7 +754,7 @@ export default function CapturePage() {
               <label className="flex flex-col gap-1 text-sm">
                 <span className="text-ink-muted">Day</span>
                 <input
-                  className="min-h-11 rounded-card border border-hairline bg-paper-raised px-3 py-2"
+                  className={FIELD}
                   onChange={(event) => {
                     setField('occurredOn', event.target.value);
                   }}
@@ -771,7 +771,7 @@ export default function CapturePage() {
                 <span className="text-ink-muted">Cadre</span>
                 <select
                   aria-label="Cadre"
-                  className="min-h-11 rounded-card border border-hairline bg-paper-raised px-3 py-2"
+                  className={FIELD}
                   onChange={(event) => {
                     setField('cadre', event.target.value as Cadre);
                   }}
@@ -787,7 +787,7 @@ export default function CapturePage() {
               <label className="flex flex-col gap-1 text-sm">
                 <span className="text-ink-muted">Sanctioned posts</span>
                 <input
-                  className="min-h-11 rounded-card border border-hairline bg-paper-raised px-3 py-2"
+                  className={FIELD}
                   inputMode="numeric"
                   onChange={(event) => {
                     setField('postsSanctioned', event.target.value);
@@ -799,7 +799,7 @@ export default function CapturePage() {
               <label className="flex flex-col gap-1 text-sm">
                 <span className="text-ink-muted">Posts filled</span>
                 <input
-                  className="min-h-11 rounded-card border border-hairline bg-paper-raised px-3 py-2"
+                  className={FIELD}
                   inputMode="numeric"
                   onChange={(event) => {
                     setField('postsFilled', event.target.value);
@@ -811,7 +811,7 @@ export default function CapturePage() {
               <label className="flex flex-col gap-1 text-sm">
                 <span className="text-ink-muted">Present today</span>
                 <input
-                  className="min-h-11 rounded-card border border-hairline bg-paper-raised px-3 py-2"
+                  className={FIELD}
                   inputMode="numeric"
                   onChange={(event) => {
                     setField('presentToday', event.target.value);
@@ -823,7 +823,7 @@ export default function CapturePage() {
               <label className="flex flex-col gap-1 text-sm">
                 <span className="text-ink-muted">Day</span>
                 <input
-                  className="min-h-11 rounded-card border border-hairline bg-paper-raised px-3 py-2"
+                  className={FIELD}
                   onChange={(event) => {
                     setField('occurredOn', event.target.value);
                   }}
@@ -839,7 +839,7 @@ export default function CapturePage() {
               <label className="flex flex-col gap-1 text-sm">
                 <span className="text-ink-muted">Outpatients</span>
                 <input
-                  className="min-h-11 rounded-card border border-hairline bg-paper-raised px-3 py-2"
+                  className={FIELD}
                   inputMode="numeric"
                   onChange={(event) => {
                     setField('opdCount', event.target.value);
@@ -851,7 +851,7 @@ export default function CapturePage() {
               <label className="flex flex-col gap-1 text-sm">
                 <span className="text-ink-muted">Inpatients</span>
                 <input
-                  className="min-h-11 rounded-card border border-hairline bg-paper-raised px-3 py-2"
+                  className={FIELD}
                   inputMode="numeric"
                   onChange={(event) => {
                     setField('ipdCount', event.target.value);
@@ -863,7 +863,7 @@ export default function CapturePage() {
               <label className="flex flex-col gap-1 text-sm">
                 <span className="text-ink-muted">Day</span>
                 <input
-                  className="min-h-11 rounded-card border border-hairline bg-paper-raised px-3 py-2"
+                  className={FIELD}
                   onChange={(event) => {
                     setField('occurredOn', event.target.value);
                   }}
@@ -880,7 +880,7 @@ export default function CapturePage() {
                 <span className="text-ink-muted">Syndrome</span>
                 <select
                   aria-label="Syndrome"
-                  className="min-h-11 rounded-card border border-hairline bg-paper-raised px-3 py-2"
+                  className={FIELD}
                   onChange={(event) => {
                     setField('syndrome', event.target.value as Syndrome);
                   }}
@@ -896,7 +896,7 @@ export default function CapturePage() {
               <label className="flex flex-col gap-1 text-sm">
                 <span className="text-ink-muted">Cases</span>
                 <input
-                  className="min-h-11 rounded-card border border-hairline bg-paper-raised px-3 py-2"
+                  className={FIELD}
                   inputMode="numeric"
                   onChange={(event) => {
                     setField('caseCount', event.target.value);
@@ -908,7 +908,7 @@ export default function CapturePage() {
               <label className="flex flex-col gap-1 text-sm">
                 <span className="text-ink-muted">Day</span>
                 <input
-                  className="min-h-11 rounded-card border border-hairline bg-paper-raised px-3 py-2"
+                  className={FIELD}
                   onChange={(event) => {
                     setField('occurredOn', event.target.value);
                   }}
@@ -922,7 +922,7 @@ export default function CapturePage() {
 
         <div className="mt-6 flex flex-wrap items-center gap-4">
           <button
-            className="inline-flex min-h-11 items-center justify-center rounded-control bg-accent px-5 text-sm font-medium text-paper transition-colors duration-150 hover:bg-accent/85 disabled:pointer-events-none disabled:opacity-40"
+            className={CONTROL_PRIMARY}
             disabled={busy || submission === null}
             onClick={() => {
               void submit();
@@ -931,11 +931,7 @@ export default function CapturePage() {
           >
             {messageFor(language, 'capture.submit')}
           </button>
-          <button
-            className="inline-flex min-h-11 items-center justify-center rounded-control bg-paper-sunken px-4 text-sm text-ink transition-colors duration-150 hover:bg-hairline"
-            onClick={outbox.retryNow}
-            type="button"
-          >
+          <button className={CONTROL_QUIET} onClick={outbox.retryNow} type="button">
             Retry now
           </button>
           <span className="text-sm text-ink-muted">

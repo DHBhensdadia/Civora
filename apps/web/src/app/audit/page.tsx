@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { PageHeader } from '@/components/page-header';
-import { DataTable, Notice, Panel, StatCard, formatCount } from '@/components/ui';
+import { CONTROL_QUIET, DataTable, Notice, Panel, StatCard, formatCount } from '@/components/ui';
 
 /**
  * The audit trail, and the walk that decides whether it holds.
@@ -204,7 +204,7 @@ export default function AuditPage() {
 
   if (refusal !== null) {
     return (
-      <div className="flex flex-col gap-12">
+      <div className="flex flex-col gap-20">
         <Notice
           id="audit-refusal"
           testId="audit-refusal"
@@ -222,9 +222,13 @@ export default function AuditPage() {
   }
 
   return (
-    <div className="flex flex-col gap-12">
-      <PageHeader label="Assurance · audit trail" title="What was decided, and whether it holds">
-        <p className="max-w-measure text-lg text-ink-muted">
+    <div className="flex flex-col gap-20">
+      <PageHeader
+        layout="split"
+        label="Assurance · audit trail"
+        title="What was decided, and whether it holds"
+      >
+        <p className="text-lead text-ink-muted">
           Every consequential act appends an entry carrying the digest of the entry before it.
           Altering one, removing one or reordering two breaks the chain at the point of the change —
           which is what makes this record evidence rather than a log of claims.
@@ -242,7 +246,7 @@ export default function AuditPage() {
           </p>
         ) : (
           <div className="flex flex-col gap-4">
-            <div className="grid gap-3 sm:grid-cols-4">
+            <div className="grid gap-5 sm:grid-cols-4">
               <StatCard
                 label="result"
                 value={trail.report.valid ? 'holds' : 'broken'}
@@ -279,7 +283,7 @@ export default function AuditPage() {
               <button
                 type="button"
                 data-testid="audit-verify"
-                className="rounded-control bg-accent/12 px-3 py-1 text-sm text-ink hover:bg-accent/20"
+                className={CONTROL_QUIET}
                 onClick={() => {
                   setNonce((current) => current + 1);
                 }}
@@ -365,17 +369,13 @@ export default function AuditPage() {
               }}
             />
           </label>
-          <button
-            type="submit"
-            data-testid="audit-apply"
-            className="min-h-11 rounded-card bg-paper-raised px-3 py-1 text-sm text-ink hover:bg-hairline"
-          >
+          <button type="submit" data-testid="audit-apply" className={CONTROL_QUIET}>
             Apply
           </button>
           <button
             type="button"
             data-testid="audit-clear"
-            className="rounded-control px-3 py-1 text-sm text-ink-muted hover:text-ink"
+            className={CONTROL_QUIET}
             onClick={() => {
               setDraft(NO_FILTERS);
               setApplied(NO_FILTERS);

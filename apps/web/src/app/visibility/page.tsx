@@ -208,7 +208,7 @@ export default function VisibilityPage() {
 
   if (payload === null) {
     return (
-      <PageHeader spacing="roomy" title="What the district can see">
+      <PageHeader layout="split" spacing="roomy" title="What the district can see">
         <p className="text-ink-muted">{error ?? 'Reading the district…'}</p>
       </PageHeader>
     );
@@ -251,9 +251,9 @@ export default function VisibilityPage() {
     .slice(0, MOVEMENTS_SHOWN);
 
   return (
-    <div className="flex flex-col gap-12">
-      <PageHeader label="Drishti · visibility" title="What the district can see">
-        <p className="max-w-measure text-ink-muted">
+    <div className="flex flex-col gap-20">
+      <PageHeader layout="split" label="Drishti · visibility" title="What the district can see">
+        <p className="text-lead text-ink-muted">
           Live stock positions, bed pressure and attendance for every facility in {district.name},{' '}
           {district.regionName} — and, alongside them, the facilities the platform has heard nothing
           from. Silence is reported as silence: an unreported facility has unknown stock, not full
@@ -286,7 +286,7 @@ export default function VisibilityPage() {
         title="The district"
         description="Counts over the facilities this district is responsible for, with the ones the platform cannot see called out rather than folded into a total."
       >
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard
             label="Facilities"
             value={formatCount(facilities.length)}

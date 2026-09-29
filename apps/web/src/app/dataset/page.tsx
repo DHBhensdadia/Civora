@@ -77,9 +77,9 @@ export default function DatasetPage() {
   const scenario = demo.simulation.scenario;
 
   return (
-    <div className="flex flex-col gap-12">
-      <PageHeader label="Dataset inspector" title="What this platform is running on">
-        <p className="max-w-measure text-lg text-ink-muted">
+    <div className="flex flex-col gap-20">
+      <PageHeader layout="split" label="Dataset inspector" title="What this platform is running on">
+        <p className="text-lead text-ink-muted">
           The demonstration dataset, counted from the generator that produces it. Every figure below
           is reproducible from one published seed, and every record says in its own fields where it
           came from.
@@ -112,7 +112,7 @@ export default function DatasetPage() {
           </>
         }
       >
-        <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-6">
+        <div className="grid gap-5 sm:grid-cols-3 lg:grid-cols-6">
           <StatCard label="Seed" value={DEMO_SEED} />
           <StatCard label="Scenario" value={scenario.id} hint={scenario.label} />
           <StatCard
@@ -164,7 +164,7 @@ export default function DatasetPage() {
           </>
         }
       >
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {summary.provenance.map((layer) => (
             <StatCard
               key={layer.kind}
@@ -346,7 +346,7 @@ export default function DatasetPage() {
           </>
         }
       >
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard label="Items" value={formatCount(summary.catalogue.total)} />
           <StatCard
             label="Cold chain"
@@ -364,7 +364,7 @@ export default function DatasetPage() {
             hint="clinical groupings"
           />
         </div>
-        <div className="grid gap-3 lg:grid-cols-3">
+        <div className="grid gap-5 lg:grid-cols-3">
           <CountList
             id="catalogue-category"
             title="By therapeutic category"
@@ -435,7 +435,7 @@ export default function DatasetPage() {
           </>
         }
       >
-        <div className="grid gap-3 lg:grid-cols-2">
+        <div className="grid gap-5 lg:grid-cols-2">
           <CountList
             id="observations-heard"
             title="Observations the network received"
@@ -462,7 +462,7 @@ export default function DatasetPage() {
           </>
         }
       >
-        <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-6">
+        <div className="grid gap-5 sm:grid-cols-3 lg:grid-cols-6">
           <StatCard
             label="Facilities reporting"
             value={formatCount(summary.reporting.facilitiesReporting)}
@@ -480,7 +480,14 @@ export default function DatasetPage() {
       </Panel>
 
       <footer className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-hairline pt-6 text-sm text-ink-subtle">
-        <Link className="text-accent underline-offset-4 hover:underline" href="/">
+        {/*
+         * A standalone link, so it carries the hit area the inline links in prose are exempt from:
+         * the audit found it at 23px on a surface nothing had ever measured.
+         */}
+        <Link
+          className="inline-flex min-h-11 items-center text-accent transition-colors duration-150 hover:text-ink"
+          href="/"
+        >
           Back to the overview
         </Link>
         <span>

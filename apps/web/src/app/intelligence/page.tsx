@@ -6,7 +6,15 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { SpeakButton } from '@/components/speak';
 import { PageHeader } from '@/components/page-header';
-import { CountList, Notice, Panel, StatCard, formatCount } from '@/components/ui';
+import {
+  CONTROL_PRIMARY,
+  CONTROL_PRIMARY_SMALL,
+  CountList,
+  Notice,
+  Panel,
+  StatCard,
+  formatCount,
+} from '@/components/ui';
 
 /**
  * Poorvadarshan and Chetavani: what the platform expects, and what it is asking
@@ -220,6 +228,22 @@ const SEVERITY_RAIL: Readonly<Record<string, string>> = {
 };
 
 /**
+ * The plate the severity's name sits on, in the tone recipe's own depths.
+ *
+ * It was **coral for every severity**, which meant a `watch` alert and a `critical` one carried the
+ * same mark: the rail said which, and the label — the part a reader actually reads — said
+ * "something is wrong here" on all of them. The two marks now agree, and the plate is the tone
+ * recipe the rest of the application uses: a pastel wash with ink text, at the depth that carries a
+ * hue rather than a glare. A severity this build does not know falls back to the neutral plate
+ * rather than to the worst one, because a colour is a claim.
+ */
+const SEVERITY_PLATE: Readonly<Record<string, string>> = {
+  critical: 'bg-coral/45 text-ink',
+  high: 'bg-coral/25 text-ink',
+  watch: 'bg-sun/50 text-ink',
+};
+
+/**
  * What an alert's state is called, in the reader's language.
  *
  * The states are the domain's own identifiers; the bundle names each of them, and
@@ -427,7 +451,7 @@ export default function IntelligencePage() {
 
   if (payload === null) {
     return (
-      <PageHeader spacing="roomy" title="Poorvadarshan · Chetavani">
+      <PageHeader layout="split" spacing="roomy" title="Poorvadarshan · Chetavani">
         <p className="text-sm text-ink-muted">
           {error === null
             ? 'Scoring the demonstration dataset — forecast, surge lift, nine drivers, alerts…'
@@ -440,9 +464,14 @@ export default function IntelligencePage() {
   const inbox = payload.alerts.filter((alert) => alert.state !== 'resolved');
 
   return (
-    <div className="flex flex-col gap-12">
-      <PageHeader label="Risk and forecasting" spacing="roomy" title="Poorvadarshan · Chetavani">
-        <p className="max-w-measure text-sm text-ink-muted">
+    <div className="flex flex-col gap-20">
+      <PageHeader
+        layout="split"
+        label="Risk and forecasting"
+        spacing="roomy"
+        title="Poorvadarshan · Chetavani"
+      >
+        <p className="text-lead text-ink-muted">
           What the platform expects to happen to each facility&apos;s stock, and what it is asking
           somebody to do about it. Every pair is scored from one run at one day, so two readers
           looking at the same district see the same figures.
@@ -456,7 +485,7 @@ export default function IntelligencePage() {
         </p>
       </PageHeader>
 
-      <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <section className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           label="Scored"
           value={formatCount(payload.pairsScored)}
@@ -538,7 +567,9 @@ export default function IntelligencePage() {
                 className={`rounded-card border-l-2 bg-paper-raised p-4 ${SEVERITY_RAIL[alert.severity] ?? 'border-l-hairline'}`}
               >
                 <div className="flex flex-wrap items-center gap-2 text-xs">
-                  <span className="rounded-control bg-coral/45 px-2.5 py-1 text-xs text-ink">
+                  <span
+                    className={`rounded-control px-2.5 py-1 text-xs ${SEVERITY_PLATE[alert.severity] ?? 'bg-paper-sunken text-ink'}`}
+                  >
                     {severityLabel(alert.severity, language)}
                   </span>
                   <span className="rounded-control bg-paper-sunken px-2.5 py-1 text-xs text-ink-muted">
@@ -587,7 +618,7 @@ export default function IntelligencePage() {
                     <button
                       key={move_.to}
                       aria-label={`${move_.label} ${alert.itemId}`}
-                      className="inline-flex min-h-11 items-center justify-center rounded-control bg-accent px-3 text-xs font-medium text-paper transition-colors duration-150 hover:bg-accent/85 disabled:pointer-events-none disabled:opacity-40"
+                      className={CONTROL_PRIMARY_SMALL}
                       disabled={busy !== null}
                       onClick={() => {
                         void move(alert, move_.to);
@@ -755,7 +786,7 @@ export default function IntelligencePage() {
 
             <div className="flex flex-wrap items-center gap-3">
               <button
-                className="inline-flex min-h-11 items-center rounded-control bg-accent px-4 text-sm font-medium text-paper transition-colors duration-150 hover:bg-accent/85 disabled:pointer-events-none disabled:opacity-40"
+                className={CONTROL_PRIMARY}
                 data-testid="advisory-regenerate"
                 disabled={advisoryBusy}
                 onClick={() => {

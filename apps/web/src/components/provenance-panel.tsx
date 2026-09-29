@@ -53,7 +53,7 @@ export function ProvenancePanel({ id, view, size = 'full' }: ProvenancePanelProp
         </>
       }
     >
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-5 sm:grid-cols-2">
         {layers.map((group) => (
           <div
             key={group.key}

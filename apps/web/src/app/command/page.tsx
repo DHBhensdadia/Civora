@@ -198,7 +198,7 @@ export default async function CommandPage({
         title="What changed on the platform's latest day"
         description={tower.change.note}
       >
-        <div className="grid gap-3 sm:grid-cols-3">
+        <div className="grid gap-5 sm:grid-cols-3">
           <StatCard label="Latest day" value={tower.change.day} />
           <StatCard
             label="Movements recorded"
@@ -504,7 +504,7 @@ export default async function CommandPage({
         >
           {evidenceStep.allowed ? (
             <>
-              <div className="grid gap-3 sm:grid-cols-3">
+              <div className="grid gap-5 sm:grid-cols-3">
                 <StatCard
                   label="On hand"
                   value={formatCount(evidenceStep.item.onHand)}

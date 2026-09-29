@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import { PageHeader } from '@/components/page-header';
-import { Notice, Panel, StatCard } from '@/components/ui';
+import { CONTROL_DANGER, CONTROL_PRIMARY, Notice, Panel, StatCard } from '@/components/ui';
 
 /**
  * Setu: the transfer proposals, the verdict on each, and the decision a person
@@ -406,7 +406,7 @@ export default function RedistributionPage() {
 
   if (payload === null) {
     return (
-      <PageHeader spacing="roomy" title="Setu — redistribution workbench">
+      <PageHeader layout="split" spacing="roomy" title="Setu — redistribution workbench">
         <p className="text-sm text-ink-muted">
           {error === null
             ? 'Planning transfers from the demonstration dataset — graph, rankings, four weightings, validator, impact…'
@@ -425,13 +425,14 @@ export default function RedistributionPage() {
       : payload.verdict.unchecked.map((entry) => `${entry.rule} (${entry.detail})`).join('; ');
 
   return (
-    <div className="flex flex-col gap-12">
+    <div className="flex flex-col gap-20">
       <PageHeader
+        layout="split"
         label="Constraint-checked transfers"
         spacing="roomy"
         title="Setu — redistribution workbench"
       >
-        <p className="max-w-measure text-sm text-ink-muted">
+        <p className="text-lead text-ink-muted">
           Transfers the optimiser proposes, each one judged by a validator that re-derives it from
           the world rather than trusting the solver, priced by an estimator that prints its
           assumptions, and decided by a person with a reason. What decides the plan is the
@@ -478,7 +479,7 @@ export default function RedistributionPage() {
         </div>
       )}
 
-      <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <section className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           label="Proposals"
           value={number(payload.totals.proposals)}
@@ -732,15 +733,15 @@ export default function RedistributionPage() {
                     days left on arrival)
                   </p>
 
-                  <p
-                    className={
-                      row.proposal.verdict === 'proposed'
-                        ? 'mt-2 text-xs text-ink-muted'
-                        : 'mt-2 text-xs text-ink-muted'
-                    }
-                    data-testid="proposal-verdict"
-                  >
-                    Constraint verdict:{' '}
+                  {/*
+                   * The verdict is the claim the row rests on, so it is written at the page's own
+                   * ink rather than at a hint's. This ternary used to choose between two identical
+                   * class lists — the residue of a sweep that removed a tint and left the branch
+                   * behind — which is the kind of thing a reader sees as dull text and no
+                   * instrument notices at all.
+                   */}
+                  <p className="mt-2 text-xs text-ink" data-testid="proposal-verdict">
+                    <span className="text-ink-subtle">Constraint verdict:</span>{' '}
                     {row.proposal.verdict === 'proposed'
                       ? 'admitted by the validator — 12 rules checked, none failed'
                       : `refused — ${row.proposal.violations.map((violation) => violation.constraint).join(', ')}`}
@@ -867,7 +868,7 @@ export default function RedistributionPage() {
                         </label>
                         <button
                           aria-label={`Approve proposal ${row.proposal.id}`}
-                          className="inline-flex min-h-11 items-center rounded-control bg-accent px-4 text-sm font-medium text-paper transition-colors duration-150 hover:bg-accent/85 disabled:pointer-events-none disabled:opacity-40"
+                          className={CONTROL_PRIMARY}
                           disabled={busy !== null}
                           onClick={() => {
                             void decide(row, 'approved');
@@ -878,7 +879,7 @@ export default function RedistributionPage() {
                         </button>
                         <button
                           aria-label={`Reject proposal ${row.proposal.id}`}
-                          className="inline-flex min-h-11 items-center rounded-control bg-coral/45 px-4 text-sm font-medium text-ink transition-colors duration-150 hover:bg-coral/60 disabled:pointer-events-none disabled:opacity-40"
+                          className={CONTROL_DANGER}
                           disabled={busy !== null}
                           onClick={() => {
                             void decide(row, 'rejected');
@@ -956,7 +957,7 @@ export default function RedistributionPage() {
 
             <div className="flex flex-wrap items-center gap-3">
               <button
-                className="inline-flex min-h-11 items-center rounded-control bg-accent px-4 text-sm font-medium text-paper transition-colors duration-150 hover:bg-accent/85 disabled:pointer-events-none disabled:opacity-40"
+                className={CONTROL_PRIMARY}
                 data-testid="rationale-regenerate"
                 disabled={rationaleBusy}
                 onClick={() => {
@@ -1044,7 +1045,7 @@ export default function RedistributionPage() {
         title="Why not the obvious donor"
         description="The plan is a choice, and a choice is only explainable if the rejected candidates are visible: donors that could not help, receivers nothing could serve, and the graph's own account of the pairs it removed and why. What happens if nothing moves is the baseline objective beside the plan's."
       >
-        <div className="grid gap-3 lg:grid-cols-2">
+        <div className="grid gap-5 lg:grid-cols-2">
           <div className="rounded-card bg-paper-raised px-3 py-2 text-xs text-ink-muted">
             <p className="text-ink-muted">
               Graph: {number(payload.graph.candidates)} candidate pair(s) →{' '}

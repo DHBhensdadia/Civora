@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import { PageHeader } from '@/components/page-header';
-import { Notice, Panel, formatCount } from '@/components/ui';
+import { CONTROL_PRIMARY, CONTROL_QUIET, FIELD, Notice, Panel, formatCount } from '@/components/ui';
 
 /**
  * Read a paper register.
@@ -197,13 +197,13 @@ function HeldLine({
         <p className="text-xs text-ink-muted">The reader noted: {line.line.note}</p>
       )}
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
         {options.length === 0 ? null : (
           <label className="flex flex-col gap-1 text-sm">
             <span className="text-ink-muted">Which medicine is it?</span>
             <select
               aria-label={`Catalogue entry for line ${String(line.index)}`}
-              className="min-h-11 rounded-card border border-hairline bg-paper-raised px-3 py-2"
+              className={FIELD}
               onChange={(event) => {
                 setItemId(event.target.value);
               }}
@@ -221,7 +221,7 @@ function HeldLine({
           <span className="text-ink-muted">Quantity</span>
           <input
             aria-label={`Quantity for line ${String(line.index)}`}
-            className="min-h-11 rounded-card border border-hairline bg-paper-raised px-3 py-2"
+            className={FIELD}
             onChange={(event) => {
               setQuantity(event.target.value);
             }}
@@ -233,7 +233,7 @@ function HeldLine({
           <span className="text-ink-muted">Batch</span>
           <input
             aria-label={`Batch for line ${String(line.index)}`}
-            className="min-h-11 rounded-card border border-hairline bg-paper-raised px-3 py-2"
+            className={FIELD}
             onChange={(event) => {
               setBatchId(event.target.value);
             }}
@@ -245,7 +245,7 @@ function HeldLine({
           <span className="text-ink-muted">Expires</span>
           <input
             aria-label={`Expiry for line ${String(line.index)}`}
-            className="min-h-11 rounded-card border border-hairline bg-paper-raised px-3 py-2"
+            className={FIELD}
             onChange={(event) => {
               setExpiresOn(event.target.value);
             }}
@@ -257,7 +257,7 @@ function HeldLine({
 
       <div className="flex flex-wrap items-center gap-3">
         <button
-          className="rounded-control bg-accent px-3 py-2 text-sm font-medium text-paper disabled:opacity-50"
+          className={CONTROL_PRIMARY}
           disabled={busy}
           onClick={() => {
             setBusy(true);
@@ -270,7 +270,7 @@ function HeldLine({
           Accept into the ledger
         </button>
         <button
-          className="min-h-11 rounded-card bg-paper-raised px-3 py-2 text-sm text-ink disabled:opacity-50"
+          className={CONTROL_QUIET}
           disabled={busy}
           onClick={() => {
             setBusy(true);
@@ -433,9 +433,9 @@ export default function VisionPage() {
   );
 
   return (
-    <div className="flex flex-col gap-12">
-      <PageHeader label="Vision intake" title="Read a paper stock register">
-        <p className="max-w-measure text-ink-muted">
+    <div className="flex flex-col gap-20">
+      <PageHeader layout="split" label="Vision intake" title="Read a paper stock register">
+        <p className="text-lead text-ink-muted">
           Photograph a register and the platform reads it into ledger lines. The reader is a model;
           everything that decides whether a line may be written is not. A line the platform can
           stand behind goes to the ledger marked as read by vision, and a line it cannot goes to the
@@ -468,12 +468,12 @@ export default function VisionPage() {
         title="Photograph"
         description="The reader transcribes the page: it does not tidy names, expand abbreviations or convert units, because a name it improved is a name the catalogue can no longer match."
       >
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid gap-5 sm:grid-cols-2">
           <label className="flex flex-col gap-1 text-sm">
             <span className="text-ink-muted">Facility</span>
             <select
               aria-label="Facility"
-              className="min-h-11 rounded-card border border-hairline bg-paper-raised px-3 py-2"
+              className={FIELD}
               onChange={(event) => {
                 setFacilityId(event.target.value);
               }}
@@ -494,7 +494,7 @@ export default function VisionPage() {
               // called "Photograph" too, and a label that collides with its own
               // region is a name nothing can address.
               aria-label="Register photograph"
-              className="min-h-11 rounded-card border border-hairline bg-paper-raised px-3 py-2"
+              className={FIELD}
               onChange={(event) => {
                 setFile(event.target.files?.[0] ?? null);
               }}
@@ -504,7 +504,7 @@ export default function VisionPage() {
         </div>
         <div className="mt-4 flex flex-wrap items-center gap-3">
           <button
-            className="rounded-card bg-accent px-4 py-2 text-sm font-medium text-paper disabled:opacity-50"
+            className={CONTROL_PRIMARY}
             disabled={busy || file === null || facilityId === ''}
             onClick={() => {
               void readPhotograph();

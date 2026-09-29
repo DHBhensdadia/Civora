@@ -284,7 +284,7 @@ export default function FederationPage() {
 
   if (error !== null) {
     return (
-      <div className="flex flex-col gap-12">
+      <div className="flex flex-col gap-20">
         <Notice id="federation-error" tone="warning" title="The federation console could not read">
           <p>{error}</p>
         </Notice>
@@ -294,7 +294,7 @@ export default function FederationPage() {
 
   if (payload === null) {
     return (
-      <div className="flex flex-col gap-12">
+      <div className="flex flex-col gap-20">
         <p className="text-ink-muted">
           Running the federated rounds over the demonstration world — the partition, two runs and
           the curve. This takes a few seconds, once per server process.
@@ -308,9 +308,13 @@ export default function FederationPage() {
     curve.quiet.initialLoss === 0 ? 0 : 1 - curve.quiet.finalLoss / curve.quiet.initialLoss;
 
   return (
-    <div className="flex flex-col gap-12">
-      <PageHeader label="Samvad · federation" title="Federated learning across state silos">
-        <p className="max-w-measure text-lg text-ink-muted">
+    <div className="flex flex-col gap-20">
+      <PageHeader
+        layout="split"
+        label="Samvad · federation"
+        title="Federated learning across state silos"
+      >
+        <p className="text-lead text-ink-muted">
           Each {payload.world.regionLevelName} is a silo. A model is trained inside each one,
           clipped as it leaves, aggregated with the others, noised, and accounted for — and no
           record ever crosses a silo boundary. The numbers below are measurements from runs this
@@ -331,7 +335,7 @@ export default function FederationPage() {
 
       <section
         aria-label="The run at a glance"
-        className="grid gap-3 sm:grid-cols-3 lg:grid-cols-5"
+        className="grid gap-5 sm:grid-cols-3 lg:grid-cols-5"
       >
         <StatCard
           label="Silos"
@@ -413,7 +417,7 @@ export default function FederationPage() {
         title={`The federation itself — ${algorithmic.label}`}
         description={`${algorithmic.meaning}. Comparisons are taken from this run, because a silo training alone needs no privacy mechanism: comparing a priced model against a noise-free local one would measure the noise and call it the federation.`}
       >
-        <section aria-label="The algorithmic run" className="grid gap-3 sm:grid-cols-3">
+        <section aria-label="The algorithmic run" className="grid gap-5 sm:grid-cols-3">
           <StatCard
             label="Variance explained"
             value={percent(algorithmic.improvement)}
@@ -480,7 +484,7 @@ export default function FederationPage() {
         title={`The same rounds with a privacy guarantee — ${priced.label}`}
         description={`${priced.meaning}. ${priced.noiseReason}`}
       >
-        <section aria-label="The privacy spend" className="grid gap-3 sm:grid-cols-4">
+        <section aria-label="The privacy spend" className="grid gap-5 sm:grid-cols-4">
           <StatCard
             label="σ"
             value={fixed(priced.noiseMultiplier)}

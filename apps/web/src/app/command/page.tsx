@@ -113,9 +113,9 @@ export default async function CommandPage({
     : `This session is scoped: ${formatCount(tower.counts.districts)} district(s) are read and the rest are neither counted nor shown.`;
 
   return (
-    <div className="flex flex-col gap-12">
-      <PageHeader label="National command plane" spacing="roomy" title="Control tower">
-        <p className="max-w-measure text-lg text-ink-muted">
+    <div className="flex flex-col gap-20">
+      <PageHeader label="National command plane" layout="split" title="Control tower">
+        <p className="text-lead text-ink-muted">
           Every figure here is assembled from the same projections the surfaces beside it read — the
           ledger, the scored population, the alert set and the seeded network. Nothing on this page
           is recomputed, so a risk score or a plan seen here is the one the intelligence surface and
@@ -155,7 +155,7 @@ export default async function CommandPage({
         </Notice>
       ) : null}
 
-      <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <section className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           label="Facilities read"
           value={formatCount(tower.counts.facilities)}
@@ -250,7 +250,17 @@ export default async function CommandPage({
           </>
         }
       >
-        <nav aria-label="Aggregation tier" className="flex flex-wrap gap-2">
+        {/*
+         * The tier is a segmented control rather than a row of links: three
+         * mutually exclusive readings of one panel, so the control is one track
+         * with one raised segment in it. It stays a `nav` of links — a tier is a
+         * URL — which is also what keeps the browser journey that clicks
+         * "State" working.
+         */}
+        <nav
+          aria-label="Aggregation tier"
+          className="inline-flex w-fit max-w-full flex-wrap gap-1 rounded-card bg-paper-sunken p-1"
+        >
           {COMMAND_TIERS.map((option) => (
             <Link
               key={option}
@@ -258,8 +268,8 @@ export default async function CommandPage({
               aria-current={option === tier ? 'page' : undefined}
               className={
                 option === tier
-                  ? 'inline-flex min-h-11 items-center rounded-control bg-accent px-4 text-sm font-medium text-paper'
-                  : 'inline-flex min-h-11 items-center rounded-control bg-paper-sunken px-4 text-sm text-ink-muted transition-colors duration-150 hover:bg-hairline hover:text-ink'
+                  ? 'inline-flex min-h-11 items-center rounded-control bg-paper px-4 text-sm font-medium text-ink shadow-card transition-colors duration-200'
+                  : 'inline-flex min-h-11 items-center rounded-control px-4 text-sm text-ink-muted transition-colors duration-200 hover:text-ink'
               }
             >
               {TIER_LABEL[option]}

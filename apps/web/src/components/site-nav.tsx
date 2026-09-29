@@ -34,6 +34,13 @@ import type { Session } from '@/lib/session';
  * these are thirteen in four groups, so the groups stay and the shell supplies the
  * frame.
  *
+ * **The plate is white and every panel beside it is not.** It carried the same
+ * `paper-raised` fill as a `Panel`, which meant that on any surface whose first
+ * panel starts at the same height as the navigation, the two read as one object:
+ * the shadow was the only thing saying where the navigation ended. The plate is
+ * now the one raised *white* surface in the product, separated from the off-white
+ * content plates by both a fill and a shadow rather than by a shadow alone.
+ *
  * The current surface is marked with a filled plate and the accent, and carries
  * `aria-current`, because a reader who cannot see where they are has to open
  * pages to find out. It was a left rail until this pass: a rail is a border, and
@@ -57,7 +64,7 @@ export function SiteNav({ session }: SiteNavProps) {
   return (
     <nav
       aria-label="Platform sections"
-      className="flex flex-col gap-6 rounded-card bg-paper-raised p-4 shadow-card"
+      className="flex flex-col gap-6 rounded-card bg-paper p-4 shadow-card"
     >
       {groups.map((group) => (
         <div key={group.key} className="flex flex-col gap-2">

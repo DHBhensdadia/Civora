@@ -23,6 +23,12 @@ import { Eyebrow } from '@/components/ui';
  *
  * `label` is optional because a surface's loading and error states render the same title without a
  * group label above it.
+ *
+ * **The composition is now a prop as well.** `layout="split"` puts the title in the left half of a
+ * two-column grid with the lead beside it, which is the reference's measured `660px 660px` grid at
+ * `gap: 0` — the one place a title and its explanation sit side by side instead of being stacked
+ * into a column that ends before the page has started. The two surfaces a reader meets first take
+ * it; the default stays `stacked`, so no other surface moves until it is rebuilt.
  */
 export interface PageHeaderProps {
   /** The group label above the title — who this surface is, in a few words. */
@@ -35,6 +41,12 @@ export interface PageHeaderProps {
   readonly labelTone?: 'accent' | 'muted';
   /** The gap the surfaces already carried: `compact` is 12px, `roomy` is 20px. */
   readonly spacing?: 'compact' | 'roomy';
+  /**
+   * `stacked` is a title, then its lead beneath it. `split` is the reference's two-column header:
+   * the title in the left half, the lead in the right. It applies at `lg` and above and falls back
+   * to `stacked` below it, where there is no second column to put anything in.
+   */
+  readonly layout?: 'stacked' | 'split';
   /** The lead paragraph, and any provenance or status line beneath it. */
   readonly children?: ReactNode;
 }
@@ -45,14 +57,31 @@ export function PageHeader({
   scale = 'display',
   labelTone = 'muted',
   spacing = 'compact',
+  layout = 'stacked',
   children,
 }: PageHeaderProps) {
+  const heading = (
+    <h1 className={scale === 'hero' ? 'text-hero text-balance' : 'text-display text-balance'}>
+      {title}
+    </h1>
+  );
+
+  if (layout === 'split') {
+    return (
+      <header className="grid gap-y-6 lg:grid-cols-2 lg:gap-x-0">
+        <div className="flex flex-col gap-3">
+          {label === undefined ? null : <Eyebrow tone={labelTone}>{label}</Eyebrow>}
+          {heading}
+        </div>
+        {children === undefined ? null : <div className="flex flex-col gap-4">{children}</div>}
+      </header>
+    );
+  }
+
   return (
     <header className={spacing === 'roomy' ? 'flex flex-col gap-5' : 'flex flex-col gap-3'}>
       {label === undefined ? null : <Eyebrow tone={labelTone}>{label}</Eyebrow>}
-      <h1 className={scale === 'hero' ? 'text-hero text-balance' : 'text-display text-balance'}>
-        {title}
-      </h1>
+      {heading}
       {children}
     </header>
   );

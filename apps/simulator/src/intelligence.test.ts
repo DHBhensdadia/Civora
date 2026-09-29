@@ -161,6 +161,13 @@ describe('a world with a monsoon surge in it', () => {
 });
 
 describe('a facility the platform has stopped hearing from', () => {
+  // This test simulates a whole network and scores the whole population inside the
+  // test body, rather than over a world built once at collection time as the
+  // describes above do, so it is the expensive half of this file by an order of
+  // magnitude. Under the full run's 77 parallel workers it has been measured
+  // exceeding the 5 s default — a bound on assertions, not on computation — and the
+  // budget is therefore stated here, as the integration tests in
+  // `apps/web/src/lib/*.test.ts` state theirs.
   it('bands unknown and alerts, rather than staying green', () => {
     // The same world with one facility's last deliveries removed: not one line of
     // the score changes, and the pair moves from the list to the inbox because
@@ -202,5 +209,5 @@ describe('a facility the platform has stopped hearing from', () => {
 
     const alert = scored.alerts.find((candidate) => candidate.facilityId === silent);
     expect(alert).toBeDefined();
-  });
+  }, 60_000);
 });

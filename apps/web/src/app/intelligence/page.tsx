@@ -190,11 +190,11 @@ interface TelemetryPayload {
 }
 
 const BAND_CLASSES: Readonly<Record<IntelligenceRow['band'], string>> = {
-  critical: 'border-rose-500/40 bg-rose-500/10 text-rose-200',
-  high: 'border-orange-500/40 bg-orange-500/10 text-orange-200',
-  watch: 'border-amber-500/30 bg-amber-500/5 text-amber-200',
-  low: 'border-emerald-500/30 bg-emerald-500/5 text-emerald-200',
-  unknown: 'border-slate-500/40 bg-slate-500/10 text-slate-200',
+  critical: 'border-signal-critical/40 bg-signal-critical/10 text-signal-critical',
+  high: 'border-signal-high/40 bg-signal-high/10 text-signal-high',
+  watch: 'border-signal-watch/30 bg-signal-watch/5 text-signal-watch',
+  low: 'border-signal-ok/30 bg-signal-ok/5 text-signal-ok',
+  unknown: 'border-ink-600 bg-ink-800 text-fg',
 };
 
 /**
@@ -406,8 +406,8 @@ export default function IntelligencePage() {
   if (payload === null) {
     return (
       <div className="flex flex-col gap-6">
-        <h1 className="text-2xl font-semibold">Poorvadarshan · Chetavani</h1>
-        <p className="text-sm text-slate-400">
+        <h1 className="text-display text-balance">Poorvadarshan · Chetavani</h1>
+        <p className="text-sm text-fg-muted">
           {error === null
             ? 'Scoring the demonstration dataset — forecast, surge lift, nine drivers, alerts…'
             : `The intelligence read failed: ${error}`}
@@ -419,15 +419,15 @@ export default function IntelligencePage() {
   const inbox = payload.alerts.filter((alert) => alert.state !== 'resolved');
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-12">
       <header className="flex flex-col gap-3">
-        <h1 className="text-2xl font-semibold">Poorvadarshan · Chetavani</h1>
-        <p className="max-w-3xl text-sm text-slate-400">
+        <h1 className="text-display text-balance">Poorvadarshan · Chetavani</h1>
+        <p className="max-w-measure text-sm text-fg-muted">
           What the platform expects to happen to each facility&apos;s stock, and what it is asking
           somebody to do about it. Every pair is scored from one run at one day, so two readers
           looking at the same district see the same figures.
         </p>
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-fg-subtle">
           Every figure is derived from the generated dataset (`{payload.store.seed}`, scenario{' '}
           {payload.store.scenarioId}). The band is chosen from what was measured about the shelf;
           the item&apos;s essentiality and the district&apos;s population are shown beside it as
@@ -485,6 +485,7 @@ export default function IntelligencePage() {
       )}
 
       <Panel
+        eyebrow="Distribution"
         id="bands"
         title="Where the population sits"
         description="A band is a statement about the shelf. `unknown` is not `low`: it is what the platform says when it cannot measure a pair at all, and it sorts with the worst of them."
@@ -498,12 +499,13 @@ export default function IntelligencePage() {
       </Panel>
 
       <Panel
+        eyebrow="Chetavani"
         id="inbox"
         title="Alert inbox"
         description="Conditions that justify somebody acting today, each carrying the quantity that put it there. Acknowledging, escalating, proposing an action, snoozing or resolving an alert appends to its history with who did it, when, and why — and a move the model does not allow is refused rather than clamped."
       >
         {inbox.length === 0 ? (
-          <p className="text-sm text-slate-400" data-testid="inbox-empty">
+          <p className="text-sm text-fg-muted" data-testid="inbox-empty">
             Nothing in the inbox at this scoring day.
           </p>
         ) : (
@@ -513,21 +515,21 @@ export default function IntelligencePage() {
                 key={alert.id}
                 aria-label={`Alert for ${alert.itemId} at ${alert.facilityId}`}
                 data-testid={`alert-${alert.id}`}
-                className="rounded-lg border border-slate-800 bg-slate-900/60 p-4"
+                className="rounded-instrument border border-ink-700 bg-ink-900 p-4"
               >
                 <div className="flex flex-wrap items-center gap-2 text-xs">
-                  <span className="rounded border border-rose-500/40 bg-rose-500/10 px-2 py-0.5 text-rose-200">
+                  <span className="rounded-instrument border border-signal-critical/40 bg-signal-critical/10 px-2 py-0.5 text-signal-critical">
                     {severityLabel(alert.severity, language)}
                   </span>
-                  <span className="rounded border border-slate-700 px-2 py-0.5 text-slate-300">
+                  <span className="min-h-11 rounded-instrument border border-ink-600 px-2 py-0.5 text-fg-muted">
                     {stateLabel(alert.state, language)}
                   </span>
-                  <span className="text-slate-500">
+                  <span className="text-fg-subtle">
                     {formatDate(alert.raisedOn, language)} · condition {alert.dedupeKey}
                   </span>
                 </div>
 
-                <p className="mt-2 text-sm text-slate-200">{alert.bodies.en}</p>
+                <p className="mt-2 text-sm text-fg">{alert.bodies.en}</p>
 
                 {/*
                  * Reading it aloud, which is how an alert reaches a health
@@ -539,7 +541,7 @@ export default function IntelligencePage() {
                 <SpeakButton alertId={alert.id} bodies={alert.bodies} language={language} />
 
                 {alert.history.length === 0 ? null : (
-                  <ol className="mt-3 flex flex-col gap-1 text-xs text-slate-400">
+                  <ol className="mt-3 flex flex-col gap-1 text-xs text-fg-muted">
                     {alert.history.map((move, index) => (
                       <li key={`${alert.id}:${String(index)}`}>
                         {move.from} → {move.to} · {move.actor} ({move.actorRole}) · {move.at} —{' '}
@@ -550,11 +552,11 @@ export default function IntelligencePage() {
                 )}
 
                 <div className="mt-3 flex flex-wrap items-center gap-2">
-                  <label className="flex items-center gap-2 text-xs text-slate-400">
+                  <label className="flex items-center gap-2 text-xs text-fg-muted">
                     {messageFor(language, 'alert.reason')}
                     <input
                       aria-label={`Reason for ${alert.itemId}`}
-                      className="w-64 rounded border border-slate-700 bg-slate-950 px-2 py-1 text-sm text-slate-200"
+                      className="w-64 min-h-11 rounded-instrument border border-ink-600 bg-ink-950 px-2 py-1 text-sm text-fg"
                       onChange={(event) => {
                         setReasons((current) => ({ ...current, [alert.id]: event.target.value }));
                       }}
@@ -565,7 +567,7 @@ export default function IntelligencePage() {
                     <button
                       key={move_.to}
                       aria-label={`${move_.label} ${alert.itemId}`}
-                      className="rounded border border-sky-500/40 bg-sky-500/10 px-2 py-1 text-xs text-sky-200 disabled:opacity-40"
+                      className="rounded border border-accent/40 bg-accent/10 px-2 py-1 text-xs text-accent disabled:opacity-40"
                       disabled={busy !== null}
                       onClick={() => {
                         void move(alert, move_.to);
@@ -583,12 +585,13 @@ export default function IntelligencePage() {
       </Panel>
 
       <Panel
+        eyebrow="Writing"
         id="advisories"
         title="Advisory bodies, written ahead of the burst"
         description="An alert says a shelf is going to run out; it does not explain it, in the language the officer reads. These are the bodies a writer produced for the whole alert set, once, before anybody opened a row — and every language the alert record carries is named, whether or not prose exists for it, because a blank space where a body should be is the one thing a reader would take for agreement."
       >
         {advisories === null ? (
-          <p className="text-sm text-slate-400" data-testid="advisory-pending">
+          <p className="text-sm text-fg-muted" data-testid="advisory-pending">
             {advisoryBusy
               ? 'Asking the writer for a body per language for the whole alert set…'
               : 'No advisory read has happened yet.'}
@@ -596,17 +599,17 @@ export default function IntelligencePage() {
         ) : (
           <div className="flex flex-col gap-4">
             {advisories.presentationMode ? (
-              <p data-testid="advisory-presentation" className="text-sm text-sky-200">
+              <p data-testid="advisory-presentation" className="text-sm text-accent">
                 Presentation mode: the set was prepared ahead of the demonstration, and a click here
                 will not start a model call.
               </p>
             ) : null}
             <div
-              className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded border border-slate-800 bg-slate-900/60 px-3 py-2 text-sm text-slate-300"
+              className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-instrument border border-ink-700 bg-ink-900 px-3 py-2 text-sm text-fg-muted"
               data-testid="advisory-summary"
             >
               <span>
-                Writer <span className="font-mono text-sky-300">{advisories.provider}</span>
+                Writer <span className="font-mono text-accent">{advisories.provider}</span>
               </span>
               <span>
                 languages the record carries{' '}
@@ -615,13 +618,13 @@ export default function IntelligencePage() {
               <span>
                 attempted <span className="font-mono">{String(advisories.attempted)}</span>
               </span>
-              <span className="text-emerald-300">
+              <span className="text-signal-ok">
                 written <span className="font-mono">{String(advisories.written)}</span>
               </span>
-              <span className="text-amber-200">
+              <span className="text-signal-watch">
                 refused <span className="font-mono">{String(advisories.refused)}</span>
               </span>
-              <span className="text-xs text-slate-500">
+              <span className="text-xs text-fg-subtle">
                 {advisories.regenerated
                   ? `written by this read in ${String(advisories.generatedInMs)} ms, at ${advisories.generatedAt}`
                   : `answered from this process; the set was written at ${advisories.generatedAt}`}
@@ -631,7 +634,7 @@ export default function IntelligencePage() {
             {advisories.languages.some((code) =>
               advisories.offered.every((offered) => offered.code !== code),
             ) ? (
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-fg-subtle">
                 An alert carries a language this build does not offer:{' '}
                 {advisories.languages
                   .filter((code) => advisories.offered.every((offered) => offered.code !== code))
@@ -640,7 +643,7 @@ export default function IntelligencePage() {
               </p>
             ) : null}
 
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-fg-subtle">
               Offered and not carried by any alert yet:{' '}
               {advisories.offered
                 .filter((offered) => !advisories.languages.includes(offered.code))
@@ -654,12 +657,12 @@ export default function IntelligencePage() {
               {advisories.alerts.map((alert) => (
                 <li
                   key={alert.alertId}
-                  className="rounded-lg border border-slate-800 bg-slate-900/60 p-3"
+                  className="rounded-instrument border border-ink-700 bg-ink-900 p-3"
                   data-testid="advisory-alert"
                 >
-                  <p className="text-sm text-slate-200">
+                  <p className="text-sm text-fg">
                     {alert.facilityName} · {alert.itemName} ·{' '}
-                    <span className="text-rose-200">
+                    <span className="text-signal-critical">
                       {' '}
                       {severityLabel(alert.severity, language)}
                     </span>{' '}
@@ -670,25 +673,25 @@ export default function IntelligencePage() {
                     {alert.languages.map((language) => (
                       <li
                         key={`${alert.alertId}:${language.language}`}
-                        className="rounded border border-slate-800 bg-slate-950/60 px-3 py-2"
+                        className="rounded-instrument border border-ink-700 bg-ink-950/60 px-3 py-2"
                         data-language={language.language}
                         data-status={language.status}
                         data-testid="advisory-language"
                       >
                         <div className="flex flex-wrap items-center gap-2 text-xs">
-                          <span className="text-slate-300">{language.label}</span>
+                          <span className="text-fg-muted">{language.label}</span>
                           <span
                             className={
                               language.status === 'written'
-                                ? 'rounded border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5 text-emerald-200'
-                                : 'rounded border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-amber-100'
+                                ? 'rounded-instrument border border-signal-ok/40 bg-signal-ok/10 px-2 py-0.5 text-signal-ok'
+                                : 'rounded-instrument border border-signal-watch/40 bg-signal-watch/10 px-2 py-0.5 text-signal-watch'
                             }
                             data-testid="advisory-status"
                           >
                             {language.status}
                           </span>
                           {language.model === null ? null : (
-                            <span className="text-slate-500">
+                            <span className="text-fg-subtle">
                               {language.model}
                               {language.cacheHit ? ' · from cache' : ''}
                             </span>
@@ -697,29 +700,32 @@ export default function IntelligencePage() {
 
                         {language.generated === null ? null : (
                           <div className="mt-2 flex flex-col gap-1">
-                            <p className="text-sm text-slate-200">{language.generated}</p>
+                            <p className="text-sm text-fg">{language.generated}</p>
                             {language.actions.length === 0 ? null : (
-                              <ul className="list-inside list-disc text-xs text-slate-300">
+                              <ul className="list-inside list-disc text-xs text-fg-muted">
                                 {language.actions.map((action) => (
                                   <li key={action}>{action}</li>
                                 ))}
                               </ul>
                             )}
-                            <p className="text-xs text-slate-500">
+                            <p className="text-xs text-fg-subtle">
                               cites {language.citations.join(', ')}
                             </p>
                           </div>
                         )}
 
-                        <p className="mt-2 text-xs text-slate-400">
+                        <p className="mt-2 text-xs text-fg-muted">
                           In the record for this language:{' '}
-                          <span className="text-slate-300">
+                          <span className="text-fg-muted">
                             {language.inRecord ?? 'nothing — no body exists in this language yet'}
                           </span>
                         </p>
 
                         {language.refusal === null ? null : (
-                          <p className="mt-1 text-xs text-amber-100" data-testid="advisory-refusal">
+                          <p
+                            className="mt-1 text-xs text-signal-watch"
+                            data-testid="advisory-refusal"
+                          >
                             No prose was written: {language.refusal}
                           </p>
                         )}
@@ -732,7 +738,7 @@ export default function IntelligencePage() {
 
             <div className="flex flex-wrap items-center gap-3">
               <button
-                className="rounded border border-sky-500/40 bg-sky-500/10 px-3 py-2 text-sm text-sky-200 disabled:opacity-40"
+                className="rounded border border-accent/40 bg-accent/10 px-3 py-2 text-sm text-accent disabled:opacity-40"
                 data-testid="advisory-regenerate"
                 disabled={advisoryBusy}
                 onClick={() => {
@@ -742,7 +748,7 @@ export default function IntelligencePage() {
               >
                 Ask the writer again
               </button>
-              <span className="text-xs text-slate-500">
+              <span className="text-xs text-fg-subtle">
                 A refusal is a result, not a failure: with no reasoning provider configured every
                 language above refuses, and the alert keeps the body it was raised with rather than
                 losing it to a writer that could not improve it. No numeral in a generated body may
@@ -751,7 +757,7 @@ export default function IntelligencePage() {
             </div>
 
             {advisoryResult === null ? null : (
-              <p className="text-sm text-sky-100" data-testid="advisory-result">
+              <p className="text-sm text-accent" data-testid="advisory-result">
                 {advisoryResult}
               </p>
             )}
@@ -760,31 +766,32 @@ export default function IntelligencePage() {
       </Panel>
 
       <Panel
+        eyebrow="Cost"
         id="telemetry"
         title="What the reasoning layer has been asked to do"
         description="Counted at the call by the adapter itself, for this process: requests, attempts against the model, answers served from cache, refusals, tokens and time spent waiting. The ceiling here is a free tier and a per-day rate limit, so the figures are the platform's own account of what it spent rather than an estimate from document counts. The adapter is named beside them, because the same panel under a replay adapter is not a measurement of a model."
       >
         {telemetry === null ? (
-          <p className="text-sm text-slate-400" data-testid="telemetry-pending">
+          <p className="text-sm text-fg-muted" data-testid="telemetry-pending">
             No telemetry read has happened yet.
           </p>
         ) : (
           <div className="flex flex-col gap-4">
             <div
-              className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded border border-slate-800 bg-slate-900/60 px-3 py-2 text-sm text-slate-300"
+              className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-instrument border border-ink-700 bg-ink-900 px-3 py-2 text-sm text-fg-muted"
               data-testid="telemetry-provider"
               data-provider={telemetry.provider}
               data-reported={telemetry.reported ? 'yes' : 'no'}
             >
               <span>
-                Adapter <span className="font-mono text-sky-300">{telemetry.provider}</span>
+                Adapter <span className="font-mono text-accent">{telemetry.provider}</span>
               </span>
               <span data-testid="telemetry-model">
                 {telemetry.model === null
                   ? 'sends nowhere — it replays recorded answers'
                   : `model ${telemetry.model}`}
               </span>
-              <span className="text-xs text-slate-500">
+              <span className="text-xs text-fg-subtle">
                 snapshot taken {telemetry.readAt}, refreshed with the inbox every 5 seconds
               </span>
             </div>
@@ -792,7 +799,7 @@ export default function IntelligencePage() {
             {telemetry.reported ? (
               <>
                 <div
-                  className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-300"
+                  className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-fg-muted"
                   data-testid="telemetry-totals"
                 >
                   <span>
@@ -804,7 +811,7 @@ export default function IntelligencePage() {
                   <span>
                     from cache <span className="font-mono">{formatCount(telemetry.cacheHits)}</span>
                   </span>
-                  <span className="text-amber-200">
+                  <span className="text-signal-watch">
                     refused <span className="font-mono">{formatCount(telemetry.failures)}</span>
                   </span>
                   <span>
@@ -818,79 +825,79 @@ export default function IntelligencePage() {
                 </div>
 
                 {telemetry.perTask.length === 0 ? (
-                  <p className="text-sm text-slate-400" data-testid="telemetry-none">
+                  <p className="text-sm text-fg-muted" data-testid="telemetry-none">
                     Nothing has been asked of a model in this process yet, so there is nothing to
                     attribute. A panel of zeros here would be a claim; this is not one.
                   </p>
                 ) : (
-                  <div className="overflow-x-auto rounded-lg border border-slate-800">
+                  <div className="overflow-x-auto rounded-instrument border border-ink-700">
                     <table className="w-full border-collapse text-sm">
                       <caption className="sr-only">
                         Requests made, per task, with attempts, refusals and time
                       </caption>
                       <thead>
-                        <tr className="border-b border-slate-800 bg-slate-900/60 text-left">
-                          <th scope="col" className="px-4 py-2 font-medium text-slate-300">
+                        <tr className="border-b border-ink-700 bg-ink-900 text-left">
+                          <th scope="col" className="px-4 py-2 font-medium text-fg-muted">
                             Task
                           </th>
                           <th
                             scope="col"
-                            className="px-4 py-2 text-right font-medium text-slate-300"
+                            className="px-4 py-2 text-right font-medium text-fg-muted"
                           >
                             Calls
                           </th>
                           <th
                             scope="col"
-                            className="px-4 py-2 text-right font-medium text-slate-300"
+                            className="px-4 py-2 text-right font-medium text-fg-muted"
                           >
                             Attempts
                           </th>
                           <th
                             scope="col"
-                            className="px-4 py-2 text-right font-medium text-slate-300"
+                            className="px-4 py-2 text-right font-medium text-fg-muted"
                           >
                             Cache
                           </th>
                           <th
                             scope="col"
-                            className="px-4 py-2 text-right font-medium text-slate-300"
+                            className="px-4 py-2 text-right font-medium text-fg-muted"
                           >
                             Refused
                           </th>
                           <th
                             scope="col"
-                            className="px-4 py-2 text-right font-medium text-slate-300"
+                            className="px-4 py-2 text-right font-medium text-fg-muted"
                           >
                             Tokens in / out
                           </th>
                           <th
                             scope="col"
-                            className="px-4 py-2 text-right font-medium text-slate-300"
+                            className="px-4 py-2 text-right font-medium text-fg-muted"
                           >
                             Mean
                           </th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-800/70">
+                      <tbody className="divide-y divide-ink-700/70">
                         {telemetry.perTask.map((task) => (
                           <tr key={task.task} data-task={task.task} data-testid="telemetry-task">
-                            <td className="px-4 py-2 font-mono text-slate-200">{task.task}</td>
-                            <td className="px-4 py-2 text-right font-mono text-slate-300">
+                            <td className="px-4 py-2 font-mono text-fg">{task.task}</td>
+                            <td className="px-4 py-2 text-right font-mono text-fg-muted">
                               {formatCount(task.calls)}
                             </td>
-                            <td className="px-4 py-2 text-right font-mono text-slate-300">
+                            <td className="px-4 py-2 text-right font-mono text-fg-muted">
                               {formatCount(task.attempts)}
                             </td>
-                            <td className="px-4 py-2 text-right font-mono text-slate-300">
+                            <td className="px-4 py-2 text-right font-mono text-fg-muted">
                               {formatCount(task.cacheHits)}
                             </td>
-                            <td className="px-4 py-2 text-right font-mono text-amber-200">
+                            <td className="px-4 py-2 text-right font-mono text-signal-watch">
                               {formatCount(task.failures)}
                             </td>
-                            <td className="px-4 py-2 text-right font-mono text-slate-300">
+                            <td className="px-4 py-2 text-right font-mono text-fg-muted">
                               {countOr(task.inputTokens)} / {countOr(task.outputTokens)}
                             </td>
-                            <td className="px-4 py-2 text-right font-mono text-slate-300">
+                            <td className="px-4 py-2 text-right font-mono text-fg-muted">
                               {millisOr(task.meanRequestMs)}
                             </td>
                           </tr>
@@ -901,7 +908,7 @@ export default function IntelligencePage() {
                 )}
               </>
             ) : (
-              <p className="text-sm text-amber-100" data-testid="telemetry-unavailable">
+              <p className="text-sm text-signal-watch" data-testid="telemetry-unavailable">
                 This adapter keeps no count of what it has been asked, so there is nothing to show —
                 which is not the same as nothing having happened, and is precisely why the panel
                 says it rather than drawing a zero.
@@ -909,12 +916,12 @@ export default function IntelligencePage() {
             )}
 
             <div
-              className="rounded border border-slate-800 bg-slate-900/60 px-3 py-2 text-sm text-slate-300"
+              className="rounded-instrument border border-ink-700 bg-ink-900 px-3 py-2 text-sm text-fg-muted"
               data-testid="telemetry-projection"
             >
               <p>
                 A full advisory pass for this inbox is{' '}
-                <span className="font-mono text-sky-200">
+                <span className="font-mono text-accent">
                   {formatCount(telemetry.projection.advisoryPass)}
                 </span>{' '}
                 request(s) — {formatCount(telemetry.projection.alerts)} alert(s) in{' '}
@@ -924,7 +931,7 @@ export default function IntelligencePage() {
                 {formatCount(telemetry.projection.advisoryPass)} requests a day for the
                 demonstration profile.
               </p>
-              <p className="mt-1 text-xs text-slate-500">
+              <p className="mt-1 text-xs text-fg-subtle">
                 A photograph and a recording are {formatCount(telemetry.projection.perCapture)}{' '}
                 request each — a capture is one request, and a retry that actually happened is
                 counted in the attempts above rather than estimated here. People take photographs
@@ -935,7 +942,7 @@ export default function IntelligencePage() {
             </div>
 
             {telemetry.provider === 'fixture' ? (
-              <p className="text-xs text-amber-100" data-testid="telemetry-caveat">
+              <p className="text-xs text-signal-watch" data-testid="telemetry-caveat">
                 These counters describe this process under a replay adapter: every request was
                 answered from a recording, nothing was sent anywhere, so attempts stays at zero
                 while calls climbs and no tokens are reported. They are true about this process and
@@ -944,7 +951,7 @@ export default function IntelligencePage() {
                 provider&apos;s account of itself.
               </p>
             ) : (
-              <p className="text-xs text-slate-500" data-testid="telemetry-caveat">
+              <p className="text-xs text-fg-subtle" data-testid="telemetry-caveat">
                 A refusal is counted here as a failure, and a retry as an extra attempt against the
                 model: neither is hidden, because a count that only rose on success would make a
                 quota problem invisible until it became an outage. No numeral from this panel
@@ -956,35 +963,36 @@ export default function IntelligencePage() {
       </Panel>
 
       <Panel
+        eyebrow="Poorvadarshan"
         id="ranked"
         title="Risk-ranked list"
         description="Every scored pair, worst first, with the driver contributions behind the order. The index ranks and bands; it is not a probability, which is why the forecast's own measured probability and the window it was measured over are shown beside it."
       >
-        <div className="overflow-x-auto rounded-lg border border-slate-800">
+        <div className="overflow-x-auto rounded-instrument border border-ink-700">
           <table className="w-full border-collapse text-sm">
             <caption className="sr-only">
               Facility-item pairs ranked by stock-out risk, with drivers
             </caption>
             <thead>
-              <tr className="border-b border-slate-800 bg-slate-900/60 text-left">
-                <th scope="col" className="px-4 py-2 font-medium text-slate-300">
+              <tr className="border-b border-ink-700 bg-ink-900 text-left">
+                <th scope="col" className="px-4 py-2 font-medium text-fg-muted">
                   Band
                 </th>
-                <th scope="col" className="px-4 py-2 font-medium text-slate-300">
+                <th scope="col" className="px-4 py-2 font-medium text-fg-muted">
                   Facility · item
                 </th>
-                <th scope="col" className="px-4 py-2 text-right font-medium text-slate-300">
+                <th scope="col" className="px-4 py-2 text-right font-medium text-fg-muted">
                   Index
                 </th>
-                <th scope="col" className="px-4 py-2 font-medium text-slate-300">
+                <th scope="col" className="px-4 py-2 font-medium text-fg-muted">
                   Measured shortfall
                 </th>
-                <th scope="col" className="px-4 py-2 font-medium text-slate-300">
+                <th scope="col" className="px-4 py-2 font-medium text-fg-muted">
                   Why
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/70">
+            <tbody className="divide-y divide-ink-700/70">
               {payload.rows.map((row) => (
                 <tr
                   key={`${row.facilityId}|${row.itemId}`}
@@ -998,39 +1006,39 @@ export default function IntelligencePage() {
                       {row.band}
                     </span>
                   </td>
-                  <td className="px-4 py-2 text-slate-300">
-                    <span className="block text-slate-200">{row.itemName}</span>
-                    <span className="text-xs text-slate-500">
+                  <td className="px-4 py-2 text-fg-muted">
+                    <span className="block text-fg">{row.itemName}</span>
+                    <span className="text-xs text-fg-subtle">
                       {row.facilityName} · {row.districtName} · {row.essentiality}
                     </span>
                   </td>
-                  <td className="px-4 py-2 text-right font-mono text-slate-200">
+                  <td className="px-4 py-2 text-right font-mono text-fg">
                     {row.riskIndex.toFixed(2)}
                   </td>
-                  <td className="px-4 py-2 font-mono text-slate-300">{probability(row)}</td>
-                  <td className="px-4 py-2 text-slate-400">
+                  <td className="px-4 py-2 font-mono text-fg-muted">{probability(row)}</td>
+                  <td className="px-4 py-2 text-fg-muted">
                     <details>
-                      <summary className="cursor-pointer text-xs text-sky-300">
+                      <summary className="cursor-pointer text-xs text-accent">
                         Nine drivers
-                        <span className="ml-2 text-slate-500">
+                        <span className="ml-2 text-fg-subtle">
                           {row.drivers[0]?.driver ?? 'none'} first
                         </span>
                       </summary>
                       <ul className="mt-2 flex flex-col gap-1 text-xs">
                         {row.drivers.map((driver) => (
                           <li key={driver.driver} className="flex gap-2">
-                            <span className="w-10 shrink-0 text-right font-mono text-slate-300">
+                            <span className="w-10 shrink-0 text-right font-mono text-fg-muted">
                               {signed(driver.contribution)}
                             </span>
-                            <span className="text-slate-300">
-                              <span className="font-medium text-slate-200">{driver.driver}</span> —{' '}
+                            <span className="text-fg-muted">
+                              <span className="font-medium text-fg">{driver.driver}</span> —{' '}
                               {driver.detail}
                             </span>
                           </li>
                         ))}
                       </ul>
                       {row.missing.length === 0 ? null : (
-                        <p className="mt-2 text-xs text-amber-200">
+                        <p className="mt-2 text-xs text-signal-watch">
                           Could not be measured: {row.missing.join('; ')}
                         </p>
                       )}
@@ -1044,12 +1052,13 @@ export default function IntelligencePage() {
       </Panel>
 
       <Panel
+        eyebrow="Signals"
         id="events"
         title="Epidemic signals"
         description="Syndromic series whose level moved beyond the facility's own seasonal and weekly pattern, with the growth rate a decision is made on. A signal lifts the forecast for every item that treats the syndrome."
       >
         {payload.events.length === 0 ? (
-          <p className="text-sm text-slate-400" data-testid="events-empty">
+          <p className="text-sm text-fg-muted" data-testid="events-empty">
             No epidemic signal was detected in this scoring run. A quiet year is a result.
           </p>
         ) : (
@@ -1057,12 +1066,12 @@ export default function IntelligencePage() {
             {payload.events.map((event) => (
               <li
                 key={event.id}
-                className="rounded-lg border border-slate-800 bg-slate-900/60 p-4 text-sm"
+                className="rounded-instrument border border-ink-700 bg-ink-900 p-4 text-sm"
               >
-                <p className="text-slate-200">
+                <p className="text-fg">
                   {event.syndrome} · {event.facilityName} · {event.districtName}
                 </p>
-                <p className="mt-1 text-xs text-slate-400">
+                <p className="mt-1 text-xs text-fg-muted">
                   detected {event.detectedOn} by {event.method} over {event.windowDays} days ·
                   growth {percent(event.growthRate)} a day · {event.baselineCaseCount.toFixed(1)}{' '}
                   expected against {event.observedCaseCount.toFixed(1)} seen

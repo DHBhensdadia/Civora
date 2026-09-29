@@ -294,9 +294,9 @@ interface RationaleSetView {
 }
 
 const ASSESSMENT_CLASSES: Readonly<Record<string, string>> = {
-  beneficial: 'border-emerald-500/40 bg-emerald-500/10 text-emerald-200',
-  marginal: 'border-amber-500/40 bg-amber-500/10 text-amber-100',
-  negative: 'border-rose-500/40 bg-rose-500/10 text-rose-200',
+  beneficial: 'border-signal-ok/40 bg-signal-ok/10 text-signal-ok',
+  marginal: 'border-signal-watch/40 bg-signal-watch/10 text-signal-watch',
+  negative: 'border-signal-critical/40 bg-signal-critical/10 text-signal-critical',
 };
 
 const number = (value: number): string => value.toLocaleString('en-IN');
@@ -406,8 +406,8 @@ export default function RedistributionPage() {
   if (payload === null) {
     return (
       <div className="flex flex-col gap-6">
-        <h1 className="text-2xl font-semibold">Setu — redistribution workbench</h1>
-        <p className="text-sm text-slate-400">
+        <h1 className="text-display text-balance">Setu — redistribution workbench</h1>
+        <p className="text-sm text-fg-muted">
           {error === null
             ? 'Planning transfers from the demonstration dataset — graph, rankings, four weightings, validator, impact…'
             : `The redistribution read failed: ${error}`}
@@ -425,16 +425,16 @@ export default function RedistributionPage() {
       : payload.verdict.unchecked.map((entry) => `${entry.rule} (${entry.detail})`).join('; ');
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-12">
       <header className="flex flex-col gap-3">
-        <h1 className="text-2xl font-semibold">Setu — redistribution workbench</h1>
-        <p className="max-w-3xl text-sm text-slate-400">
+        <h1 className="text-display text-balance">Setu — redistribution workbench</h1>
+        <p className="max-w-measure text-sm text-fg-muted">
           Transfers the optimiser proposes, each one judged by a validator that re-derives it from
           the world rather than trusting the solver, priced by an estimator that prints its
           assumptions, and decided by a person with a reason. What decides the plan is the
           optimiser; the model may choose a weighting and explain — it never sets a quantity.
         </p>
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-fg-subtle">
           Every proposal is derived from the generated dataset (`{payload.seed}`, scenario{' '}
           {payload.scenarioId}, plan built in {number(payload.generatedInMs)} ms). Refreshes every 5
           seconds (polling, because the local adapter has no change feed). The plan is computed once
@@ -510,23 +510,24 @@ export default function RedistributionPage() {
       </section>
 
       <Panel
+        eyebrow="Strategy"
         id="chosen"
         title="How the plan was chosen"
         description="Four stated weightings, judged rather than trusted: each is run through the solver and then through the validator, and one is selected. With no reasoning provider configured the selection is the deterministic fallback — the shipped path — which ranks only validator-admitted strategies by unmet demand avoided per unit-kilometre and names the figure it ranked on."
       >
         <div
-          className="flex flex-col gap-1 rounded border border-slate-800 bg-slate-900/60 px-3 py-2 text-sm text-slate-300"
+          className="flex flex-col gap-1 rounded-instrument border border-ink-700 bg-ink-900 px-3 py-2 text-sm text-fg-muted"
           data-testid="chosen-strategy"
         >
           <p>
-            Chosen: <span className="font-mono text-sky-200">{payload.chosen.name}</span> · decided
+            Chosen: <span className="font-mono text-accent">{payload.chosen.name}</span> · decided
             by <span className="font-mono">{payload.chosen.decidedBy}</span>
             {payload.chosen.decidedBy === 'fallback'
               ? ' (deterministic fallback: no model selected)'
               : null}
           </p>
-          <p className="text-xs text-slate-400">{payload.chosen.reason}</p>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-fg-muted">{payload.chosen.reason}</p>
+          <p className="text-xs text-fg-subtle">
             {number(payload.chosen.iterations)} attempt(s) ·
             {payload.chosen.budgetReached
               ? ' the iteration budget was reached, so the fallback stands'
@@ -536,7 +537,7 @@ export default function RedistributionPage() {
 
         {payload.chosen.refusals.length === 0 ? null : (
           <ul
-            className="mt-3 flex flex-col gap-1 text-xs text-amber-100"
+            className="mt-3 flex flex-col gap-1 text-xs text-signal-watch"
             data-testid="strategy-refusals"
           >
             {payload.chosen.refusals.map((strategyRefusal, index) => (
@@ -551,85 +552,85 @@ export default function RedistributionPage() {
           </ul>
         )}
 
-        <div className="mt-4 overflow-x-auto rounded-lg border border-slate-800">
+        <div className="mt-4 overflow-x-auto rounded-instrument border border-ink-700">
           <table className="w-full border-collapse text-sm">
             <caption className="sr-only">
               The four stated weightings, with the strategy that was selected
             </caption>
             <thead>
-              <tr className="border-b border-slate-800 bg-slate-900/60 text-left">
-                <th scope="col" className="px-4 py-2 font-medium text-slate-300">
+              <tr className="border-b border-ink-700 bg-ink-900 text-left">
+                <th scope="col" className="px-4 py-2 font-medium text-fg-muted">
                   Weighting
                 </th>
-                <th scope="col" className="px-4 py-2 text-right font-medium text-slate-300">
+                <th scope="col" className="px-4 py-2 text-right font-medium text-fg-muted">
                   Transfers
                 </th>
-                <th scope="col" className="px-4 py-2 text-right font-medium text-slate-300">
+                <th scope="col" className="px-4 py-2 text-right font-medium text-fg-muted">
                   Units
                 </th>
-                <th scope="col" className="px-4 py-2 text-right font-medium text-slate-300">
+                <th scope="col" className="px-4 py-2 text-right font-medium text-fg-muted">
                   Unit-km
                 </th>
-                <th scope="col" className="px-4 py-2 text-right font-medium text-slate-300">
+                <th scope="col" className="px-4 py-2 text-right font-medium text-fg-muted">
                   Avoided / unit-km
                 </th>
-                <th scope="col" className="px-4 py-2 text-right font-medium text-slate-300">
+                <th scope="col" className="px-4 py-2 text-right font-medium text-fg-muted">
                   Objective
                 </th>
-                <th scope="col" className="px-4 py-2 font-medium text-slate-300">
+                <th scope="col" className="px-4 py-2 font-medium text-fg-muted">
                   Verdict
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/70">
+            <tbody className="divide-y divide-ink-700/70">
               {payload.strategies.map((strategy) => (
                 <tr
                   key={strategy.name}
                   data-strategy={strategy.name}
                   data-chosen={strategy.chosen ? 'yes' : 'no'}
                   data-testid="strategy"
-                  className={strategy.chosen ? 'bg-sky-500/5' : undefined}
+                  className={strategy.chosen ? 'bg-accent/5' : undefined}
                 >
-                  <th scope="row" className="px-4 py-2 text-left font-medium text-slate-200">
+                  <th scope="row" className="px-4 py-2 text-left font-medium text-fg">
                     {strategy.name}
                     {strategy.chosen ? (
                       <span
-                        className="ml-2 rounded border border-sky-500/40 bg-sky-500/10 px-2 py-0.5 text-xs text-sky-200"
+                        className="ml-2 rounded border border-accent/40 bg-accent/10 px-2 py-0.5 text-xs text-accent"
                         data-testid="strategy-chosen"
                       >
                         chosen
                       </span>
                     ) : null}
-                    <span className="block text-xs font-normal text-slate-500">
+                    <span className="block text-xs font-normal text-fg-subtle">
                       {strategy.description}
                     </span>
                   </th>
-                  <td className="px-4 py-2 text-right font-mono text-slate-300">
+                  <td className="px-4 py-2 text-right font-mono text-fg-muted">
                     {number(strategy.transfers)}
                   </td>
-                  <td className="px-4 py-2 text-right font-mono text-slate-300">
+                  <td className="px-4 py-2 text-right font-mono text-fg-muted">
                     {number(strategy.units)}
                   </td>
-                  <td className="px-4 py-2 text-right font-mono text-slate-300">
+                  <td className="px-4 py-2 text-right font-mono text-fg-muted">
                     {number(strategy.unitKm)}
                   </td>
-                  <td className="px-4 py-2 text-right font-mono text-slate-300">
+                  <td className="px-4 py-2 text-right font-mono text-fg-muted">
                     {decimal(strategy.benefitPerUnitKm, 3)}
                   </td>
-                  <td className="px-4 py-2 text-right font-mono text-slate-300">
+                  <td className="px-4 py-2 text-right font-mono text-fg-muted">
                     {decimal(strategy.objective.total)}
                   </td>
                   <td className="px-4 py-2 text-xs">
                     {strategy.acceptable ? (
-                      <span className="text-emerald-300">admitted by the validator</span>
+                      <span className="text-signal-ok">admitted by the validator</span>
                     ) : (
-                      <span className="text-amber-100">
+                      <span className="text-signal-watch">
                         refused:{' '}
                         {strategy.refusal ?? strategy.violations.map((v) => v.rule).join(', ')}
                       </span>
                     )}
                     {strategy.unchecked.length === 0 ? null : (
-                      <span className="mt-1 block text-slate-500">
+                      <span className="mt-1 block text-fg-subtle">
                         unchecked: {strategy.unchecked.map((entry) => entry.rule).join(', ')}
                       </span>
                     )}
@@ -642,30 +643,31 @@ export default function RedistributionPage() {
       </Panel>
 
       <Panel
+        eyebrow="Validation"
         id="verdict"
         title="The validator's verdict"
         description="A separate module re-derives the plan from the world rather than believing the solver: every constraint gets its own rule and its own failure message, and a constraint the validator cannot evaluate is reported as unchecked rather than folded into 'passed'. A plan it refuses produces no proposals at all — only the refusal, attributed rule by rule."
       >
         <div
-          className="rounded border border-slate-800 bg-slate-900/60 px-3 py-2 text-sm text-slate-300"
+          className="rounded-instrument border border-ink-700 bg-ink-900 px-3 py-2 text-sm text-fg-muted"
           data-testid="plan-verdict"
           data-valid={payload.verdict.valid ? 'yes' : 'no'}
         >
           <p>
             {payload.verdict.valid ? (
-              <span className="text-emerald-300">
+              <span className="text-signal-ok">
                 The plan this page shows was admitted by the validator.
               </span>
             ) : (
-              <span className="text-rose-200">The validator refused the plan.</span>
+              <span className="text-signal-critical">The validator refused the plan.</span>
             )}{' '}
             It moved {number(payload.verdict.measured.transfers)} transfer(s),{' '}
             {number(payload.verdict.measured.units)} unit(s),{' '}
             {number(payload.verdict.measured.unitKm)} unit-km.
           </p>
-          <p className="mt-1 text-xs text-slate-400">Unchecked: {unchecked}</p>
+          <p className="mt-1 text-xs text-fg-muted">Unchecked: {unchecked}</p>
           {payload.refused.length === 0 ? null : (
-            <ul className="mt-2 flex flex-col gap-1 text-xs text-rose-200">
+            <ul className="mt-2 flex flex-col gap-1 text-xs text-signal-critical">
               {payload.refused.map((violation, index) => (
                 <li key={`${violation.rule}:${String(index)}`}>
                   <span className="font-mono">{violation.rule}</span> — {violation.detail}
@@ -677,12 +679,13 @@ export default function RedistributionPage() {
       </Panel>
 
       <Panel
+        eyebrow="Setu"
         id="proposals"
         title="Proposals"
         description="Every transfer the optimiser proposed and the validator admitted, each with the constraint verdict on the row, the impact with the assumptions it was computed under, and the explanation — written by the reasoning layer through a grounded schema, or refused with the writer's own sentence. A person approves or rejects it with a reason; nothing here executes anything."
       >
         {payload.rows.length === 0 ? (
-          <p className="text-sm text-slate-400" data-testid="proposals-empty">
+          <p className="text-sm text-fg-muted" data-testid="proposals-empty">
             The validator admitted no transfers in this plan. On the Phase 2 &lsquo;do
             nothing&rsquo; scenario that is the expected result: the optimiser proposes nothing
             because nothing is warranted, and a system that always finds something to move is not
@@ -700,13 +703,13 @@ export default function RedistributionPage() {
                   aria-label={`Transfer of ${row.item.name} from ${row.donor.name} to ${row.receiver.name}`}
                   data-proposal={row.proposal.id}
                   data-testid="proposal"
-                  className="rounded-lg border border-slate-800 bg-slate-900/60 p-4"
+                  className="rounded-instrument border border-ink-700 bg-ink-900 p-4"
                 >
                   <div className="flex flex-wrap items-baseline gap-2">
-                    <span className="text-sm font-medium text-slate-100">
+                    <span className="text-sm font-medium text-fg">
                       {row.donor.name} → {row.receiver.name}
                     </span>
-                    <span className="text-xs text-slate-500">
+                    <span className="text-xs text-fg-subtle">
                       {row.donor.districtName} → {row.receiver.districtName} ·{' '}
                       {decimal(row.transfer.distanceKm, 1)} km · lead{' '}
                       {number(row.transfer.leadTimeDays)}d
@@ -714,7 +717,7 @@ export default function RedistributionPage() {
                     </span>
                   </div>
 
-                  <p className="mt-1 text-sm text-slate-300">
+                  <p className="mt-1 text-sm text-fg-muted">
                     {number(row.proposal.quantity)} {row.item.unit} of {row.item.name}
                     {row.proposal.batchId === null ? '' : ` · batch ${row.proposal.batchId}`} ·
                     expires {row.transfer.expiresOn} ({number(row.transfer.shelfLifeOnArrivalDays)}{' '}
@@ -724,8 +727,8 @@ export default function RedistributionPage() {
                   <p
                     className={
                       row.proposal.verdict === 'proposed'
-                        ? 'mt-2 text-xs text-emerald-300'
-                        : 'mt-2 text-xs text-rose-200'
+                        ? 'mt-2 text-xs text-signal-ok'
+                        : 'mt-2 text-xs text-signal-critical'
                     }
                     data-testid="proposal-verdict"
                   >
@@ -734,14 +737,14 @@ export default function RedistributionPage() {
                       ? 'admitted by the validator — 12 rules checked, none failed'
                       : `refused — ${row.proposal.violations.map((violation) => violation.constraint).join(', ')}`}
                   </p>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-fg-subtle">
                     Unchecked: {payload.verdict.unchecked.length === 0 ? 'none' : unchecked}
                   </p>
 
                   <div className="mt-3 grid gap-3 lg:grid-cols-2">
                     <div className="flex flex-col gap-2">
-                      <div className="text-xs text-slate-400">
-                        <span className="font-medium text-slate-300">Impact</span>
+                      <div className="text-xs text-fg-muted">
+                        <span className="font-medium text-fg-muted">Impact</span>
                         {row.impact === null ? (
                           <span className="ml-2" data-testid="impact-unquantified">
                             unquantified — no forecast covered this pair, so no figure is claimed
@@ -754,7 +757,7 @@ export default function RedistributionPage() {
                             >
                               {row.impact.assessment}
                             </span>
-                            <span className="mt-1 block text-slate-300">
+                            <span className="mt-1 block text-fg-muted">
                               avoids{' '}
                               <span className="font-mono">
                                 {decimal(row.impact.expectedUnmetDemandAvoided, 1)}
@@ -768,8 +771,8 @@ export default function RedistributionPage() {
                               against net{' '}
                               <span className="font-mono">{decimal(row.impact.netBenefit)}</span>
                             </span>
-                            <span className="mt-1 block text-slate-500">{row.impact.note}</span>
-                            <span className="mt-1 block text-slate-500">
+                            <span className="mt-1 block text-fg-subtle">{row.impact.note}</span>
+                            <span className="mt-1 block text-fg-subtle">
                               baseline unmet demand{' '}
                               <span className="font-mono">
                                 {decimal(row.impact.baselineUnmetDemand, 1)}
@@ -783,8 +786,8 @@ export default function RedistributionPage() {
                         )}
                       </div>
 
-                      <div className="text-xs text-slate-500">
-                        <span className="text-slate-400">
+                      <div className="text-xs text-fg-subtle">
+                        <span className="text-fg-muted">
                           Assumptions printed beside the figure:
                         </span>
                         <ul className="mt-1 list-inside list-disc" data-testid="impact-assumptions">
@@ -807,44 +810,44 @@ export default function RedistributionPage() {
                     </div>
 
                     <div className="flex flex-col gap-2" data-testid="proposal-rationale">
-                      <span className="text-xs font-medium text-slate-300">
+                      <span className="text-xs font-medium text-fg-muted">
                         Why this transfer — and what would make it wrong
                       </span>
                       {rationale === null ? (
-                        <span className="text-xs text-slate-500">
+                        <span className="text-xs text-fg-subtle">
                           The writer has not been asked about this proposal yet.
                         </span>
                       ) : rationale.status === 'written' ? (
                         <>
-                          <p className="text-sm text-slate-200">{rationale.summary}</p>
+                          <p className="text-sm text-fg">{rationale.summary}</p>
                           {rationale.conditions.length === 0 ? null : (
-                            <ul className="list-inside list-disc text-xs text-slate-300">
+                            <ul className="list-inside list-disc text-xs text-fg-muted">
                               {rationale.conditions.map((condition) => (
                                 <li key={condition}>{condition}</li>
                               ))}
                             </ul>
                           )}
-                          <p className="text-xs text-slate-500">
+                          <p className="text-xs text-fg-subtle">
                             cites {rationale.citations.join(', ')}
                             {rationale.model === null ? '' : ` · ${rationale.model}`}
                           </p>
                         </>
                       ) : (
-                        <p className="text-xs text-amber-100" data-testid="rationale-refusal">
+                        <p className="text-xs text-signal-watch" data-testid="rationale-refusal">
                           No rationale was written: {rationale.refusal}
                         </p>
                       )}
                     </div>
                   </div>
 
-                  <div className="mt-3 border-t border-slate-800 pt-3">
+                  <div className="mt-3 border-t border-ink-700 pt-3">
                     {row.decision === null ? (
                       <div className="flex flex-wrap items-center gap-2">
-                        <label className="flex items-center gap-2 text-xs text-slate-400">
+                        <label className="flex items-center gap-2 text-xs text-fg-muted">
                           Reason
                           <input
                             aria-label={`Reason for proposal ${row.proposal.id}`}
-                            className="w-72 rounded border border-slate-700 bg-slate-950 px-2 py-1 text-sm text-slate-200"
+                            className="w-72 min-h-11 rounded-instrument border border-ink-600 bg-ink-950 px-2 py-1 text-sm text-fg"
                             onChange={(event) => {
                               setReasons((current) => ({
                                 ...current,
@@ -856,7 +859,7 @@ export default function RedistributionPage() {
                         </label>
                         <button
                           aria-label={`Approve proposal ${row.proposal.id}`}
-                          className="rounded border border-emerald-500/40 bg-emerald-500/10 px-3 py-1 text-xs text-emerald-200 disabled:opacity-40"
+                          className="rounded-instrument border border-signal-ok/40 bg-signal-ok/10 px-3 py-1 text-xs text-signal-ok disabled:opacity-40"
                           disabled={busy !== null}
                           onClick={() => {
                             void decide(row, 'approved');
@@ -867,7 +870,7 @@ export default function RedistributionPage() {
                         </button>
                         <button
                           aria-label={`Reject proposal ${row.proposal.id}`}
-                          className="rounded border border-rose-500/40 bg-rose-500/10 px-3 py-1 text-xs text-rose-200 disabled:opacity-40"
+                          className="rounded-instrument border border-signal-critical/40 bg-signal-critical/10 px-3 py-1 text-xs text-signal-critical disabled:opacity-40"
                           disabled={busy !== null}
                           onClick={() => {
                             void decide(row, 'rejected');
@@ -876,17 +879,17 @@ export default function RedistributionPage() {
                         >
                           Reject
                         </button>
-                        <span className="text-xs text-slate-500">
+                        <span className="text-xs text-fg-subtle">
                           a decision has to say why it was made
                         </span>
                       </div>
                     ) : (
-                      <p className="text-xs text-slate-300" data-testid="proposal-decision">
+                      <p className="text-xs text-fg-muted" data-testid="proposal-decision">
                         <span
                           className={
                             row.decision.decision === 'approved'
-                              ? 'rounded border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5 text-emerald-200'
-                              : 'rounded border border-rose-500/40 bg-rose-500/10 px-2 py-0.5 text-rose-200'
+                              ? 'rounded-instrument border border-signal-ok/40 bg-signal-ok/10 px-2 py-0.5 text-signal-ok'
+                              : 'rounded-instrument border border-signal-critical/40 bg-signal-critical/10 px-2 py-0.5 text-signal-critical'
                           }
                         >
                           {row.decision.decision}
@@ -904,12 +907,13 @@ export default function RedistributionPage() {
       </Panel>
 
       <Panel
+        eyebrow="Rationale"
         id="rationale-set"
         title="Explanations, written once for the set"
         description="The whole proposal set is explained in one pass, before anybody opens a row — the same discipline the advisories follow, so the demo does not depend on a live burst of calls at the moment it is judged. Every figure in a written rationale is one the proposal already carries; the grounded schema refuses an invented number and a citation that names nothing."
       >
         {rationales === null ? (
-          <p className="text-sm text-slate-400" data-testid="rationale-pending">
+          <p className="text-sm text-fg-muted" data-testid="rationale-pending">
             {rationaleBusy
               ? 'Asking the writer for a rationale per proposal…'
               : 'No rationale read has happened yet.'}
@@ -917,11 +921,11 @@ export default function RedistributionPage() {
         ) : (
           <div className="flex flex-col gap-3">
             <div
-              className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded border border-slate-800 bg-slate-900/60 px-3 py-2 text-sm text-slate-300"
+              className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-instrument border border-ink-700 bg-ink-900 px-3 py-2 text-sm text-fg-muted"
               data-testid="rationale-summary"
             >
               <span>
-                Writer <span className="font-mono text-sky-300">{rationales.provider}</span>
+                Writer <span className="font-mono text-accent">{rationales.provider}</span>
               </span>
               <span>
                 proposals <span className="font-mono">{number(rationales.proposals)}</span>
@@ -929,13 +933,13 @@ export default function RedistributionPage() {
               <span>
                 attempted <span className="font-mono">{number(rationales.attempted)}</span>
               </span>
-              <span className="text-emerald-300">
+              <span className="text-signal-ok">
                 written <span className="font-mono">{number(rationales.written)}</span>
               </span>
-              <span className="text-amber-200">
+              <span className="text-signal-watch">
                 refused <span className="font-mono">{number(rationales.refused)}</span>
               </span>
-              <span className="text-xs text-slate-500">
+              <span className="text-xs text-fg-subtle">
                 {rationales.regenerated
                   ? `written by this read in ${number(rationales.generatedInMs)} ms, at ${rationales.generatedAt}`
                   : `answered from this process; the set was written at ${rationales.generatedAt}`}
@@ -944,7 +948,7 @@ export default function RedistributionPage() {
 
             <div className="flex flex-wrap items-center gap-3">
               <button
-                className="rounded border border-sky-500/40 bg-sky-500/10 px-3 py-2 text-sm text-sky-200 disabled:opacity-40"
+                className="rounded border border-accent/40 bg-accent/10 px-3 py-2 text-sm text-accent disabled:opacity-40"
                 data-testid="rationale-regenerate"
                 disabled={rationaleBusy}
                 onClick={() => {
@@ -954,7 +958,7 @@ export default function RedistributionPage() {
               >
                 Ask the writer again
               </button>
-              <span className="text-xs text-slate-500">
+              <span className="text-xs text-fg-subtle">
                 A refusal is a result, not a failure: with no reasoning provider configured every
                 proposal above shows the writer&apos;s own sentence instead of prose, and the
                 proposal keeps its figures rather than losing them to a writer that could not
@@ -963,7 +967,7 @@ export default function RedistributionPage() {
             </div>
 
             {rationaleResult === null ? null : (
-              <p className="text-sm text-sky-100" data-testid="rationale-result">
+              <p className="text-sm text-accent" data-testid="rationale-result">
                 {rationaleResult}
               </p>
             )}
@@ -972,20 +976,21 @@ export default function RedistributionPage() {
       </Panel>
 
       <Panel
+        eyebrow="Accountability"
         id="audit"
         title="Audit trail"
         description="The decisions people have taken, in a hash-chained record: each entry carries the digest of the one before it, so removing an entry or altering a reason breaks the chain at the point of the change. The chain is recomputed here rather than asserted — a reader is shown whether the trail holds, not told that it does."
       >
         <div
-          className="rounded border border-slate-800 bg-slate-900/60 px-3 py-2 text-sm text-slate-300"
+          className="rounded-instrument border border-ink-700 bg-ink-900 px-3 py-2 text-sm text-fg-muted"
           data-testid="audit-chain"
           data-valid={payload.audit.valid ? 'yes' : 'no'}
         >
           <p>
             {payload.audit.valid ? (
-              <span className="text-emerald-300">The chain holds.</span>
+              <span className="text-signal-ok">The chain holds.</span>
             ) : (
-              <span className="text-rose-200">
+              <span className="text-signal-critical">
                 The chain is broken at {payload.audit.brokenAt ?? 'an unknown entry'}.
               </span>
             )}{' '}
@@ -994,7 +999,7 @@ export default function RedistributionPage() {
         </div>
 
         {payload.auditEvents.length === 0 ? (
-          <p className="mt-3 text-sm text-slate-400" data-testid="audit-empty">
+          <p className="mt-3 text-sm text-fg-muted" data-testid="audit-empty">
             Nothing has been decided in this process yet. The first decision will be the first link
             in the chain.
           </p>
@@ -1005,17 +1010,17 @@ export default function RedistributionPage() {
                 key={event.id}
                 data-audit-action={event.action}
                 data-testid="audit-event"
-                className="rounded border border-slate-800 bg-slate-950/60 px-3 py-2 text-xs text-slate-300"
+                className="rounded-instrument border border-ink-700 bg-ink-950/60 px-3 py-2 text-xs text-fg-muted"
               >
                 <p>
-                  <span className="font-mono text-slate-200">{event.id}</span> · {event.action} ·{' '}
+                  <span className="font-mono text-fg">{event.id}</span> · {event.action} ·{' '}
                   {event.subjectId}
                 </p>
                 <p className="mt-1">
                   {event.actorUid} ({event.actorRole}) at {event.occurredAt} —{' '}
                   {event.reason ?? 'no reason recorded'}
                 </p>
-                <p className="mt-1 font-mono text-slate-500">
+                <p className="mt-1 font-mono text-fg-subtle">
                   {event.hash.slice(0, 16)}… ←{' '}
                   {event.previousHash?.slice(0, 16) ?? 'start of chain'}
                 </p>
@@ -1026,13 +1031,14 @@ export default function RedistributionPage() {
       </Panel>
 
       <Panel
+        eyebrow="Refusals"
         id="why-not"
         title="Why not the obvious donor"
         description="The plan is a choice, and a choice is only explainable if the rejected candidates are visible: donors that could not help, receivers nothing could serve, and the graph's own account of the pairs it removed and why. What happens if nothing moves is the baseline objective beside the plan's."
       >
         <div className="grid gap-3 lg:grid-cols-2">
-          <div className="rounded border border-slate-800 bg-slate-900/60 px-3 py-2 text-xs text-slate-400">
-            <p className="text-slate-300">
+          <div className="rounded-instrument border border-ink-700 bg-ink-900 px-3 py-2 text-xs text-fg-muted">
+            <p className="text-fg-muted">
               Graph: {number(payload.graph.candidates)} candidate pair(s) →{' '}
               {number(payload.graph.edges)} feasible edge(s)
             </p>
@@ -1064,9 +1070,9 @@ export default function RedistributionPage() {
             </p>
           </div>
 
-          <div className="flex flex-col gap-2 text-xs text-slate-400">
+          <div className="flex flex-col gap-2 text-xs text-fg-muted">
             <div>
-              <p className="text-slate-300">Donors that could not help</p>
+              <p className="text-fg-muted">Donors that could not help</p>
               {payload.ineligibleDonors.length === 0 ? (
                 <p>none — every donor with stock had something to give under the floor</p>
               ) : (
@@ -1080,7 +1086,7 @@ export default function RedistributionPage() {
               )}
             </div>
             <div>
-              <p className="text-slate-300">Receivers nothing could serve</p>
+              <p className="text-fg-muted">Receivers nothing could serve</p>
               {payload.unserved.length === 0 ? (
                 <p>none — every need found a donor inside the window</p>
               ) : (
@@ -1095,7 +1101,7 @@ export default function RedistributionPage() {
               )}
             </div>
             <div>
-              <p className="text-slate-300">Receivers the forecast could not rank</p>
+              <p className="text-fg-muted">Receivers the forecast could not rank</p>
               {payload.unmeasuredReceivers.length === 0 ? (
                 <p>none — every receiver had a measured shortfall probability</p>
               ) : (
@@ -1112,7 +1118,7 @@ export default function RedistributionPage() {
         </div>
       </Panel>
 
-      <p className="text-xs text-slate-500">
+      <p className="text-xs text-fg-subtle">
         Impact method <span className="font-mono">{payload.impactMethod}</span>: the forecast&apos;s
         median and upper paths over {number(payload.impactAssumptions.horizonDays)} day(s),{' '}
         {payload.impactAssumptions.weightedByShortfallProbability

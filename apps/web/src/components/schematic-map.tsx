@@ -45,15 +45,15 @@ export function SchematicMap({ id, map }: SchematicMapProps) {
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h3 id={`${id}-heading`} className="text-sm font-medium text-slate-200">
+        <h3 id={`${id}-heading`} className="text-sm font-medium text-fg">
           Stock-out risk across the regions this session can read
         </h3>
-        <p data-testid="map-renderer" className="font-mono text-xs text-slate-400">
+        <p data-testid="map-renderer" className="font-mono text-xs text-fg-muted">
           renderer: {map.renderer}
         </p>
       </div>
 
-      <p data-testid="map-refusal" className="max-w-3xl text-xs text-slate-400">
+      <p data-testid="map-refusal" className="max-w-measure text-xs text-fg-muted">
         {map.renderer === 'google-maps'
           ? 'Google Maps is configured for this deployment; the schematic view below is drawn from the same markers, so the figures do not depend on it.'
           : (map.refusal ??
@@ -66,7 +66,7 @@ export function SchematicMap({ id, map }: SchematicMapProps) {
           viewBox={`-4 -4 ${MAP_EXTENT + 8} ${MAP_EXTENT + 8}`}
           role="img"
           data-testid="schematic-map"
-          className="h-72 w-72 shrink-0 rounded-lg border border-slate-800 bg-slate-900/60"
+          className="h-72 w-72 shrink-0 rounded-instrument border border-ink-700 bg-ink-800"
         >
           <rect x="0" y="0" width={MAP_EXTENT} height={MAP_EXTENT} fill="#020617" opacity="0.6" />
           {map.markers.map((marker) => (
@@ -90,14 +90,14 @@ export function SchematicMap({ id, map }: SchematicMapProps) {
         </svg>
 
         <div className="flex flex-col gap-3">
-          <p className="text-sm text-slate-300">
-            Value: <span className="text-slate-400">{map.valueLabel}</span>, counted from the risk
+          <p className="text-sm text-fg-muted">
+            Value: <span className="text-fg-muted">{map.valueLabel}</span>, counted from the risk
             engine&rsquo;s own bands. A region with no reading is drawn in grey and never as the
             smallest value.
           </p>
-          <ul data-testid="map-legend" className="flex flex-col gap-1 text-xs text-slate-300">
+          <ul data-testid="map-legend" className="flex flex-col gap-1 text-xs text-fg-muted">
             {bands.length === 0 ? (
-              <li className="font-mono text-slate-400">no values read</li>
+              <li className="font-mono text-fg-muted">no values read</li>
             ) : (
               bands.map((band, index) => (
                 <li key={band.label} className="flex items-center gap-2">
@@ -119,7 +119,7 @@ export function SchematicMap({ id, map }: SchematicMapProps) {
               <span className="font-mono">no reading</span>
             </li>
           </ul>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-fg-subtle">
             {map.classes.uniform
               ? 'Every region this session can read carries the same value, so there is one class and nothing to shade.'
               : `${formatCount(map.markers.length)} region markers, placed from facility coordinates. The placement is schematic: good enough to put a marker in the right region, not good enough to navigate by.`}

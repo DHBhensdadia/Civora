@@ -175,13 +175,13 @@ function PendingProposal({
       data-testid="voice-pending"
     >
       <div className="flex flex-col gap-1">
-        <span className="font-mono text-xs text-slate-500">
+        <span className="font-mono text-xs text-fg-subtle">
           {proposal.id} · spoken by {proposal.spokenBy} · about {proposal.observedOn}
         </span>
-        <p className="text-sm text-slate-200">
+        <p className="text-sm text-fg">
           Heard “{proposal.command.transcript}” ({proposal.command.language})
         </p>
-        <p className="text-sm text-slate-400">
+        <p className="text-sm text-fg-muted">
           That would be {INTENT_TEXT[proposal.command.intent] ?? proposal.command.intent}
           {proposal.command.quantity === null
             ? ''
@@ -199,19 +199,19 @@ function PendingProposal({
       </div>
 
       {proposal.problems.length === 0 ? (
-        <p className="text-sm text-emerald-300">
+        <p className="text-sm text-signal-ok">
           {proposal.item === null
             ? 'Nothing is outstanding: this can be written.'
             : `Nothing is outstanding: this would be written against ${proposal.item.name} ${proposal.item.strength}.`}
         </p>
       ) : (
         <div className="flex flex-col gap-2">
-          <p className="text-sm text-amber-200">Before this is written, the platform needs:</p>
+          <p className="text-sm text-signal-watch">Before this is written, the platform needs:</p>
           <ul className="flex flex-wrap gap-2">
             {proposal.problems.map((problem) => (
               <li
                 key={problem}
-                className="rounded border border-amber-500/40 bg-amber-500/10 px-2 py-1 text-xs text-amber-100"
+                className="rounded-instrument border border-signal-watch/40 bg-signal-watch/10 px-2 py-1 text-xs text-signal-watch"
               >
                 {PROBLEM_TEXT[problem] ?? problem}
               </li>
@@ -221,7 +221,7 @@ function PendingProposal({
       )}
 
       {proposal.command.ambiguities.length === 0 ? null : (
-        <ul className="flex flex-col gap-1 text-xs text-slate-400">
+        <ul className="flex flex-col gap-1 text-xs text-fg-muted">
           {proposal.command.ambiguities.map((note) => (
             <li key={note}>The reader was unsure: {note}</li>
           ))}
@@ -230,10 +230,10 @@ function PendingProposal({
 
       {options.length === 0 ? null : (
         <label className="flex flex-col gap-1 text-sm">
-          <span className="text-slate-300">Which medicine was meant?</span>
+          <span className="text-fg-muted">Which medicine was meant?</span>
           <select
             aria-label={`Catalogue entry for ${proposal.id}`}
-            className="rounded border border-slate-700 bg-slate-900 px-3 py-2"
+            className="min-h-11 rounded-instrument border border-ink-600 bg-ink-900 px-3 py-2"
             onChange={(event) => {
               setItemId(event.target.value);
             }}
@@ -252,10 +252,10 @@ function PendingProposal({
       {proposal.command.intent === 'stock_receipt' ? (
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="flex flex-col gap-1 text-sm">
-            <span className="text-slate-300">Batch</span>
+            <span className="text-fg-muted">Batch</span>
             <input
               aria-label={`Batch for ${proposal.id}`}
-              className="rounded border border-slate-700 bg-slate-900 px-3 py-2"
+              className="min-h-11 rounded-instrument border border-ink-600 bg-ink-900 px-3 py-2"
               onChange={(event) => {
                 setBatchId(event.target.value);
               }}
@@ -264,10 +264,10 @@ function PendingProposal({
             />
           </label>
           <label className="flex flex-col gap-1 text-sm">
-            <span className="text-slate-300">Expires</span>
+            <span className="text-fg-muted">Expires</span>
             <input
               aria-label={`Expiry for ${proposal.id}`}
-              className="rounded border border-slate-700 bg-slate-900 px-3 py-2"
+              className="min-h-11 rounded-instrument border border-ink-600 bg-ink-900 px-3 py-2"
               onChange={(event) => {
                 setExpiresOn(event.target.value);
               }}
@@ -280,10 +280,10 @@ function PendingProposal({
 
       {proposal.command.intent === 'staff_attendance' ? (
         <label className="flex flex-col gap-1 text-sm">
-          <span className="text-slate-300">Present today</span>
+          <span className="text-fg-muted">Present today</span>
           <input
             aria-label={`Present for ${proposal.id}`}
-            className="rounded border border-slate-700 bg-slate-900 px-3 py-2"
+            className="min-h-11 rounded-instrument border border-ink-600 bg-ink-900 px-3 py-2"
             onChange={(event) => {
               setPresent(event.target.value);
             }}
@@ -295,7 +295,7 @@ function PendingProposal({
 
       <div className="flex flex-wrap items-center gap-3">
         <button
-          className="rounded bg-emerald-500 px-3 py-2 text-sm font-medium text-slate-950 disabled:opacity-50"
+          className="rounded-instrument bg-signal-ok px-3 py-2 text-sm font-medium text-ink-950 disabled:opacity-50"
           disabled={busy}
           onClick={() => {
             setBusy(true);
@@ -308,7 +308,7 @@ function PendingProposal({
           That is what I said — write it
         </button>
         <button
-          className="rounded border border-slate-700 px-3 py-2 text-sm text-slate-200 disabled:opacity-50"
+          className="min-h-11 rounded-instrument border border-ink-600 px-3 py-2 text-sm text-fg disabled:opacity-50"
           disabled={busy}
           onClick={() => {
             setBusy(true);
@@ -320,7 +320,7 @@ function PendingProposal({
         >
           That is not what I said
         </button>
-        <span className="text-xs text-slate-500">
+        <span className="text-xs text-fg-subtle">
           {proposal.source === 'model'
             ? `parsed by ${proposal.model}`
             : 'parse supplied rather than heard'}
@@ -480,11 +480,11 @@ export default function VoicePage() {
   );
 
   return (
-    <main className="mx-auto flex max-w-5xl flex-col gap-10 px-6 py-12">
+    <div className="flex flex-col gap-12">
       <header className="flex flex-col gap-3">
-        <p className="text-sm font-medium tracking-widest text-sky-400 uppercase">Voice intake</p>
-        <h1 className="text-3xl font-semibold tracking-tight">Say it, then confirm it</h1>
-        <p className="max-w-3xl text-slate-300">
+        <p className="font-mono text-eyebrow text-accent uppercase">Voice intake</p>
+        <h1 className="text-display text-balance">Say it, then confirm it</h1>
+        <p className="max-w-measure text-fg-muted">
           Speak a stock, bed or attendance update and the platform parses it into a record it holds
           back. The transcript is shown back to you word for word, the update is named, and every
           question the platform still has is listed — and nothing reaches the ledger until somebody
@@ -518,10 +518,10 @@ export default function VoicePage() {
       >
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="flex flex-col gap-1 text-sm">
-            <span className="text-slate-300">Facility</span>
+            <span className="text-fg-muted">Facility</span>
             <select
               aria-label="Facility"
-              className="rounded border border-slate-700 bg-slate-900 px-3 py-2"
+              className="min-h-11 rounded-instrument border border-ink-600 bg-ink-900 px-3 py-2"
               onChange={(event) => {
                 setFacilityId(event.target.value);
               }}
@@ -535,13 +535,13 @@ export default function VoicePage() {
             </select>
           </label>
           <label className="flex flex-col gap-1 text-sm">
-            <span className="text-slate-300">Recording</span>
+            <span className="text-fg-muted">Recording</span>
             <input
               accept="audio/*"
               // Named for the act rather than the noun: the label matcher is a
               // substring match, and this page is mostly about what was said.
               aria-label="Voice note"
-              className="rounded border border-slate-700 bg-slate-900 px-3 py-2"
+              className="min-h-11 rounded-instrument border border-ink-600 bg-ink-900 px-3 py-2"
               onChange={(event) => {
                 setFile(event.target.files?.[0] ?? null);
               }}
@@ -551,7 +551,7 @@ export default function VoicePage() {
         </div>
         <div className="mt-4 flex flex-wrap items-center gap-3">
           <button
-            className="rounded bg-sky-500 px-4 py-2 text-sm font-medium text-slate-950 disabled:opacity-50"
+            className="rounded-instrument bg-accent px-4 py-2 text-sm font-medium text-ink-950 disabled:opacity-50"
             disabled={busy || file === null || facilityId === ''}
             onClick={() => {
               void listen();
@@ -560,18 +560,18 @@ export default function VoicePage() {
           >
             Listen and hold for confirmation
           </button>
-          <span className="text-xs text-slate-500">
+          <span className="text-xs text-fg-subtle">
             Acting as {session?.session.label ?? '—'} · the day defaults to today, {today()}
           </span>
         </div>
         {message === null ? null : (
-          <p className="mt-4 rounded border border-sky-500/40 bg-sky-500/10 px-3 py-2 text-sm text-sky-100">
+          <p className="mt-4 rounded border border-accent/40 bg-accent/10 px-3 py-2 text-sm text-accent">
             {message}
           </p>
         )}
         {refusal === null ? null : (
           <p
-            className="mt-4 rounded border border-rose-500/40 bg-rose-500/10 px-3 py-2 text-sm text-rose-100"
+            className="mt-4 rounded-instrument border border-signal-critical/40 bg-signal-critical/10 px-3 py-2 text-sm text-signal-critical"
             data-testid="voice-refusal"
           >
             {refusal}
@@ -585,11 +585,11 @@ export default function VoicePage() {
         description="Nothing on this list has been written. What was heard is repeated word for word, and the questions below it are the platform's own rule — a proposal that is still incomplete is refused again after the button is pressed rather than written because it was pressed."
       >
         {pending.length === 0 ? (
-          <p className="text-sm text-slate-400" data-testid="voice-empty-queue">
+          <p className="text-sm text-fg-muted" data-testid="voice-empty-queue">
             Nothing is waiting to be confirmed.
           </p>
         ) : (
-          <ul className="flex flex-col divide-y divide-slate-800 rounded-lg border border-slate-800">
+          <ul className="flex flex-col divide-y divide-ink-700 rounded-instrument border border-ink-700">
             {pending.map((proposal) => (
               <PendingProposal
                 key={proposal.id}
@@ -602,7 +602,7 @@ export default function VoicePage() {
           </ul>
         )}
         {rejected.length === 0 ? null : (
-          <p className="mt-3 text-xs text-slate-500">
+          <p className="mt-3 text-xs text-fg-subtle">
             {String(rejected.length)} proposal(s) were rejected by the person who spoke:{' '}
             {rejected.map((proposal) => proposal.id).join(', ')}. They are kept as evidence about
             the reader and were never written.
@@ -616,9 +616,9 @@ export default function VoicePage() {
         description="Confirmed proposals that reached the ledger. They carry captureSource voice, which is how the ledger tells a spoken entry from a typed or photographed one."
       >
         {written.length === 0 ? (
-          <p className="text-sm text-slate-400">Nothing has been confirmed yet.</p>
+          <p className="text-sm text-fg-muted">Nothing has been confirmed yet.</p>
         ) : (
-          <ul className="flex flex-col divide-y divide-slate-800 rounded-lg border border-slate-800">
+          <ul className="flex flex-col divide-y divide-ink-700 rounded-instrument border border-ink-700">
             {written.map((proposal) => (
               <li
                 key={proposal.id}
@@ -626,7 +626,7 @@ export default function VoicePage() {
                 data-provenance="voice"
                 data-testid="voice-written-line"
               >
-                <span className="text-sm text-slate-200">
+                <span className="text-sm text-fg">
                   {proposal.facilityName} · {proposal.item?.name ?? 'report'} ·{' '}
                   {proposal.command.quantity === null
                     ? (INTENT_TEXT[proposal.command.intent] ?? proposal.command.intent)
@@ -638,11 +638,11 @@ export default function VoicePage() {
                   · {proposal.observedOn} · confirmed by {proposal.confirmedBy ?? '—'}
                 </span>
                 <span className="flex items-center gap-2">
-                  <span className="rounded border border-sky-500/40 bg-sky-500/10 px-2 py-1 text-xs text-sky-100">
+                  <span className="rounded border border-accent/40 bg-accent/10 px-2 py-1 text-xs text-accent">
                     Heard ·{' '}
                     {proposal.source === 'model' ? `voice · ${proposal.model}` : 'parse supplied'}
                   </span>
-                  <span className="font-mono text-xs text-slate-500">
+                  <span className="font-mono text-xs text-fg-subtle">
                     {proposal.receipt?.idempotencyKey ?? '—'}
                   </span>
                 </span>
@@ -652,12 +652,12 @@ export default function VoicePage() {
         )}
       </Panel>
 
-      <p className="text-xs text-slate-500">
+      <p className="text-xs text-fg-subtle">
         The queue is held in this process, like the projection and the alert inbox: it is correct
         for the demonstration and it is not a store. Every record written from here is stamped
         simulated by the platform, because the dataset it is added to is generated. Today is{' '}
         {today()}.
       </p>
-    </main>
+    </div>
   );
 }

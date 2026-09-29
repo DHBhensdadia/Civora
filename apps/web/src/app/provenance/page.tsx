@@ -21,13 +21,11 @@ export default async function ProvenancePage() {
   const store = await getLiveStore();
 
   return (
-    <main className="mx-auto flex max-w-4xl flex-col gap-8 px-6 py-12">
+    <div className="flex flex-col gap-12">
       <header className="flex flex-col gap-3">
-        <p className="text-sm font-medium tracking-widest text-sky-400 uppercase">
-          Where the data comes from
-        </p>
-        <h1 className="text-3xl font-semibold tracking-tight">Provenance</h1>
-        <p className="max-w-3xl text-slate-300">
+        <p className="font-mono text-eyebrow text-accent uppercase">Where the data comes from</p>
+        <h1 className="text-display text-balance">Provenance</h1>
+        <p className="max-w-measure text-fg-muted">
           A demonstration of a national platform has one failure mode worse than a wrong figure: a
           right figure mistaken for a real one. This page exists so that cannot happen quietly — it
           names which layers are published values, which are generated from them, and which seed
@@ -39,7 +37,7 @@ export default async function ProvenancePage() {
 
       <section className="flex flex-col gap-3">
         <h2 className="text-lg font-semibold">What that means for a figure on a surface</h2>
-        <ul className="flex list-disc flex-col gap-2 pl-5 text-sm text-slate-300">
+        <ul className="flex list-disc flex-col gap-2 pl-5 text-sm text-fg-muted">
           <li>
             Every generated record carries <code className="font-mono">synthetic: true</code> and a
             provenance naming the simulator. A surface that displayed one as a measurement fails the
@@ -62,6 +60,6 @@ export default async function ProvenancePage() {
           </li>
         </ul>
       </section>
-    </main>
+    </div>
   );
 }

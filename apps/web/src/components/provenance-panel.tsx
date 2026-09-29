@@ -29,13 +29,13 @@ export function ProvenancePanel({ id, view, size = 'full' }: ProvenancePanelProp
     {
       key: 'real',
       title: 'Retrieved from published sources',
-      tone: 'text-emerald-300',
+      tone: 'text-signal-ok',
       entries: view.realLayers,
     },
     {
       key: 'simulated',
       title: 'Generated from those sources',
-      tone: 'text-amber-300',
+      tone: 'text-signal-watch',
       entries: view.simulatedLayers,
     },
   ];
@@ -58,20 +58,20 @@ export function ProvenancePanel({ id, view, size = 'full' }: ProvenancePanelProp
           <div
             key={group.key}
             data-testid={id === 'provenance' ? `provenance-${group.key}` : undefined}
-            className="rounded-lg border border-slate-800 bg-slate-900/60 p-4"
+            className="rounded-instrument border border-ink-700 bg-ink-800 p-4"
           >
             <h3 className={`text-sm font-medium ${group.tone}`}>{group.title}</h3>
             <ul className="mt-3 flex flex-col gap-3">
               {group.entries.map((layer) => (
                 <li key={layer.layer} className="flex flex-col gap-1 text-sm">
-                  <span className="text-slate-200">{layer.layer}</span>
+                  <span className="text-fg">{layer.layer}</span>
                   {size === 'full' ? (
                     <>
-                      <span className="text-slate-400">{layer.detail}</span>
-                      <span className="text-xs text-slate-500">{layer.source}</span>
+                      <span className="text-fg-muted">{layer.detail}</span>
+                      <span className="text-xs text-fg-subtle">{layer.source}</span>
                     </>
                   ) : (
-                    <span className="text-xs text-slate-500">{layer.source}</span>
+                    <span className="text-xs text-fg-subtle">{layer.source}</span>
                   )}
                 </li>
               ))}
@@ -82,33 +82,33 @@ export function ProvenancePanel({ id, view, size = 'full' }: ProvenancePanelProp
 
       <dl
         data-testid={`${id}-seed`}
-        className="grid gap-x-6 gap-y-2 rounded-lg border border-slate-800 bg-slate-900/60 p-4 text-sm sm:grid-cols-2"
+        className="grid gap-x-6 gap-y-2 rounded-instrument border border-ink-700 bg-ink-800 p-4 text-sm sm:grid-cols-2"
       >
         <div>
-          <dt className="text-slate-400">Active seed</dt>
-          <dd className="font-mono text-sky-300">{view.seed}</dd>
+          <dt className="text-fg-muted">Active seed</dt>
+          <dd className="font-mono text-accent">{view.seed}</dd>
         </div>
         <div>
-          <dt className="text-slate-400">Dataset fingerprint</dt>
-          <dd className="font-mono text-slate-300">{view.fingerprint}</dd>
+          <dt className="text-fg-muted">Dataset fingerprint</dt>
+          <dd className="font-mono text-fg-muted">{view.fingerprint}</dd>
         </div>
         <div>
-          <dt className="text-slate-400">Scenario</dt>
-          <dd className="text-slate-300">
+          <dt className="text-fg-muted">Scenario</dt>
+          <dd className="text-fg-muted">
             {view.scenarioLabel} <span className="font-mono text-xs">({view.scenarioId})</span>
           </dd>
         </div>
         <div>
-          <dt className="text-slate-400">Window</dt>
-          <dd className="text-slate-300">
+          <dt className="text-fg-muted">Window</dt>
+          <dd className="text-fg-muted">
             {view.window.from} → {view.window.to} · {view.window.days} days
           </dd>
         </div>
       </dl>
 
-      <p className="text-sm text-slate-400">
+      <p className="text-sm text-fg-muted">
         The sources, licences, retrieval dates and every assumption are in{' '}
-        <span className="font-mono text-slate-300">{view.document}</span> in the repository, and the
+        <span className="font-mono text-fg-muted">{view.document}</span> in the repository, and the
         same values are browsable in the dataset inspector at <code>/dataset</code>.
       </p>
     </Panel>

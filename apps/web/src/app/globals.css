@@ -132,6 +132,21 @@
     line-height: var(--text-base--line-height);
   }
 
+  /*
+   * Prose is narrow, instruments are wide — enforced here rather than
+   * remembered on thirteen pages.
+   *
+   * A paragraph is read by moving the eye along a line, and past roughly 75
+   * characters the eye loses the next line's start; the build's paragraphs ran
+   * to 206. Tables, the map and the KPI row are not paragraphs and are not
+   * capped — a reader scans those for a cell, not for a sentence. Anything that
+   * genuinely needs a wider box than the measure is not prose and should not be
+   * a `<p>`.
+   */
+  p {
+    max-width: var(--container-measure);
+  }
+
   /* One focus ring, on everything, in the accent. */
   :focus-visible {
     outline: 2px solid var(--color-accent);

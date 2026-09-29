@@ -119,12 +119,12 @@ function FilterField({
   readonly options: readonly string[];
 }) {
   return (
-    <label className="flex flex-col gap-1 text-xs text-slate-400">
+    <label className="flex flex-col gap-1 text-xs text-fg-muted">
       <span>{label}</span>
       <select
         name={name}
         aria-label={label}
-        className="rounded border border-slate-700 bg-slate-900 px-2 py-1 font-mono text-xs text-slate-200"
+        className="min-h-11 rounded-instrument border border-ink-600 bg-ink-900 px-2 py-1 font-mono text-xs text-fg"
         value={value}
         onChange={(event) => {
           onChange(event.target.value);
@@ -203,7 +203,7 @@ export default function AuditPage() {
 
   if (refusal !== null) {
     return (
-      <main className="mx-auto max-w-5xl px-6 py-16">
+      <div className="flex flex-col gap-12">
         <Notice
           id="audit-refusal"
           testId="audit-refusal"
@@ -216,20 +216,18 @@ export default function AuditPage() {
             what the interface chose to draw.
           </p>
         </Notice>
-      </main>
+      </div>
     );
   }
 
   return (
-    <main className="mx-auto flex max-w-5xl flex-col gap-10 px-6 py-16">
+    <div className="flex flex-col gap-12">
       <header className="flex flex-col gap-3">
-        <p className="text-sm font-medium tracking-widest text-sky-400 uppercase">
-          Assurance · audit trail
-        </p>
+        <p className="font-mono text-eyebrow text-accent uppercase">Assurance · audit trail</p>
         <h1 className="text-4xl font-semibold tracking-tight">
           What was decided, and whether it holds
         </h1>
-        <p className="max-w-3xl text-lg text-slate-300">
+        <p className="max-w-measure text-lg text-fg-muted">
           Every consequential act appends an entry carrying the digest of the entry before it.
           Altering one, removing one or reordering two breaks the chain at the point of the change —
           which is what makes this record evidence rather than a log of claims.
@@ -242,7 +240,7 @@ export default function AuditPage() {
         description="Recomputed from the entries themselves: every digest is re-derived and every link checked, over the whole chain rather than the rows below. The verification is an act, so it says when it was made."
       >
         {trail === null ? (
-          <p className="text-sm text-slate-400" data-testid="audit-walking">
+          <p className="text-sm text-fg-muted" data-testid="audit-walking">
             {walking ? 'Walking the chain…' : 'Reading the chain…'}
           </p>
         ) : (
@@ -273,8 +271,8 @@ export default function AuditPage() {
               data-valid={trail.report.valid ? 'true' : 'false'}
               className={
                 trail.report.valid
-                  ? 'rounded-lg border border-emerald-500/30 bg-emerald-500/5 px-4 py-3 text-sm text-emerald-100'
-                  : 'rounded-lg border border-rose-500/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-100'
+                  ? 'rounded-instrument border border-signal-ok/30 bg-signal-ok/5 px-4 py-3 text-sm text-signal-ok'
+                  : 'rounded-instrument border border-signal-critical/40 bg-signal-critical/10 px-4 py-3 text-sm text-signal-critical'
               }
             >
               {trail.report.detail}
@@ -284,14 +282,14 @@ export default function AuditPage() {
               <button
                 type="button"
                 data-testid="audit-verify"
-                className="rounded border border-sky-500/40 bg-sky-500/10 px-3 py-1 text-sm text-sky-200 hover:bg-sky-500/20"
+                className="rounded border border-accent/40 bg-accent/10 px-3 py-1 text-sm text-accent hover:bg-accent/20"
                 onClick={() => {
                   setNonce((current) => current + 1);
                 }}
               >
                 Walk the chain again
               </button>
-              <span className="text-xs text-slate-500">
+              <span className="text-xs text-fg-subtle">
                 {walking ? 'walking…' : 'the walk is repeated on every read, filters or not'}
               </span>
             </div>
@@ -338,13 +336,13 @@ export default function AuditPage() {
               setDraft((current) => ({ ...current, subject: value === '' ? null : value }));
             }}
           />
-          <label className="flex flex-col gap-1 text-xs text-slate-400">
+          <label className="flex flex-col gap-1 text-xs text-fg-muted">
             <span>from</span>
             <input
               type="date"
               name="from"
               aria-label="from"
-              className="rounded border border-slate-700 bg-slate-900 px-2 py-1 font-mono text-xs text-slate-200"
+              className="min-h-11 rounded-instrument border border-ink-600 bg-ink-900 px-2 py-1 font-mono text-xs text-fg"
               value={draft.from ?? ''}
               onChange={(event) => {
                 setDraft((current) => ({
@@ -354,13 +352,13 @@ export default function AuditPage() {
               }}
             />
           </label>
-          <label className="flex flex-col gap-1 text-xs text-slate-400">
+          <label className="flex flex-col gap-1 text-xs text-fg-muted">
             <span>to</span>
             <input
               type="date"
               name="to"
               aria-label="to"
-              className="rounded border border-slate-700 bg-slate-900 px-2 py-1 font-mono text-xs text-slate-200"
+              className="min-h-11 rounded-instrument border border-ink-600 bg-ink-900 px-2 py-1 font-mono text-xs text-fg"
               value={draft.to ?? ''}
               onChange={(event) => {
                 setDraft((current) => ({
@@ -373,14 +371,14 @@ export default function AuditPage() {
           <button
             type="submit"
             data-testid="audit-apply"
-            className="rounded border border-slate-700 bg-slate-900 px-3 py-1 text-sm text-slate-200 hover:border-sky-500/40"
+            className="min-h-11 rounded-instrument border border-ink-600 bg-ink-900 px-3 py-1 text-sm text-fg hover:border-accent/40"
           >
             Apply
           </button>
           <button
             type="button"
             data-testid="audit-clear"
-            className="rounded px-3 py-1 text-sm text-slate-400 hover:text-slate-200"
+            className="rounded px-3 py-1 text-sm text-fg-muted hover:text-fg"
             onClick={() => {
               setDraft(NO_FILTERS);
               setApplied(NO_FILTERS);
@@ -390,7 +388,7 @@ export default function AuditPage() {
           </button>
         </form>
 
-        <p className="text-sm text-slate-400" data-testid="audit-count">
+        <p className="text-sm text-fg-muted" data-testid="audit-count">
           {trail === null
             ? 'reading…'
             : `showing ${counted(trail.shown, 'entry', 'entries')} of ${counted(
@@ -410,9 +408,9 @@ export default function AuditPage() {
         description="Newest first. Each row names the entry it chains to, which is the link the digest covers — not the row above it in a filtered list."
       >
         {trail === null ? (
-          <p className="text-sm text-slate-400">Reading…</p>
+          <p className="text-sm text-fg-muted">Reading…</p>
         ) : trail.rows.length === 0 ? (
-          <p className="text-sm text-slate-400" data-testid="audit-empty">
+          <p className="text-sm text-fg-muted" data-testid="audit-empty">
             {trail.total === 0
               ? 'Nothing consequential has been decided in this process yet. The chain is written as decisions are taken — a capture, an alert move, a transfer decision, the federated rounds — so an empty trail here is a platform nobody has acted on yet rather than a recorder that is switched off.'
               : `No entry matches that question. The chain holds ${counted(
@@ -438,36 +436,36 @@ export default function AuditPage() {
                 <span key={`${row.id}-when`} className="font-mono text-xs">
                   {row.day}
                   <br />
-                  <span className="text-slate-500">{row.occurredAt.slice(11, 19)}</span>
+                  <span className="text-fg-subtle">{row.occurredAt.slice(11, 19)}</span>
                 </span>,
                 <span key={`${row.id}-who`} className="text-xs">
                   {row.actorUid}
                   <br />
-                  <span className="text-slate-500">{row.actorRole}</span>
+                  <span className="text-fg-subtle">{row.actorRole}</span>
                 </span>,
                 <span key={`${row.id}-what`} className="text-xs">
                   <span className="font-mono">{row.action}</span>
                   {row.meaning === null ? null : (
-                    <span className="block text-slate-500">{row.meaning}</span>
+                    <span className="block text-fg-subtle">{row.meaning}</span>
                   )}
                 </span>,
                 <span key={`${row.id}-subject`} className="text-xs">
                   <span className="font-mono">{row.subjectType}</span>
                   <br />
-                  <span className="text-slate-500">{row.subjectId}</span>
+                  <span className="text-fg-subtle">{row.subjectId}</span>
                 </span>,
                 <span key={`${row.id}-pair`} className="font-mono text-xs">
                   {row.before === null && row.after === null
                     ? '—'
                     : `${row.before ?? '—'} → ${row.after ?? '—'}`}
                 </span>,
-                <span key={`${row.id}-why`} className="text-xs text-slate-300">
+                <span key={`${row.id}-why`} className="text-xs text-fg-muted">
                   {row.reason ?? '—'}
                 </span>,
                 <span key={`${row.id}-link`} className="font-mono text-xs">
                   {row.id}
                   <br />
-                  <span className="text-slate-500">→ {row.linksTo ?? 'start of chain'}</span>
+                  <span className="text-fg-subtle">→ {row.linksTo ?? 'start of chain'}</span>
                 </span>,
               ])}
             />
@@ -495,7 +493,7 @@ export default function AuditPage() {
             formatCount(entry.recorded),
           ])}
         />
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-fg-subtle">
           Not recorded, deliberately: a refused action (nothing changed), a replay or duplicate
           submission (nothing was written), a read of any surface, a conflict (it is written to its
           own collection and changes no observation), and the platform&rsquo;s own recomputations —
@@ -503,6 +501,6 @@ export default function AuditPage() {
           decision.
         </p>
       </Panel>
-    </main>
+    </div>
   );
 }

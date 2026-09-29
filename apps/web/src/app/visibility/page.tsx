@@ -37,11 +37,11 @@ const MOVEMENTS_SHOWN = 12;
 
 /** How each capture family is drawn, so the words and the colour agree. */
 const CAPTURE_TONES: Readonly<Record<CaptureTone, string>> = {
-  extracted: 'border-sky-500/40 bg-sky-500/10 text-sky-200',
-  typed: 'border-slate-600 bg-slate-800/60 text-slate-300',
+  extracted: 'border-accent/40 bg-accent/10 text-accent',
+  typed: 'border-ink-600 bg-ink-800 text-fg-muted',
   imported: 'border-violet-500/40 bg-violet-500/10 text-violet-200',
-  generated: 'border-slate-700 bg-slate-900/60 text-slate-400',
-  unknown: 'border-rose-500/40 bg-rose-500/10 text-rose-200',
+  generated: 'border-ink-600 bg-ink-900 text-fg-muted',
+  unknown: 'border-signal-critical/40 bg-signal-critical/10 text-signal-critical',
 };
 
 interface ReadItem {
@@ -141,9 +141,9 @@ const STATUS_WORDS: Readonly<Record<FacilityView['reading']['status'], string>> 
 };
 
 const STATUS_CLASSES: Readonly<Record<FacilityView['reading']['status'], string>> = {
-  current: 'border-emerald-500/40 bg-emerald-500/10 text-emerald-200',
-  stale: 'border-amber-500/40 bg-amber-500/10 text-amber-200',
-  'never-heard': 'border-rose-500/40 bg-rose-500/10 text-rose-200',
+  current: 'border-signal-ok/40 bg-signal-ok/10 text-signal-ok',
+  stale: 'border-signal-watch/40 bg-signal-watch/10 text-signal-watch',
+  'never-heard': 'border-signal-critical/40 bg-signal-critical/10 text-signal-critical',
 };
 
 const UNKNOWN = 'unknown';
@@ -207,10 +207,10 @@ export default function VisibilityPage() {
 
   if (payload === null) {
     return (
-      <main className="mx-auto flex max-w-5xl flex-col gap-6 px-6 py-12">
-        <h1 className="text-3xl font-semibold tracking-tight">What the district can see</h1>
-        <p className="text-slate-400">{error ?? 'Reading the district…'}</p>
-      </main>
+      <div className="flex flex-col gap-12">
+        <h1 className="text-display text-balance">What the district can see</h1>
+        <p className="text-fg-muted">{error ?? 'Reading the district…'}</p>
+      </div>
     );
   }
 
@@ -251,19 +251,17 @@ export default function VisibilityPage() {
     .slice(0, MOVEMENTS_SHOWN);
 
   return (
-    <main className="mx-auto flex max-w-6xl flex-col gap-10 px-6 py-12">
+    <div className="flex flex-col gap-12">
       <header className="flex flex-col gap-3">
-        <p className="text-sm font-medium tracking-widest text-sky-400 uppercase">
-          Drishti · visibility
-        </p>
-        <h1 className="text-3xl font-semibold tracking-tight">What the district can see</h1>
-        <p className="max-w-3xl text-slate-300">
+        <p className="font-mono text-eyebrow text-accent uppercase">Drishti · visibility</p>
+        <h1 className="text-display text-balance">What the district can see</h1>
+        <p className="max-w-measure text-fg-muted">
           Live stock positions, bed pressure and attendance for every facility in {district.name},{' '}
           {district.regionName} — and, alongside them, the facilities the platform has heard nothing
           from. Silence is reported as silence: an unreported facility has unknown stock, not full
           shelves.
         </p>
-        <p className="text-sm text-slate-400">
+        <p className="text-sm text-fg-muted">
           Signed in as {payload.session.label} · reading as of {ledger.asOf} · refreshes every{' '}
           {String(REFRESH_INTERVAL_MS / 1000)} seconds (polling, because the local adapter has no
           change feed)
@@ -282,7 +280,7 @@ export default function VisibilityPage() {
       </Notice>
 
       {error === null ? null : (
-        <p className="rounded border border-rose-500/40 bg-rose-500/10 px-3 py-2 text-sm text-rose-100">
+        <p className="rounded border border-signal-critical/40 bg-signal-critical/10 px-3 py-2 text-sm text-signal-critical">
           {error}
         </p>
       )}
@@ -315,10 +313,10 @@ export default function VisibilityPage() {
           />
         </div>
         <label className="mt-4 flex max-w-sm flex-col gap-1 text-sm">
-          <span className="text-slate-300">District</span>
+          <span className="text-fg-muted">District</span>
           <select
             aria-label="District"
-            className="rounded border border-slate-700 bg-slate-900 px-3 py-2"
+            className="rounded border border-ink-600 bg-ink-900 px-3 py-2"
             onChange={(event) => {
               setDistrictId(event.target.value);
             }}
@@ -331,7 +329,7 @@ export default function VisibilityPage() {
             ))}
           </select>
         </label>
-        <p className="text-sm text-slate-500">
+        <p className="text-sm text-fg-subtle">
           The list is scoped: a district officer sees the districts their scope covers and nothing
           else.
         </p>
@@ -362,8 +360,8 @@ export default function VisibilityPage() {
             const stock = reading.stock;
             return [
               <span key="name" className="flex flex-col">
-                <span className="text-slate-200">{facility.name}</span>
-                <span className="text-xs text-slate-500">
+                <span className="text-fg">{facility.name}</span>
+                <span className="text-xs text-fg-subtle">
                   {facility.tierLabel} · {facility.connectivity} connectivity
                   {facility.coldChain ? ' · cold chain' : ''}
                 </span>
@@ -405,7 +403,7 @@ export default function VisibilityPage() {
       >
         {neverHeard.length === 0 && stale.length === 0 ? (
           <p
-            className="rounded border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-100"
+            className="rounded border border-signal-ok/40 bg-signal-ok/10 px-3 py-2 text-sm text-signal-ok"
             data-testid="no-gaps"
           >
             Every facility in this district has reported within the last{' '}
@@ -450,7 +448,7 @@ export default function VisibilityPage() {
         description={`Items with less than ${formatCount(thresholds.criticalCoverDays)} days of cover at the current rate of use, across the district. Cover is computed from the ledger, corrected for days on which the shelf was empty — the recorded issue rate during a stock-out measures supply, not need.`}
       >
         {atRisk.length === 0 ? (
-          <p className="text-sm text-slate-400">
+          <p className="text-sm text-fg-muted">
             No facility with a current reading has an item below{' '}
             {formatCount(thresholds.criticalCoverDays)} days of cover.
           </p>
@@ -468,8 +466,8 @@ export default function VisibilityPage() {
             ]}
             rows={atRisk.map((entry) => [
               <span key="item" className="flex flex-col">
-                <span className="text-slate-200">{entry.item.name}</span>
-                <span className="font-mono text-xs text-slate-500">{entry.item.itemId}</span>
+                <span className="text-fg">{entry.item.name}</span>
+                <span className="font-mono text-xs text-fg-subtle">{entry.item.itemId}</span>
               </span>,
               entry.facility,
               `${formatCount(entry.item.onHand)} ${entry.item.unit}`,
@@ -488,10 +486,10 @@ export default function VisibilityPage() {
         description={`The ${formatCount(MOVEMENTS_SHOWN)} most recent movements across the district, each labelled with the channel that produced it — extracted from a photograph or a voice note, typed by a person, imported from another system, or generated for the demonstration. A capture reads differently from the seeded history it sits beside, and a movement the platform cannot place is labelled with its raw source rather than folded into the nearest known one.`}
       >
         {movements.length === 0 ? (
-          <p className="text-sm text-slate-400">No movements are held for this district.</p>
+          <p className="text-sm text-fg-muted">No movements are held for this district.</p>
         ) : (
           <ul
-            className="flex flex-col divide-y divide-slate-800 rounded-lg border border-slate-800"
+            className="flex flex-col divide-y divide-ink-700 rounded-instrument border border-ink-700"
             data-testid="movement-list"
           >
             {movements.map(({ facility, movement }) => {
@@ -503,7 +501,7 @@ export default function VisibilityPage() {
                   data-testid="movement-row"
                   data-capture={movement.captureSource}
                 >
-                  <span className="text-sm text-slate-200">
+                  <span className="text-sm text-fg">
                     {facility.name} · {movement.itemName} · {movement.kind}{' '}
                     {formatCount(movement.quantity)} · {movement.occurredOn}
                   </span>
@@ -535,7 +533,7 @@ export default function VisibilityPage() {
         />
       </Panel>
 
-      <footer className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-slate-800 pt-6 text-sm text-slate-500">
+      <footer className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-ink-700 pt-6 text-sm text-fg-subtle">
         <span>
           Generated from seed <code className="font-mono">{store.seed}</code> ·{' '}
           {formatCount(store.facilitiesWithHistory)} facilities with a history · window{' '}
@@ -546,6 +544,6 @@ export default function VisibilityPage() {
         </span>
         <span>All data simulated</span>
       </footer>
-    </main>
+    </div>
   );
 }

@@ -27,9 +27,30 @@ import type { Session } from './session';
  * make the matrix symmetric.
  */
 
+/**
+ * The four things a person comes to the platform to do.
+ *
+ * Thirteen flat links in a wrapping header row is what the navigation was, and a
+ * flat list stops being navigable somewhere around seven — the reader has to
+ * scan all of it to find any of it. The grouping is not decoration: it encodes
+ * the loop the platform closes, which is *see the situation, decide, record, and
+ * be able to show your working*.
+ */
+export type NavGroup = 'situation' | 'decide' | 'record' | 'assure';
+
+/** The groups, in the order the sidebar prints them. */
+export const NAV_GROUPS: readonly { readonly key: NavGroup; readonly label: string }[] = [
+  { key: 'situation', label: 'Situation' },
+  { key: 'decide', label: 'Decide' },
+  { key: 'record', label: 'Record' },
+  { key: 'assure', label: 'Assure' },
+] as const;
+
 export interface NavSection {
   readonly href: string;
   readonly label: string;
+  /** Which group the sidebar prints this surface under. */
+  readonly group: NavGroup;
   /** One line naming what the surface is for, printed on the roles page. */
   readonly purpose: string;
   /** The roles the surface is offered to, in the order it is listed. */
@@ -48,12 +69,14 @@ export const NAV_SECTIONS: readonly NavSection[] = [
   {
     href: '/',
     label: 'Overview',
+    group: 'situation',
     purpose: 'What the platform is, which modules exist, and which adapters it runs on.',
     roles: ['phc_staff', 'district_officer', 'state_officer', 'national', 'auditor'],
   },
   {
     href: '/command',
     label: 'Command tower',
+    group: 'situation',
     purpose:
       'The national picture — stock-out risk, bed pressure and reporting gaps — with the drill-down from a state to the batch behind it.',
     roles: ['district_officer', 'state_officer', 'national', 'auditor'],
@@ -61,30 +84,35 @@ export const NAV_SECTIONS: readonly NavSection[] = [
   {
     href: '/visibility',
     label: 'Visibility',
+    group: 'situation',
     purpose: 'What is in stock where, and how stale the answer is, district by district.',
     roles: ['phc_staff', 'district_officer', 'state_officer', 'national', 'auditor'],
   },
   {
     href: '/intelligence',
     label: 'Intelligence',
+    group: 'decide',
     purpose: 'The ranked risk list and the alert inbox an officer works.',
     roles: ['district_officer', 'state_officer', 'national', 'auditor'],
   },
   {
     href: '/redistribution',
     label: 'Redistribution',
+    group: 'decide',
     purpose: 'Constraint-checked transfer proposals, their verdicts and approvals.',
     roles: ['district_officer', 'state_officer', 'national', 'auditor'],
   },
   {
     href: '/federation',
     label: 'Federation',
+    group: 'decide',
     purpose: 'The federated rounds, the privacy budget they spent and what it cost.',
     roles: ['state_officer', 'national', 'auditor'],
   },
   {
     href: '/import',
     label: 'Import',
+    group: 'record',
     purpose:
       'Read a file from a system the ministry already runs — an HMIS return or the administrative directory — after checking what it would write.',
     // A district officer and above: an import writes rows the platform did not
@@ -94,6 +122,7 @@ export const NAV_SECTIONS: readonly NavSection[] = [
   {
     href: '/audit',
     label: 'Audit trail',
+    group: 'assure',
     purpose:
       'Every consequential decision in one digest-linked chain, with a verification that names the entry where it stops holding.',
     // The same rule the stored rules enforce on the collection: the chain holds
@@ -103,30 +132,35 @@ export const NAV_SECTIONS: readonly NavSection[] = [
   {
     href: '/capture',
     label: 'Capture',
+    group: 'record',
     purpose: 'Record what a facility counted, written and spoken, offline.',
     roles: ['phc_staff', 'district_officer', 'national'],
   },
   {
     href: '/vision',
     label: 'Vision intake',
+    group: 'record',
     purpose: 'Read a register from a photograph and confirm it before it is stored.',
     roles: ['phc_staff', 'district_officer', 'national'],
   },
   {
     href: '/voice',
     label: 'Voice intake',
+    group: 'record',
     purpose: 'Say a stock, bed or attendance update and confirm what was heard.',
     roles: ['phc_staff', 'district_officer', 'national'],
   },
   {
     href: '/dataset',
     label: 'Dataset inspector',
+    group: 'assure',
     purpose: 'The generated world itself: counts, fingerprints and seeded records.',
     roles: ['phc_staff', 'district_officer', 'state_officer', 'national', 'auditor'],
   },
   {
     href: '/provenance',
     label: 'Provenance',
+    group: 'assure',
     purpose: 'Which layers are real, which are simulated, and under which seed.',
     roles: ['phc_staff', 'district_officer', 'state_officer', 'national', 'auditor'],
   },

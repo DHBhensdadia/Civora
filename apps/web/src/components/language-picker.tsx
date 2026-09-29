@@ -17,6 +17,10 @@ import { languageLabelOf } from '@civora/i18n';
  * unsupported one by name, and the surface is re-read after it — so the header,
  * the capture form and the alert inbox cannot end up in three different
  * languages, which is what a purely client-side switch produces.
+ *
+ * The resolved language is **named beside the control** and stays visible at
+ * every breakpoint, because the one reader who most needs to see it is the one
+ * looking at a page rendered in a tongue they did not choose.
  */
 
 export interface LanguagePickerProps {
@@ -53,11 +57,11 @@ export function LanguagePicker({ current, offered }: LanguagePickerProps) {
 
   return (
     <span className="flex items-center gap-2 text-xs">
-      <label className="flex items-center gap-1 text-slate-400">
+      <label className="flex items-center gap-2">
         <span className="sr-only">Interface language</span>
         <select
           aria-label="Interface language"
-          className="rounded border border-slate-700 bg-slate-950 px-2 py-1 text-xs text-slate-200"
+          className="min-h-11 rounded-full border border-ink-600 bg-ink-900 px-3 text-xs text-fg transition-colors duration-150 hover:border-accent disabled:opacity-40"
           disabled={busy}
           onChange={(event) => {
             void choose(event.target.value);
@@ -71,11 +75,11 @@ export function LanguagePicker({ current, offered }: LanguagePickerProps) {
           ))}
         </select>
       </label>
-      <span data-testid="interface-language" className="font-mono text-slate-500">
+      <span data-testid="interface-language" className="font-mono text-fg-subtle">
         {languageLabelOf(current)}
       </span>
       {refusal === null ? null : (
-        <span data-testid="language-refusal" className="text-amber-200">
+        <span data-testid="language-refusal" className="text-signal-watch">
           {refusal}
         </span>
       )}

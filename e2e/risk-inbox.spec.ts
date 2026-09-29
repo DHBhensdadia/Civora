@@ -89,8 +89,14 @@ test.describe('the intelligence surface', () => {
 
     await page.goto('/intelligence');
 
-    // Reachable from the navigation, like every other surface.
-    await expect(page.getByRole('link', { name: 'Intelligence' })).toBeVisible();
+    // Reachable from the navigation, like every other surface. Scoped to the
+    // sidebar, because the footer carries the same routes in its own row and an
+    // unscoped locator would be asking about both landmarks at once.
+    await expect(
+      page
+        .getByRole('navigation', { name: 'Platform sections' })
+        .getByRole('link', { name: 'Intelligence' }),
+    ).toBeVisible();
     // The summary counts the whole scored population, not only the rows sent.
     await expect(
       page.getByText(

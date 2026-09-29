@@ -4,7 +4,6 @@ import { PageHeader } from '@/components/page-header';
 import { Eyebrow, StatCard, formatCount } from '@/components/ui';
 import { getEnv } from '@/env';
 import { MODULES } from '@/lib/modules';
-import { APP_VERSION } from '@/lib/version';
 import { getProviders } from '@/providers';
 
 export const dynamic = 'force-dynamic';
@@ -232,7 +231,11 @@ export default async function HomePage() {
         </ul>
       </section>
       <footer className="flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-hairline pt-6 text-eyebrow text-ink-subtle">
-        <span>Version {APP_VERSION}</span>
+        {/*
+         * No version here any more. The shell's own footer names the build on
+         * every surface (`layout.tsx`), and a second copy of one number on one
+         * page is the sort of fact that goes stale in one of its two places.
+         */}
         <span>{formatCount(MODULES.length)} modules</span>
         <Link
           className="inline-flex min-h-11 items-center text-accent transition-colors duration-150 hover:text-ink"

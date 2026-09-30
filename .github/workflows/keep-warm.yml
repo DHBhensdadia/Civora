@@ -5,14 +5,17 @@ name: Keep the demo host warm
 # minutes, and a sleeping instance pays the whole start-up warm again — about 41 s on
 # `0.1 CPU` — before it answers anything.
 #
-# One probe every five minutes keeps it awake. `/api/command` is probed as well, for
-# two reasons that are smaller than the first but real: it confirms the tower actually
-# serves rather than only reporting healthy, and it re-warms the tower's scan if a
-# capture has moved the ledger's revision — the revision is what invalidates that memo,
-# and the scan is 180 ms here but a couple of seconds at a tenth of a core. Neither
-# path touches the model, so no Gemini quota is spent here. The start-up warm of the
-# assembled views (§8.9) is what makes this probe a confirmation rather than the thing
-# that pays for them.
+# One probe every five minutes keeps it awake, and that is the whole job. `/healthz`
+# touches no store, no model and no scan, so it costs nothing to repeat forever.
+#
+# It deliberately does **not** probe `/api/command`. While this was being written the
+# deployed revision still filled the tower's scan memo inside the first reader's
+# request, and the evidence is in this file's own history: the probe triggered a 48–54 s
+# scan every five minutes, the instance failed its health checks during it, restarted,
+# lost the memo and did it again. The assembled views are warmed at start-up since
+# `7aa0213` (`docs/DEPLOYMENT.md` §8.9), which is what the probe was standing in for —
+# so a probe that can only make an older host worse is not worth the confirmation it
+# gives on a current one.
 #
 # This is a convenience, not a guarantee. GitHub delays scheduled runs under load and
 # disables schedules after 60 days without repository activity, and Actions minutes are
@@ -42,19 +45,8 @@ jobs:
           set -u
 
           # A slow host is the thing being observed, not a failure of this job:
-          # every probe reports what it saw and the step still exits 0.
-          report=''
+          # the probe reports what it saw and the step still exits 0.
+          result="$(curl -sS -o /dev/null -w '%{http_code} in %{time_total}s, %{size_download} bytes' --max-time 30 "$CIVORA_LIVE_URL/healthz" 2>&1)" || result='no answer within 30s'
 
-          probe() {
-            path="$1"
-            limit="$2"
-            result="$(curl -sS -o /dev/null -w '%{http_code} in %{time_total}s, %{size_download} bytes' --max-time "$limit" "$CIVORA_LIVE_URL$path" 2>&1)" || result="no answer within ${limit}s"
-            line="$(printf '%-16s %s' "$path" "$result")"
-            printf '%s\n' "$line"
-            report="$report$line"$'\n'
-          }
-
-          probe /healthz 30
-          probe /api/command 180
-
-          printf '## Deployed host probe\n\n```\n%s```\n' "$report" >>"$GITHUB_STEP_SUMMARY"
+          printf '/healthz %s\n' "$result"
+          printf '## Keep-warm probe\n\n```\n/healthz %s\n```\n' "$result" >>"$GITHUB_STEP_SUMMARY"

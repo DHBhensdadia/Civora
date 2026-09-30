@@ -1,16 +1,18 @@
 # Deployment
 
-> **Status: the fallback is deployed and does not serve the product.** The machine this
+> **Status: the fallback is deployed, and it serves the product's read paths.** The machine this
 > repository was built on has no Google Cloud project, no billing account and no running
 > container runtime (`Workspace/state/BLOCKERS.md` B1 and B8, outside this repository), so
 > the **primary** steps below are scripted, reviewed and dry-run, but **not one of them has
 > been executed against a real project**. The non-Google fallback chosen for the
-> demonstration (§8) **was created on 2026-09-30 and is measured insufficient**: it answers,
-> and a first page read takes 51.7–56.2 s with intermittent 502 (§8.6). §8.7 moves the world build off
-> the request path — to start-up, once per instance — which is the fix §8.6 named; a deployed
-> measurement of that fix has **not** been taken, and the 51.7–56.2 s figures are from before it.
+> demonstration (§8) **was created on 2026-09-30 and is now measured**: before the world build
+> moved off the request path a first page read took 51.7–56.2 s with intermittent 502 (§8.6);
+> after it (§8.7) the store-backed reads answer in **0.15–0.61 s** from outside, logged out, and
+> the one read still slow is the control tower's first country scan at **51.33 s**, which answers
+> other visitors **502** while it runs (§8.8).
 > Every statement in this document is either a command that
-> was run (`infra/*.sh --dry-run`, recorded in §10) or a fact read from the vendor's
+> was run (`infra/*.sh --dry-run`, recorded in §10), a measurement taken from outside with `curl`
+> on the date named beside it, or a fact read from the vendor's
 > own page on the date named beside it. Where something is unverified, it says so.
 
 This document is the reproduction path for the deployment described in **ADR 0008**
@@ -340,7 +342,10 @@ docker run --publish 8080:3000 \
   civora-web:local
 ```
 
-**Status: deployed, and measured insufficient — 2026-09-30.** The Blueprint was created
+**Status as measured here — deployed, and insufficient — 2026-09-30, before §8.7's change.**
+This section is the record §8.6 reasons from, and §8.8 is the same host after the change
+(store-backed reads in 0.15–0.61 s, with the control tower's first scan still at 51.33 s).
+The Blueprint was created
 from this repository and the service answers at `https://civora-web.onrender.com`: the
 image builds on Render's builder, the injected port is honoured, and `/healthz` answers
 **200** with the adapters `in-memory` / `fixture` / `gemini`. **A store read serves
@@ -351,7 +356,10 @@ also failed with 502 at 56.6 s; `/readyz` has failed at 52.1 s, 48.5 s, 36.5 s a
 world-build, because the block costs the instance a restart (§8.6), so no instance
 survives long enough to cache anything. The cause is measured, not inferred.
 
-### 8.6 Why the free instance cannot serve this build, and the number that fixes it
+### 8.6 Why the free instance could not serve this build as it was, and the number that fixes it
+
+_This section analyses the failure as it stood on 2026-09-30, before §8.7. §8.7 is the change it
+names as the alternative to buying CPU, and §8.8 is what the host measures now._
 
 `/readyz` calls `readinessOf()` and every data route calls `getLiveStore()`; both build the
 demonstration world **once per process and synchronously** — 173,564 ledger entries and
@@ -441,13 +449,68 @@ paid **once**, not per request. What used to happen was the opposite: each reque
 health check starved while the loop was busy, and the instance was restarted before anything could
 be cached.
 
-**What this does not prove.** No deploy has been run since the change — `render.yaml` sets
-`autoDeployTrigger: off` by design, so the owner deploys from the dashboard — and **no deployed
-measurement of the fix exists**. The 41 s above is arithmetic from the measured 4.14 s, not a
-reading. If a deploy shows the instance restarting at start-up instead of settling, the next lever
-is §8.6's: the `plan` field. `CIVORA_WARM_STORE=off` starts the platform without the warm-up — the
-request path still builds the world itself, which is exactly the old behaviour, and is there so this
-change can be turned off in one variable without a code change.
+**The reading, not the arithmetic.** §8.8 is the deployed measurement of this change, taken from
+outside on 2026-09-30: the store-backed reads answer in 0.15–0.61 s, and the 41 s above is
+superseded by what the instance actually did. Two levers remain if a deploy ever shows the
+instance restarting at start-up instead of settling: §8.6's `plan` field, and
+`CIVORA_WARM_STORE=off`, which starts the platform without the warm-up — the request path still
+builds the world itself, which is exactly the old behaviour, and is there so this change can be
+turned off in one variable without a code change.
+
+### 8.8 The deployed measurement, and the one read that is still slow (2026-09-30)
+
+**This section replaces §8.7's arithmetic with a reading.** The start-up warm was committed, pushed
+and deployed from the Render dashboard on 2026-09-30, then measured from this machine, logged out,
+in two passes so that a cold first pass shows up separately from the warm second one:
+
+| path              | first pass                 | second pass, immediately after |
+| ----------------- | -------------------------- | ------------------------------ |
+| `/healthz`        | 200, 0.28 s, 331 b         | 200, 0.15 s                    |
+| `/readyz`         | 200, 0.42 s, 674 b         | 200, 0.17 s                    |
+| `/`               | 200, 0.61 s, 46,712 b      | 200, 0.48 s                    |
+| `/command`        | 200, 0.45 s, 75,594 b      | 200, 0.51 s                    |
+| `/api/command`    | 200, **51.33 s**, 96,127 b | 200, 0.31 s                    |
+| `/redistribution` | **502**, 0.23 s            | 200, 0.31 s, 23,601 b          |
+| `/audit`          | **502**, 0.52 s            | 200, 0.29 s, 29,601 b          |
+
+Before the change the same page read was **51.7–56.2 s** and failed outright with 502 (§8.6). The
+front page answers in 0.61 s now because the 218,719-document world was already in memory when the
+process began serving, which is what §8.7 moved.
+
+**The remaining slow read, and why it 502s two neighbours.** The control tower does not read the
+store directly; it _scans_ it — every facility's own reading, replayed from its ledger, plus the
+scored population the risk bands come from. That scan is memoised per session scope and per ledger
+revision (`apps/web/src/lib/command-service.ts`), and the memo is filled by the first reader, inside
+that reader's own request. Measured here against the production build, the first scan costs **2.23 s
+of a whole core**; at a tenth of a core that is the **51.33 s** in the table. While it runs the
+event loop is busy: the instance cannot answer Render's health check, Render withholds traffic after
+15 s of consecutive failures, and requests arriving in that window are answered **502 by the proxy**
+— which is the 502 on `/redistribution` and `/audit` above, at 0.23 s and 0.52 s, from an
+application that was never reached. The second column is those same two paths answering in 0.31 s
+and 0.29 s once the scan has completed. So the defect is not a slow page; it is one visitor's first
+tower read costing every other visitor half a minute.
+
+**Two remedies, one of which is applied here.**
+
+- **Applied: the host is kept warm, and the scan is paid at a moment nobody is watching.**
+  [`.github/workflows/keep-warm.yml`](../.github/workflows/keep-warm.yml) probes `/healthz` every
+  five minutes — the free instance spins down after 15 idle minutes, and a sleeping instance pays
+  the start-up warm again — and then `/api/command`, which performs the first tower scan away from a
+  visitor's click. It is a convenience, not a guarantee: GitHub delays scheduled runs under load,
+  disables them after 60 days without repository activity, and its minutes are unlimited only
+  because this repository is public.
+- **Not applied: the tower scan warmed at start-up, beside the store.** It is the same shape as
+  §8.7, and it needs two things that are not in this commit. First, the scan memo and the scored
+  population are module-level state in bundles Next compiles _separately_ from `instrumentation.ts`
+  — read from this build's own output rather than assumed: `server/instrumentation.js` pulls
+  `server/chunks/apps_web_src_17mwiv1._.js`, while `app/api/command/route.js` pulls
+  `server/chunks/apps_web_src_lib_19-dsn4._.js` — so a warm-up would fill a memo no route reads
+  unless that state is parked on `globalThis`, the way the store's already is. Second, and the
+  reason it is not simply added: the scan is a _synchronous_ block of about 51 s on this host, so
+  warming it after the server begins listening would hold the health check unanswered for 51 s of a
+  60 s restart threshold — trading one outage window for another and adding a restart risk to a
+  deployment that is currently healthy. The change is therefore two changes: hand the event loop
+  back between facilities, then warm. The second is not worth making before the first is measured.
 
 ## 9. Teardown
 
@@ -470,16 +533,17 @@ be claimed about a deployment, and a URL that no longer responds is not a deploy
 
 Every line here is a gap, not a footnote.
 
-| Unverified                                                    | Why                                                                                                                                                                                                                                           | What would close it                                                                                         |
-| ------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| Any provisioning step against a real project                  | no `gcloud`, no project, no billing account (B1)                                                                                                                                                                                              | Run `infra/provision.sh` twice and record both runs                                                         |
-| The image running, and its four runtime assertions            | the image **builds** — CI's `container` job is green on `41af8d1` (2026-09-25), `594e450` (2026-09-27), `0830ca0` (2026-09-29) and `541a1ac` (2026-09-30) — but no container of it has ever started, and `check-image.sh` needs a daemon (B8) | `bash infra/check-image.sh` on a machine with a container runtime                                           |
-| The Cloud Build path                                          | same as above, plus B1                                                                                                                                                                                                                        | `bash infra/deploy.sh`                                                                                      |
-| A live URL, its cold start, and the live smoke test           | no deployment exists                                                                                                                                                                                                                          | `CIVORA_LIVE_URL=… pnpm e2e live-smoke.spec.ts`, output recorded in `RUN_STATE.md`                          |
-| The budget alert, and the billing spending limit              | B1                                                                                                                                                                                                                                            | `gcloud billing budgets list`                                                                               |
-| Render's own validation of `render.yaml`, and its first build | no Render account exists; the file validates against Render's published JSON Schema (2026-09-29, zero violations) and nothing further has been exercised                                                                                      | Create the Blueprint — Render validates the file and builds `infra/Dockerfile` itself, then reports a build |     | The fallback instance serving the product, and its live smoke test (§8) | **Deployed 2026-09-30 and measured insufficient.** It answers `/healthz` and returns **502 on every read of the store, including `/`** — the first read builds the whole world synchronously and the free plan's `0.1 CPU` needs 57–69 s for work this machine does in 4.14 s, which fails Render's health check and restarts the instance. §8.6 has the mechanism and the measurement | Move the service to a compute plan with a real CPU, warm it (§8.2), then `CIVORA_LIVE_URL=… pnpm smoke:live` and record the output |
-| The Firestore data provider and the Firebase identity adapter | neither adapter is part of this build (`apps/web/src/providers.ts` refuses them by name); a real project needs B1                                                                                                                             | Write each behind its port, then provision, seed and run `pnpm test:rules` against the deployed rules       |
-| The deployed advisory set surviving a cold start              | no deployment exists; the chosen host spins down after 15 idle minutes, and a cold start re-pays 16 model calls against a measured 20-a-day ceiling                                                                                           | Warm the deployed instance (§8.2), record the counts, then read them again after a deliberate spin-down     |
+| Unverified                                                    | Why                                                                                                                                                                                                                                           | What would close it                                                                                                                             |
+| ------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| Any provisioning step against a real project                  | no `gcloud`, no project, no billing account (B1)                                                                                                                                                                                              | Run `infra/provision.sh` twice and record both runs                                                                                             |
+| The image running, and its four runtime assertions            | the image **builds** — CI's `container` job is green on `41af8d1` (2026-09-25), `594e450` (2026-09-27), `0830ca0` (2026-09-29) and `541a1ac` (2026-09-30) — but no container of it has ever started, and `check-image.sh` needs a daemon (B8) | `bash infra/check-image.sh` on a machine with a container runtime                                                                               |
+| The Cloud Build path                                          | same as above, plus B1                                                                                                                                                                                                                        | `bash infra/deploy.sh`                                                                                                                          |
+| A live URL, its cold start, and the live smoke test           | the URL exists and answers (§8.8)                                                                                                                                                                                                             | `CIVORA_LIVE_URL=… pnpm e2e live-smoke.spec.ts`, output recorded in `RUN_STATE.md`                                                              |
+| The budget alert, and the billing spending limit              | B1                                                                                                                                                                                                                                            | `gcloud billing budgets list`                                                                                                                   |
+| Render's own validation of `render.yaml`, and its first build | validated against Render's published JSON Schema (2026-09-29, zero violations) and then exercised for real: the Blueprint was created and built `infra/Dockerfile` on 2026-09-30                                                              | Done. The build log is the evidence; §8.7's change is the commit it built                                                                       |
+| The fallback instance serving the product (§8)                | **Deployed 2026-09-30 and measured: it serves.** Store-backed reads answer in 0.15–0.61 s (§8.7, §8.8); the control tower's first country scan is **51.33 s** and answers other visitors 502 while it runs (§8.8)                             | Remove the scan's cold cost — hand the loop back, then warm it (§8.8) — and re-measure the tower read                                           |
+| The live smoke test, and a deployed cold start                | the deployment exists and its reads have been measured from outside, but nobody has waited out a **sleeping** instance, and `smoke:live` has not been run against the URL                                                                     | `CIVORA_LIVE_URL=https://civora-web.onrender.com pnpm e2e live-smoke.spec.ts`, then leave the instance idle for 15 minutes and measure the wake |
+| The deployed advisory set surviving a cold start              | no deployment exists; the chosen host spins down after 15 idle minutes, and a cold start re-pays 16 model calls against a measured 20-a-day ceiling                                                                                           | Warm the deployed instance (§8.2), record the counts, then read them again after a deliberate spin-down                                         |
 
 **What was executed, on 2026-09-27:** all four scripts' `--dry-run` paths (plans printed,
 exit `0`); the missing-prerequisite paths (one sentence, exit `3` for `provision.sh`,

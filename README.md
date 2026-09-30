@@ -354,7 +354,7 @@ run are named rather than omitted.
 | Gate                       | Command                                              | Result                                                                                                                                                                                                                                                                 |
 | -------------------------- | ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Types, lint, formatting    | `pnpm typecheck` · `pnpm lint` · `pnpm format:check` | zero errors                                                                                                                                                                                                                                                            |
-| Unit and property tests    | `pnpm test`                                          | **77 files, 783 tests**, all passing                                                                                                                                                                                                                                   |
+| Unit and property tests    | `pnpm test`                                          | **78 files, 788 tests**, all passing                                                                                                                                                                                                                                   |
 | Firestore rules            | `pnpm test:rules`                                    | **25 cases**, each access asserted allowed and denied                                                                                                                                                                                                                  |
 | Interoperability contracts | `pnpm --filter @civora/interop test`                 | **4 files, 33 tests** — every fixture parses                                                                                                                                                                                                                           |
 | Browser journeys           | `CI=1 pnpm e2e`                                      | **109 passed, 0 flaky, 9 skipped with their reason printed** (five gated live-model journeys, four gated live-smoke ones)                                                                                                                                              |
@@ -363,7 +363,7 @@ run are named rather than omitted.
 | Forecasting backtest       | `pnpm forecast:backtest`                             | report regenerated and committed ([`docs/EVALUATION.md`](docs/EVALUATION.md)); re-running reproduces every figure, changing only the date and the measured runtime                                                                                                     |
 | Federated round            | `pnpm fl:run --dp`                                   | six silos, six rounds, **ε 7.9999** at δ 1e-5, digest `sha256:b0d37c69…` reproduced across runs                                                                                                                                                                        |
 | Live reasoning             | `CIVORA_LIVE_AI=1 pnpm e2e live-ai.spec.ts`          | **5 journeys passed** against `gemini-3.1-flash-lite`: advisories 6/6, rationales 6/6, narratives 4/4, a register read and a recording confirmed                                                                                                                       |
-| Client bundle              | `pnpm check:bundle`                                  | **34 client files, 13,66,022 bytes** — no reasoning endpoint, SDK class, key name or provider config, with both positive controls firing                                                                                                                               |
+| Client bundle              | `pnpm check:bundle`                                  | **34 client files, 13,66,165 bytes** — no reasoning endpoint, SDK class, key name or provider config, with both positive controls firing                                                                                                                               |
 | Dependencies               | `pnpm audit --audit-level high`                      | **0 high**, 2 moderate (named in the audit output)                                                                                                                                                                                                                     |
 | Container image            | `docker build`                                       | **Builds in CI, never run.** Green on `41af8d1`, `594e450` and `0830ca0`; the local `check-image.sh` assertions need a container runtime (B8), and Cloud Build and the fallback host build the same Dockerfile remotely, which is why this does not block a deployment |
 | Deployed end-to-end        | `CIVORA_LIVE_URL=… pnpm smoke:live`                  | **BLOCKED — no URL exists.** The spec is written, executed against the production build locally in three instance states, and skips with its reason until a URL is set                                                                                                 |
@@ -391,6 +391,16 @@ run are named rather than omitted.
 Cloud project, no billing account and no running container runtime, so nothing
 has been provisioned and no URL answers. That is stated here rather than left for
 a reader to discover.
+
+Because no Google Cloud project exists, the demonstration's host is declared as
+the **non-Google fallback** in [`render.yaml`](render.yaml): Render builds the
+same `infra/Dockerfile` from this repository, so the deployment needs no
+container runtime here, and the key is entered once in the Render Dashboard
+rather than written into the image. **That Blueprint has not been created** — the
+file is written, reviewed and validated against Render's published schema, and
+`docs/DEPLOYMENT.md` §8 is its runbook. The primary path is unchanged: if a
+project and a runtime ever arrive, `infra/deploy.sh` deploys to Cloud Run exactly
+as §3 writes it.
 
 The deployment is scripted and reviewable without any of those credentials:
 

@@ -255,7 +255,8 @@ not about the model. There is no Google-specific runtime dependency in the image
 ### 8.1 The owner's steps
 
 1. **Push `Source/` to the repository.** A Blueprint reads the repository, so this comes
-   first — and it is submission artefact 1 anyway.
+   first — and it is submission artefact 1 anyway. **Done:** `main` is pushed at `541a1ac`
+   with the tag `v1.2.0`, so the Blueprint has a repository to read.
 2. In the Render Dashboard: **New → Blueprint**, connect the GitHub repository (grant the
    Render app access to that one repository), and confirm `render.yaml` as the Blueprint
    file. Render validates the file and creates one web service, `civora-web`.
@@ -385,17 +386,17 @@ be claimed about a deployment, and a URL that no longer responds is not a deploy
 
 Every line here is a gap, not a footnote.
 
-| Unverified                                                    | Why                                                                                                                                                                                                                   | What would close it                                                                                         |
-| ------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| Any provisioning step against a real project                  | no `gcloud`, no project, no billing account (B1)                                                                                                                                                                      | Run `infra/provision.sh` twice and record both runs                                                         |
-| The image running, and its four runtime assertions            | the image **builds** — CI's `container` job is green on `41af8d1` (2026-09-25), `594e450` (2026-09-27) and `0830ca0` (2026-09-29) — but no container of it has ever started, and `check-image.sh` needs a daemon (B8) | `bash infra/check-image.sh` on a machine with a container runtime                                           |
-| The Cloud Build path                                          | same as above, plus B1                                                                                                                                                                                                | `bash infra/deploy.sh`                                                                                      |
-| A live URL, its cold start, and the live smoke test           | no deployment exists                                                                                                                                                                                                  | `CIVORA_LIVE_URL=… pnpm e2e live-smoke.spec.ts`, output recorded in `RUN_STATE.md`                          |
-| The budget alert, and the billing spending limit              | B1                                                                                                                                                                                                                    | `gcloud billing budgets list`                                                                               |
-| Render's own validation of `render.yaml`, and its first build | no Render account exists; the file validates against Render's published JSON Schema (2026-09-29, zero violations) and nothing further has been exercised                                                              | Create the Blueprint — Render validates the file and builds `infra/Dockerfile` itself, then reports a build |
-| The fallback instance, its URL and its live smoke test (§8)   | nothing has been created on Render, and the push a Blueprint needs has not happened                                                                                                                                   | Create the Blueprint, warm it (§8.2), then `CIVORA_LIVE_URL=… pnpm smoke:live` and record the output        |
-| The Firestore data provider and the Firebase identity adapter | neither adapter is part of this build (`apps/web/src/providers.ts` refuses them by name); a real project needs B1                                                                                                     | Write each behind its port, then provision, seed and run `pnpm test:rules` against the deployed rules       |
-| The deployed advisory set surviving a cold start              | no deployment exists; the chosen host spins down after 15 idle minutes, and a cold start re-pays 16 model calls against a measured 20-a-day ceiling                                                                   | Warm the deployed instance (§8.2), record the counts, then read them again after a deliberate spin-down     |
+| Unverified                                                    | Why                                                                                                                                                                                                                                           | What would close it                                                                                         |
+| ------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| Any provisioning step against a real project                  | no `gcloud`, no project, no billing account (B1)                                                                                                                                                                                              | Run `infra/provision.sh` twice and record both runs                                                         |
+| The image running, and its four runtime assertions            | the image **builds** — CI's `container` job is green on `41af8d1` (2026-09-25), `594e450` (2026-09-27), `0830ca0` (2026-09-29) and `541a1ac` (2026-09-30) — but no container of it has ever started, and `check-image.sh` needs a daemon (B8) | `bash infra/check-image.sh` on a machine with a container runtime                                           |
+| The Cloud Build path                                          | same as above, plus B1                                                                                                                                                                                                                        | `bash infra/deploy.sh`                                                                                      |
+| A live URL, its cold start, and the live smoke test           | no deployment exists                                                                                                                                                                                                                          | `CIVORA_LIVE_URL=… pnpm e2e live-smoke.spec.ts`, output recorded in `RUN_STATE.md`                          |
+| The budget alert, and the billing spending limit              | B1                                                                                                                                                                                                                                            | `gcloud billing budgets list`                                                                               |
+| Render's own validation of `render.yaml`, and its first build | no Render account exists; the file validates against Render's published JSON Schema (2026-09-29, zero violations) and nothing further has been exercised                                                                                      | Create the Blueprint — Render validates the file and builds `infra/Dockerfile` itself, then reports a build |
+| The fallback instance, its URL and its live smoke test (§8)   | nothing has been created on Render. **The push a Blueprint needs has happened** — `main` and the tag `v1.2.0` are on the remote at `541a1ac` (2026-09-30) — so the remaining blocker is the Blueprint itself, not the repository              | Create the Blueprint, warm it (§8.2), then `CIVORA_LIVE_URL=… pnpm smoke:live` and record the output        |
+| The Firestore data provider and the Firebase identity adapter | neither adapter is part of this build (`apps/web/src/providers.ts` refuses them by name); a real project needs B1                                                                                                                             | Write each behind its port, then provision, seed and run `pnpm test:rules` against the deployed rules       |
+| The deployed advisory set surviving a cold start              | no deployment exists; the chosen host spins down after 15 idle minutes, and a cold start re-pays 16 model calls against a measured 20-a-day ceiling                                                                                           | Warm the deployed instance (§8.2), record the counts, then read them again after a deliberate spin-down     |
 
 **What was executed, on 2026-09-27:** all four scripts' `--dry-run` paths (plans printed,
 exit `0`); the missing-prerequisite paths (one sentence, exit `3` for `provision.sh`,
@@ -403,12 +404,13 @@ exit `0`); the missing-prerequisite paths (one sentence, exit `3` for `provision
 (`teardown.sh --delete-project` without a confirmation, exit `3`). Nothing was created,
 deployed or charged.
 
-**Also executed, off this machine, on 2026-09-25, 2026-09-27 and 2026-09-29:** CI's `container` job
-(`docker build -f infra/Dockerfile -t civora-web:ci .`) succeeded on `41af8d1`, `594e450` and
-`0830ca0`, so
+**Also executed, off this machine, on 2026-09-25, 2026-09-27, 2026-09-29 and 2026-09-30:** CI's
+`container` job (`docker build -f infra/Dockerfile -t civora-web:ci .`) succeeded on `41af8d1`,
+`594e450`, `0830ca0` and `541a1ac`, so
 this repository's image is known to build — on a builder that is not this machine, with no
-container runtime here. That is a **build, not a run**: no container of this image has ever
-started, which is why the table above still lists the running half as a gap.
+container runtime here. `541a1ac` is the first build of the interface this repository now shows.
+That is a **build, not a run**: no container of this image has ever started, which is why the
+table above still lists the running half as a gap.
 
 **What was executed here, on 2026-09-29:** the two commands named in §8.5 — the JSON Schema
 validation of `render.yaml`, and `pnpm format:check` — and nothing else. Nothing was created,

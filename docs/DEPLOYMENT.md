@@ -6,7 +6,10 @@
 > the **primary** steps below are scripted, reviewed and dry-run, but **not one of them has
 > been executed against a real project**. The non-Google fallback chosen for the
 > demonstration (§8) **was created on 2026-09-30 and is measured insufficient**: it answers,
-> and a first page read takes 51.7–56.2 s with intermittent 502 (§8.6). Every statement in this document is either a command that
+> and a first page read takes 51.7–56.2 s with intermittent 502 (§8.6). §8.7 moves the world build off
+> the request path — to start-up, once per instance — which is the fix §8.6 named; a deployed
+> measurement of that fix has **not** been taken, and the 51.7–56.2 s figures are from before it.
+> Every statement in this document is either a command that
 > was run (`infra/*.sh --dry-run`, recorded in §10) or a fact read from the vendor's
 > own page on the date named beside it. Where something is unverified, it says so.
 
@@ -397,6 +400,54 @@ What _was_ executed here, on **2026-09-29**:
 Render's CLI and its API's Validate Blueprint endpoint are the _authoritative_ validators and
 **have not been run** (each needs a Render account). Neither the schema check nor the boot above
 is that validation, and neither is a build. §10 carries the remaining gaps.
+
+### 8.7 The build moves to start-up (2026-09-30)
+
+§8.6 named the fix without buying CPU: **move the build off the request path, so `/healthz` keeps
+answering and the world is built once per instance rather than once per request.** That is what the
+platform now does, in two files:
+
+- `apps/web/src/instrumentation.ts` — Next's start-up hook, awaited before the server serves:
+  it calls `warmLiveStore()`, whose whole job is to build the demonstration environment and park it
+  on `globalThis`. The reasoning surfaces are deliberately **not** warmed: they cost model calls,
+  and a deployment that spent the day's quota on every restart could not record anything on the day
+  it mattered.
+- `apps/web/src/lib/live-store.ts` — the store was already once per process, but the warm-up runs
+  from a bundle Next compiles _separately_ from the route handlers, so the two copies of that
+  module do not share a registry. The warmed world is therefore parked on `globalThis` and a copy
+  with no build of its own adopts it; without that hand-off the warm-up would build a second world
+  nobody reads. `live-store.test.ts` holds both halves of that: the adoption, and the cold path a
+  failed warm-up leaves behind.
+
+**Measured on this machine, against this production build, 2026-09-30** (fixture provider, so no
+quota): the log line is one structured record —
+`store.warmed tookMs 1793, documents 218719, facilitiesWithHistory 12, seed civora-demo-2026`.
+The port accepted a connection at **408 ms**, the warm finished at **1.79 s**, and the first request
+of each kind after it answered: `GET /healthz` **200** at **2.01 s** (it was queued behind the
+build), `GET /` **200**, 46,530 bytes, at **131 ms**, `GET /readyz` **200** at **248 ms**,
+`GET /command` **200**, 75,452 bytes, at **2.16 s**. The front page was **46530 / 131 ms** here and
+**46798 / 51700 ms** on the free instance in §8.6 — the same document, 394 times faster, because the
+world was already in memory.
+
+**Why this is expected to fit inside Render's own thresholds** — theirs, quoted from their health
+check documentation rather than inferred: an HTTP check succeeds if the instance answers 2xx **within
+five seconds**; a running instance that fails consecutive checks for **15 s** temporarily stops
+receiving traffic; it is **restarted after 60 s** of consecutive failures; and a _new deploy_ is
+given up to **15 minutes** to pass before Render cancels it and keeps the old version. The build
+costs 4.14 s of a whole core (§8.6) and a free instance has a tenth of one, so the warm should take
+roughly **41 s at worst** — long enough that the instance is out of the load balancer while it
+starts (it is starting), comfortably inside the 60 s restart and the 15-minute deploy window, and
+paid **once**, not per request. What used to happen was the opposite: each request paid it, the
+health check starved while the loop was busy, and the instance was restarted before anything could
+be cached.
+
+**What this does not prove.** No deploy has been run since the change — `render.yaml` sets
+`autoDeployTrigger: off` by design, so the owner deploys from the dashboard — and **no deployed
+measurement of the fix exists**. The 41 s above is arithmetic from the measured 4.14 s, not a
+reading. If a deploy shows the instance restarting at start-up instead of settling, the next lever
+is §8.6's: the `plan` field. `CIVORA_WARM_STORE=off` starts the platform without the warm-up — the
+request path still builds the world itself, which is exactly the old behaviour, and is there so this
+change can be turned off in one variable without a code change.
 
 ## 9. Teardown
 

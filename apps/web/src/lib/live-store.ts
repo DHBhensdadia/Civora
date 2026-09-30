@@ -249,7 +249,37 @@ async function build(): Promise<LiveStore> {
   };
 }
 
+/**
+ * Where a warmed store is parked for every copy of this module to find.
+ *
+ * The build is once per process, and `pending` is that promise — but the warm-up
+ * runs from `instrumentation.ts`, which Next bundles *separately* from the route
+ * handlers, so the two copies of this file do not share a module registry. The
+ * finished store is therefore parked on `globalThis`, the one thing both copies
+ * can see, and a copy with no build of its own adopts it. Without that hand-off
+ * the warm-up would build a second world nobody reads, which is precisely the
+ * cost it exists to avoid.
+ */
+const host = globalThis as typeof globalThis & { __civoraLiveStore?: LiveStore };
+
 let pending: Promise<LiveStore> | undefined;
 
 /** The demonstration environment, built on first use and then shared. */
-export const getLiveStore = (): Promise<LiveStore> => (pending ??= build());
+export const getLiveStore = (): Promise<LiveStore> => {
+  const warm = host.__civoraLiveStore;
+  return (pending ??= warm === undefined ? build() : Promise.resolve(warm));
+};
+
+/**
+ * Build the environment now, and park it where every copy of this module finds it.
+ *
+ * Called at start-up by `instrumentation.ts`. On a small deployment host the build
+ * is forty-odd seconds of CPU, and a *request* that pays it is a request the
+ * platform's health check gives up on — the process is then restarted with the
+ * world half-built and nothing cached, which is a loop, not a slow start.
+ */
+export const warmLiveStore = async (): Promise<LiveStore> => {
+  const store = await getLiveStore();
+  host.__civoraLiveStore = store;
+  return store;
+};

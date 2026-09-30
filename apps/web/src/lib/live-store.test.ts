@@ -16,7 +16,11 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
  */
 
 const slot = () =>
-  (globalThis as typeof globalThis & { __civoraLiveStore?: unknown }).__civoraLiveStore;
+  (
+    globalThis as typeof globalThis & {
+      __civoraLiveStore?: Promise<{ readonly info: { readonly documents: number } }>;
+    }
+  ).__civoraLiveStore;
 
 describe('the start-up warm-up', () => {
   afterEach(() => {
@@ -27,20 +31,29 @@ describe('the start-up warm-up', () => {
   it('parks the warmed world where a separately bundled copy finds it', async () => {
     const first = await import('./live-store');
     const warmed = await first.warmLiveStore();
-    expect(slot()).toBe(warmed);
+
+    // What is parked is the build rather than the finished world, so a copy that
+    // asks mid-build waits for the work already running instead of starting a
+    // second 444 MB world — which is how a process dies on a small host rather than
+    // merely slowing down.
+    expect(await slot()).toBe(warmed);
 
     // A second copy of the module, as the route handlers see it: no `pending` of
     // its own, and the warmed world waiting on the global.
     vi.resetModules();
     const second = await import('./live-store');
     expect(await second.getLiveStore()).toBe(warmed);
-  });
+  }, 60_000);
 
-  it('builds the world itself when no warm-up has run', async () => {
+  it('builds the world itself when no warm-up has run, and parks that build too', async () => {
     vi.resetModules();
     const cold = await import('./live-store');
     const store = await cold.getLiveStore();
     expect(store.info.documents).toBeGreaterThan(0);
     expect(store.info.facilitiesWithHistory).toBeGreaterThan(0);
-  });
+
+    // The request path leaves the same hand-off behind as the warm-up, so a second
+    // copy behind it does not pay for the world again.
+    expect(await slot()).toBe(store);
+  }, 60_000);
 });

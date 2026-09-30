@@ -14,6 +14,8 @@ import { getEnv } from '@/env';
 import { countEvent } from './counters';
 import { readScoredPopulation } from './intelligence-service';
 import { getLiveStore } from './live-store';
+import { loopBreaker } from './loop-breaker';
+import { sharedSlot } from './process-cache';
 import { canReadDistrict, scopeRefusalFor } from './session';
 import type { Session } from './session';
 import { tierLabelOf } from './tiers';
@@ -197,7 +199,20 @@ interface Scanned {
   readonly districtOrder: readonly string[];
 }
 
-const scans = new Map<string, { readonly revision: number; readonly value: Promise<Scanned> }>();
+/**
+ * The memo table, parked where every copy of this module finds the same one.
+ *
+ * A scan filled in by the start-up warm-up must be the scan a route handler reads,
+ * and the two live in bundles Next compiles separately — `process-cache.ts` has the
+ * build output that shows it. Without the slot the warm would fill a table nobody
+ * reads, and the first visitor would pay the whole scan as though nothing had run.
+ */
+const scans = sharedSlot<Map<string, ScanEntry>>('__civoraCommandScans').ensure(() => new Map());
+
+interface ScanEntry {
+  readonly revision: number;
+  readonly value: Promise<Scanned>;
+}
 
 async function scan(session: Session): Promise<Scanned> {
   const store = await getLiveStore();
@@ -259,6 +274,9 @@ async function scanUncached(session: Session): Promise<Scanned> {
 
   const facts: FacilityFact[] = [];
   let hiddenDistricts = 0;
+  // The scan is short work repeated: yielding on a time budget keeps the process
+  // answering its own health check while it runs (`loop-breaker.ts`).
+  const breathe = loopBreaker();
   for (const district of store.dataset.network.districts) {
     if (!canReadDistrict(session, district.id, store.scope)) {
       hiddenDistricts += 1;
@@ -267,6 +285,7 @@ async function scanUncached(session: Session): Promise<Scanned> {
     for (const facility of store.dataset.network.facilities.filter(
       (candidate) => candidate.districtId === district.id,
     )) {
+      await breathe();
       const reading = store.ledger.readingFor(facility.id);
       const stock = reading.stock;
       const risk = riskByFacility.get(facility.id);

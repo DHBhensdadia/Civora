@@ -1,14 +1,11 @@
 import { InMemoryDataProvider } from '@civora/domain';
 import type { DataProvider, DistrictId, FacilityId, Item, LedgerService } from '@civora/domain';
-import {
-  DEMO_SEED,
-  ITEMS,
-  buildDemoDataset,
-  projectSimulation,
-  seedDataProvider,
-} from '@civora/simulator';
+import { DEMO_SEED, ITEMS, projectSimulation, seedDataProvider } from '@civora/simulator';
 import type { DemoDataset } from '@civora/simulator';
 
+import { getDemoDataset } from './dataset';
+
+import { sharedSlot } from './process-cache';
 import { NATIONAL_SESSION } from './session';
 import type { Principal, ScopeLookup } from './session';
 
@@ -171,7 +168,11 @@ function buildPrincipals(
 }
 
 async function build(): Promise<LiveStore> {
-  const dataset = buildDemoDataset();
+  // Through the dataset module rather than the generator directly, so the world and
+  // the dataset inspector's subject are the *same* generation: `buildDemoDataset()`
+  // is deterministic, but generating it twice costs about a second of start-up CPU
+  // for a second identical object.
+  const dataset = getDemoDataset();
   const provider = new InMemoryDataProvider();
   const seeded = await seedDataProvider(provider, {
     network: dataset.network,
@@ -254,20 +255,32 @@ async function build(): Promise<LiveStore> {
  *
  * The build is once per process, and `pending` is that promise — but the warm-up
  * runs from `instrumentation.ts`, which Next bundles *separately* from the route
- * handlers, so the two copies of this file do not share a module registry. The
- * finished store is therefore parked on `globalThis`, the one thing both copies
- * can see, and a copy with no build of its own adopts it. Without that hand-off
- * the warm-up would build a second world nobody reads, which is precisely the
- * cost it exists to avoid.
+ * handlers, so the two copies of this file do not share a module registry (see
+ * `process-cache.ts` for the build output that shows it). The build is therefore
+ * parked on a slot both copies can see, and a copy with no build of its own adopts
+ * it. Without that hand-off the warm-up would build a second world nobody reads,
+ * which is precisely the cost it exists to avoid.
  */
-const host = globalThis as typeof globalThis & { __civoraLiveStore?: LiveStore };
+const storeSlot = sharedSlot<Promise<LiveStore>>('__civoraLiveStore');
 
 let pending: Promise<LiveStore> | undefined;
 
-/** The demonstration environment, built on first use and then shared. */
+/**
+ * The demonstration environment, built on first use and then shared.
+ *
+ * What is parked is the *build*, not the finished world, and that is deliberate: a
+ * copy that asks while the build is still running awaits the work already in flight
+ * instead of starting a second one. It matters more here than anywhere else in the
+ * platform — the world is 444.5 MB of heap, and two copies building it at once
+ * against a 512 MB instance is how a process dies rather than slows down.
+ */
 export const getLiveStore = (): Promise<LiveStore> => {
-  const warm = host.__civoraLiveStore;
-  return (pending ??= warm === undefined ? build() : Promise.resolve(warm));
+  if (pending !== undefined) {
+    return pending;
+  }
+
+  const warm = storeSlot.read();
+  return (pending = warm ?? storeSlot.write(build()));
 };
 
 /**
@@ -278,8 +291,4 @@ export const getLiveStore = (): Promise<LiveStore> => {
  * platform's health check gives up on — the process is then restarted with the
  * world half-built and nothing cached, which is a loop, not a slow start.
  */
-export const warmLiveStore = async (): Promise<LiveStore> => {
-  const store = await getLiveStore();
-  host.__civoraLiveStore = store;
-  return store;
-};
+export const warmLiveStore = async (): Promise<LiveStore> => await getLiveStore();

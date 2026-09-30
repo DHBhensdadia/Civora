@@ -15,6 +15,7 @@ import type { ScoredPopulation } from '@civora/simulator';
 import { actorOf, recordAuditEvent } from './audit-service';
 import type { AuditAction } from './audit-service';
 import { getLiveStore } from './live-store';
+import { sharedSlot } from './process-cache';
 import { canReadDistrict } from './session';
 import type { ScopeLookup, Session } from './session';
 
@@ -261,7 +262,31 @@ const describeEvent = (
 
 let pending: Promise<Built> | undefined;
 
-const built = (): Promise<Built> => (pending ??= build());
+/**
+ * The one scoring this process holds, shared with every copy of this module.
+ *
+ * Parking the *promise* rather than the finished object matters: a request that
+ * arrives while the scoring runs, in a copy that has none of its own, awaits the
+ * work already in flight instead of starting a second one. `process-cache.ts` has
+ * the build output that makes the hand-off necessary. The store the scoring is
+ * built from is shared the same way, so both copies score the same records.
+ */
+const populationSlot = sharedSlot<Promise<Built>>('__civoraScoredPopulation');
+
+const built = (): Promise<Built> => {
+  if (pending !== undefined) {
+    return pending;
+  }
+
+  const warmed = populationSlot.read();
+  if (warmed !== undefined) {
+    return (pending = warmed);
+  }
+
+  // Written before it is awaited, so a copy that asks while this one is scoring
+  // adopts the work in flight rather than starting its own.
+  return (pending = populationSlot.write(build()));
+};
 
 /** Whether a session may see this facility's intelligence. */
 const maySee = (session: Session, facilityId: string, scope: ScopeLookup): boolean => {

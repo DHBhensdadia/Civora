@@ -1,6 +1,8 @@
 import { RETRIEVAL_DATE, SOURCES, buildDemoDataset } from '@civora/simulator';
 import type { DemoDataset, SourceRecord } from '@civora/simulator';
 
+import { sharedSlot } from './process-cache';
+
 /**
  * The demonstration dataset, and the record of what it is built on.
  *
@@ -17,12 +19,20 @@ import type { DemoDataset, SourceRecord } from '@civora/simulator';
  * the same bytes.
  */
 
-let cached: DemoDataset | undefined;
+/**
+ * The generated dataset, parked where every copy of this module finds the same one.
+ *
+ * The `/dataset` inspector reads this rather than the store, and it is about a
+ * second of simulation. Held in a module variable it would be generated once per
+ * copy of this module — the route's, and the start-up warm-up's, which Next bundles
+ * separately (`process-cache.ts` has the build output that shows it) — and the
+ * warm-up would then have warmed nothing a reader sees.
+ */
+const cached = sharedSlot<DemoDataset>('__civoraDemoDataset');
 
 /** Generate the demonstration dataset, or return the one already generated. */
 export function getDemoDataset(): DemoDataset {
-  cached ??= buildDemoDataset();
-  return cached;
+  return cached.ensure(() => buildDemoDataset());
 }
 
 /**

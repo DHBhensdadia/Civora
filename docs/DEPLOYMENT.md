@@ -336,9 +336,31 @@ docker run --publish 8080:3000 \
   civora-web:local
 ```
 
-**Status: not verified.** `render.yaml` and this section are written and reviewed;
-**no Render account exists, no Blueprint has been created, nothing has been built or
-deployed there, and no URL answers.**
+**Status: deployed, and measured insufficient — 2026-09-30.** The Blueprint was created
+from this repository and the service answers at `https://civora-web.onrender.com`: the
+image builds on Render's builder, the injected port is honoured, and `/healthz` answers
+**200** with the adapters `in-memory` / `fixture` / `gemini`. **Everything that reads the
+store returns 502**, including `/` — the front page. The cause is measured, not inferred.
+
+### 8.6 Why the free instance cannot serve this build, and the number that fixes it
+
+`/readyz` calls `readinessOf()` and every data route calls `getLiveStore()`; both build the
+demonstration world **once per process and synchronously** — 173,564 ledger entries and
+218,719 documents. On this machine, against the production build, that is **4.14 s** and
+leaves the process at **444.5 MB RSS** (124.4 MB before it). On Render's free instance,
+`0.1 CPU`, the same read takes **57–69 s**, which blocks the event loop long enough that
+Render's own `/healthz` health check stops being answered, so Render restarts the instance
+— and the store is never cached, so the next attempt pays it again. **The failure is
+permanent, and `/healthz` never touches the store, so the service reports healthy while
+every surface behind it is down.**
+
+**It is CPU, not memory.** The same first read completes in **4.14 s under
+`--max-old-space-size=340`**, so the world fits inside the 512 MB a free instance has;
+what a free instance does not have is a tenth of a core's worth of time. A compute plan
+with a real CPU (the Blueprint's `plan` field — `0.5c-512mb` or `1c-2g`) is therefore the
+change that closes this, and it is the owner's to make. **`512 MB` alone is not the fix,
+and a same-memory plan bought only for its CPU should be watched**: 444.5 MB against a
+512 MB ceiling is 67 MB of headroom.
 
 What _was_ executed here, on **2026-09-29**:
 
@@ -393,8 +415,7 @@ Every line here is a gap, not a footnote.
 | The Cloud Build path                                          | same as above, plus B1                                                                                                                                                                                                                        | `bash infra/deploy.sh`                                                                                      |
 | A live URL, its cold start, and the live smoke test           | no deployment exists                                                                                                                                                                                                                          | `CIVORA_LIVE_URL=… pnpm e2e live-smoke.spec.ts`, output recorded in `RUN_STATE.md`                          |
 | The budget alert, and the billing spending limit              | B1                                                                                                                                                                                                                                            | `gcloud billing budgets list`                                                                               |
-| Render's own validation of `render.yaml`, and its first build | no Render account exists; the file validates against Render's published JSON Schema (2026-09-29, zero violations) and nothing further has been exercised                                                                                      | Create the Blueprint — Render validates the file and builds `infra/Dockerfile` itself, then reports a build |
-| The fallback instance, its URL and its live smoke test (§8)   | nothing has been created on Render. **The push a Blueprint needs has happened** — `main` and the tag `v1.2.0` are on the remote at `541a1ac` (2026-09-30) — so the remaining blocker is the Blueprint itself, not the repository              | Create the Blueprint, warm it (§8.2), then `CIVORA_LIVE_URL=… pnpm smoke:live` and record the output        |
+| Render's own validation of `render.yaml`, and its first build | no Render account exists; the file validates against Render's published JSON Schema (2026-09-29, zero violations) and nothing further has been exercised                                                                                      | Create the Blueprint — Render validates the file and builds `infra/Dockerfile` itself, then reports a build |     | The fallback instance serving the product, and its live smoke test (§8) | **Deployed 2026-09-30 and measured insufficient.** It answers `/healthz` and returns **502 on every read of the store, including `/`** — the first read builds the whole world synchronously and the free plan's `0.1 CPU` needs 57–69 s for work this machine does in 4.14 s, which fails Render's health check and restarts the instance. §8.6 has the mechanism and the measurement | Move the service to a compute plan with a real CPU, warm it (§8.2), then `CIVORA_LIVE_URL=… pnpm smoke:live` and record the output |
 | The Firestore data provider and the Firebase identity adapter | neither adapter is part of this build (`apps/web/src/providers.ts` refuses them by name); a real project needs B1                                                                                                                             | Write each behind its port, then provision, seed and run `pnpm test:rules` against the deployed rules       |
 | The deployed advisory set surviving a cold start              | no deployment exists; the chosen host spins down after 15 idle minutes, and a cold start re-pays 16 model calls against a measured 20-a-day ceiling                                                                                           | Warm the deployed instance (§8.2), record the counts, then read them again after a deliberate spin-down     |
 

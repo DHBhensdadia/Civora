@@ -1,11 +1,12 @@
 # Deployment
 
-> **Status: there is no live deployment.** The machine this repository was built on has
-> no Google Cloud project, no billing account and no running container runtime
-> (`Workspace/state/BLOCKERS.md` B1 and B8, outside this repository), so the steps
-> below are scripted, reviewed and dry-run, but **not one of them has been executed
-> against a real project**, and the non-Google fallback chosen for the demonstration (§8) is
-> declared but not yet created. Every statement in this document is either a command that
+> **Status: the fallback is deployed and does not serve the product.** The machine this
+> repository was built on has no Google Cloud project, no billing account and no running
+> container runtime (`Workspace/state/BLOCKERS.md` B1 and B8, outside this repository), so
+> the **primary** steps below are scripted, reviewed and dry-run, but **not one of them has
+> been executed against a real project**. The non-Google fallback chosen for the
+> demonstration (§8) **was created on 2026-09-30 and is measured insufficient**: it answers,
+> and a first page read takes 51.7–56.2 s with intermittent 502 (§8.6). Every statement in this document is either a command that
 > was run (`infra/*.sh --dry-run`, recorded in §10) or a fact read from the vendor's
 > own page on the date named beside it. Where something is unverified, it says so.
 
@@ -339,8 +340,13 @@ docker run --publish 8080:3000 \
 **Status: deployed, and measured insufficient — 2026-09-30.** The Blueprint was created
 from this repository and the service answers at `https://civora-web.onrender.com`: the
 image builds on Render's builder, the injected port is honoured, and `/healthz` answers
-**200** with the adapters `in-memory` / `fixture` / `gemini`. **Everything that reads the
-store returns 502**, including `/` — the front page. The cause is measured, not inferred.
+**200** with the adapters `in-memory` / `fixture` / `gemini`. **A store read serves
+sometimes and fails sometimes, and it is never fast: `/` — the front page — has answered
+200 with all 46,798 bytes of the real document in 51.7 s and again in 56.2 s, and has
+also failed with 502 at 56.6 s; `/readyz` has failed at 52.1 s, 48.5 s, 36.5 s and 0.5 s;
+`/api/command` failed at 68.7 s and 56.7 s.** Every read pays the whole synchronous
+world-build, because the block costs the instance a restart (§8.6), so no instance
+survives long enough to cache anything. The cause is measured, not inferred.
 
 ### 8.6 Why the free instance cannot serve this build, and the number that fixes it
 
@@ -348,17 +354,22 @@ store returns 502**, including `/` — the front page. The cause is measured, no
 demonstration world **once per process and synchronously** — 173,564 ledger entries and
 218,719 documents. On this machine, against the production build, that is **4.14 s** and
 leaves the process at **444.5 MB RSS** (124.4 MB before it). On Render's free instance,
-`0.1 CPU`, the same read takes **57–69 s**, which blocks the event loop long enough that
-Render's own `/healthz` health check stops being answered, so Render restarts the instance
-— and the store is never cached, so the next attempt pays it again. **The failure is
-permanent, and `/healthz` never touches the store, so the service reports healthy while
-every surface behind it is down.**
+`0.1 CPU`, the same read takes **51.7–56.2 s measured end to end** where it survives long
+enough to answer, and is cut off with **502 at 36.5–68.7 s** where it does not — because
+the build blocks the event loop long enough that Render's own `/healthz` health check
+stops being answered and the instance is restarted mid-request. **No instance survives to
+cache the store, so every read pays the build again; the service reports healthy while
+every surface behind it is either a minute away or a 502.**
 
 **It is CPU, not memory.** The same first read completes in **4.14 s under
 `--max-old-space-size=340`**, so the world fits inside the 512 MB a free instance has;
-what a free instance does not have is a tenth of a core's worth of time. A compute plan
-with a real CPU (the Blueprint's `plan` field — `0.5c-512mb` or `1c-2g`) is therefore the
-change that closes this, and it is the owner's to make. **`512 MB` alone is not the fix,
+what a free instance does not have is a tenth of a core's worth of time. **The lever is
+the `plan` field — the CPU share a plan buys — and it is the owner's decision; which plan
+is enough is not measured:** `0.5c-512mb` and `1c-2g` are the compute plans Render's schema
+allows here, the build wants 4.14 s of a full core, and no plan of this memory shares a
+core. **The alternative to buying CPU is not needing it**: move the build off the request
+path, so `/healthz` keeps answering and the world is built once per instance rather than
+once per request. **`512 MB` alone is not the fix,
 and a same-memory plan bought only for its CPU should be watched**: 444.5 MB against a
 512 MB ceiling is 67 MB of headroom.
 

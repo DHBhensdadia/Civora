@@ -10,27 +10,32 @@ model extracts and explains, and never authors a quantity that reaches the
 record.** The national network it runs on is simulated from a fixed seed,
 labelled as simulated everywhere it appears, and reproducible byte for byte.
 
-> **Status — read this first: there is no live deployment.** No Google Cloud
-> project, billing account or container runtime exists on the machine this was
-> built on, so nothing is provisioned and no URL answers. Everything else is in
+> **Status — read this first: a deployment exists and it is measured
+> insufficient.** No Google Cloud project, billing account or container runtime
+> exists on the machine this was built on, so the primary path is unexecuted; the
+> declared non-Google fallback was created instead, and **its service answers but
+> cannot serve the product** — a first page read takes **51.7–56.2 s measured** on
+> the free instance, and the platform's own health check restarts it mid-build, so
+> the same read is sometimes a **502**. **No live link is offered until that
+> changes**, and [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) §8.6 has the
+> measurement and the lever. Everything else is in
 > the repository and every gate is green: the seeded national simulation,
 > intermittent-demand forecasting with a published evaluation, the risk inbox
 > and early warning, constraint-checked redistribution a person decides on, the
 > federated console with its privacy budget, offline capture, HMIS/NLEM interop,
 > five languages, and a reasoning layer that **has been executed against a real
-> Gemini model**. [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) is the reproduction
-> path, not a record of a deployment; [What this build does not
+> Gemini model**. [What this build does not
 > claim](#what-this-build-does-not-claim) names every gap.
 
 ### Submission artefacts
 
-| Artefact                             | State                                                                                                                                                                                                                                                                                                                                                          |
-| ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Source code**                      | This repository. Five commands below take a clone to a running, seeded platform, with no cloud account.                                                                                                                                                                                                                                                        |
-| **Live link**                        | **None, and that is the honest answer.** No project, no billing account and no container runtime were available, so no instance was ever provisioned. [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) §10 lists every step a real run still has to prove.                                                                                                           |
-| **Demo video**                       | **Not recorded yet.** The shot list is written and every path it walks has been executed in a browser, including against a real model; recording it is an owner action, listed as such in the project state.                                                                                                                                                   |
-| **Pitch deck and brief description** | Written, and every figure in them traces to a command whose output is retained in this repository's documentation — no number in either is an estimate.                                                                                                                                                                                                        |
-| **Container image**                  | **Builds, and has never run.** CI's `container` job (`docker build -f infra/Dockerfile`) is green on `41af8d1`, `594e450`, `0830ca0` and `541a1ac` (the first build of the current interface) — so the image is known to build on a builder that is not this machine; no container of it has ever started, and the local check needs a container runtime (B8). |
+| Artefact                             | State                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| ------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Source code**                      | This repository. Five commands below take a clone to a running, seeded platform, with no cloud account.                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| **Live link**                        | **Deployed, measured insufficient, and therefore not offered.** The Blueprint exists and the service answers — `/healthz` **200** with every adapter bound, a first page read in **51.7–56.2 s measured**, and intermittent **502** when the free instance's health check restarts it during its own world-build on `0.1 CPU`. The URL is `https://civora-web.onrender.com`; §8.6 has the numbers and the change that closes them. [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) §10 lists every step a real run still has to prove. |
+| **Demo video**                       | **Not recorded yet.** The shot list is written and every path it walks has been executed in a browser, including against a real model; recording it is an owner action, listed as such in the project state.                                                                                                                                                                                                                                                                                                                      |
+| **Pitch deck and brief description** | Written, and every figure in them traces to a command whose output is retained in this repository's documentation — no number in either is an estimate.                                                                                                                                                                                                                                                                                                                                                                           |
+| **Container image**                  | **Builds, and has never run.** CI's `container` job (`docker build -f infra/Dockerfile`) is green on `41af8d1`, `594e450`, `0830ca0` and `541a1ac` (the first build of the current interface) — so the image is known to build on a builder that is not this machine; no container of it has ever started, and the local check needs a container runtime (B8).                                                                                                                                                                    |
 
 ### The loop, in one picture
 
@@ -351,22 +356,22 @@ Every figure below was produced by the command beside it, at the commit this
 README describes. Nothing here is an estimate, and the two gates that could not
 run are named rather than omitted.
 
-| Gate                       | Command                                              | Result                                                                                                                                                                                                                                                                            |
-| -------------------------- | ---------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Types, lint, formatting    | `pnpm typecheck` · `pnpm lint` · `pnpm format:check` | zero errors                                                                                                                                                                                                                                                                       |
-| Unit and property tests    | `pnpm test`                                          | **78 files, 788 tests**, all passing                                                                                                                                                                                                                                              |
-| Firestore rules            | `pnpm test:rules`                                    | **25 cases**, each access asserted allowed and denied                                                                                                                                                                                                                             |
-| Interoperability contracts | `pnpm --filter @civora/interop test`                 | **4 files, 33 tests** — every fixture parses                                                                                                                                                                                                                                      |
-| Browser journeys           | `CI=1 pnpm e2e`                                      | **109 passed, 0 flaky, 9 skipped with their reason printed** (five gated live-model journeys, four gated live-smoke ones)                                                                                                                                                         |
-| Grounding evaluation       | `pnpm ai:eval --grounding`                           | **PASS, exit 0** — 9 adversarial cases, the rule shown refusing an ungrounded draft                                                                                                                                                                                               |
-| Extraction accuracy        | `pnpm ai:eval --golden-set`                          | **`NOT MEASURED`, exit 2** — a case needs real-call provenance, and no labelled corpus exists                                                                                                                                                                                     |
-| Forecasting backtest       | `pnpm forecast:backtest`                             | report regenerated and committed ([`docs/EVALUATION.md`](docs/EVALUATION.md)); re-running reproduces every figure, changing only the date and the measured runtime                                                                                                                |
-| Federated round            | `pnpm fl:run --dp`                                   | six silos, six rounds, **ε 7.9999** at δ 1e-5, digest `sha256:b0d37c69…` reproduced across runs                                                                                                                                                                                   |
-| Live reasoning             | `CIVORA_LIVE_AI=1 pnpm e2e live-ai.spec.ts`          | **5 journeys passed** against `gemini-3.1-flash-lite`: advisories 6/6, rationales 6/6, narratives 4/4, a register read and a recording confirmed                                                                                                                                  |
-| Client bundle              | `pnpm check:bundle`                                  | **34 client files, 13,66,165 bytes** — no reasoning endpoint, SDK class, key name or provider config, with both positive controls firing                                                                                                                                          |
-| Dependencies               | `pnpm audit --audit-level high`                      | **0 high**, 2 moderate (named in the audit output)                                                                                                                                                                                                                                |
-| Container image            | `docker build`                                       | **Builds in CI, never run.** Green on `41af8d1`, `594e450`, `0830ca0` and `541a1ac`; the local `check-image.sh` assertions need a container runtime (B8), and Cloud Build and the fallback host build the same Dockerfile remotely, which is why this does not block a deployment |
-| Deployed end-to-end        | `CIVORA_LIVE_URL=… pnpm smoke:live`                  | **BLOCKED — no URL exists.** The spec is written, executed against the production build locally in three instance states, and skips with its reason until a URL is set                                                                                                            |
+| Gate                       | Command                                              | Result                                                                                                                                                                                                                                                                                                                                                      |
+| -------------------------- | ---------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Types, lint, formatting    | `pnpm typecheck` · `pnpm lint` · `pnpm format:check` | zero errors                                                                                                                                                                                                                                                                                                                                                 |
+| Unit and property tests    | `pnpm test`                                          | **78 files, 788 tests**, all passing                                                                                                                                                                                                                                                                                                                        |
+| Firestore rules            | `pnpm test:rules`                                    | **25 cases**, each access asserted allowed and denied                                                                                                                                                                                                                                                                                                       |
+| Interoperability contracts | `pnpm --filter @civora/interop test`                 | **4 files, 33 tests** — every fixture parses                                                                                                                                                                                                                                                                                                                |
+| Browser journeys           | `CI=1 pnpm e2e`                                      | **109 passed, 0 flaky, 9 skipped with their reason printed** (five gated live-model journeys, four gated live-smoke ones)                                                                                                                                                                                                                                   |
+| Grounding evaluation       | `pnpm ai:eval --grounding`                           | **PASS, exit 0** — 9 adversarial cases, the rule shown refusing an ungrounded draft                                                                                                                                                                                                                                                                         |
+| Extraction accuracy        | `pnpm ai:eval --golden-set`                          | **`NOT MEASURED`, exit 2** — a case needs real-call provenance, and no labelled corpus exists                                                                                                                                                                                                                                                               |
+| Forecasting backtest       | `pnpm forecast:backtest`                             | report regenerated and committed ([`docs/EVALUATION.md`](docs/EVALUATION.md)); re-running reproduces every figure, changing only the date and the measured runtime                                                                                                                                                                                          |
+| Federated round            | `pnpm fl:run --dp`                                   | six silos, six rounds, **ε 7.9999** at δ 1e-5, digest `sha256:b0d37c69…` reproduced across runs                                                                                                                                                                                                                                                             |
+| Live reasoning             | `CIVORA_LIVE_AI=1 pnpm e2e live-ai.spec.ts`          | **5 journeys passed** against `gemini-3.1-flash-lite`: advisories 6/6, rationales 6/6, narratives 4/4, a register read and a recording confirmed                                                                                                                                                                                                            |
+| Client bundle              | `pnpm check:bundle`                                  | **34 client files, 13,66,165 bytes** — no reasoning endpoint, SDK class, key name or provider config, with both positive controls firing                                                                                                                                                                                                                    |
+| Dependencies               | `pnpm audit --audit-level high`                      | **0 high**, 2 moderate (named in the audit output)                                                                                                                                                                                                                                                                                                          |
+| Container image            | `docker build`                                       | **Builds in CI, never run.** Green on `41af8d1`, `594e450`, `0830ca0` and `541a1ac`; the local `check-image.sh` assertions need a container runtime (B8), and Cloud Build and the fallback host build the same Dockerfile remotely, which is why this does not block a deployment                                                                           |
+| Deployed end-to-end        | `CIVORA_LIVE_URL=… pnpm smoke:live`                  | **Not run against a deployed URL.** A Blueprint is live and **measured insufficient** (§8.6): a first page read takes **51.7–56.2 s**, intermittently **502**, so the smoke run was deliberately not spent on it. The spec is written, executed against the production build locally in three instance states, and skips with its reason until a URL is set |
 
 ## What the brief asks for, and where it is
 
@@ -387,18 +392,25 @@ run are named rather than omitted.
 
 ## Deployment
 
-**There is no live deployment.** The machine this was built on has no Google
-Cloud project, no billing account and no running container runtime, so nothing
-has been provisioned and no URL answers. That is stated here rather than left for
-a reader to discover.
+**There is a deployment, and it does not serve the product.** The machine this
+was built on has no Google Cloud project, no billing account and no running
+container runtime, so nothing was provisioned on the primary path; the declared
+non-Google fallback was created instead. What it does is measured, not assumed:
+the service is live at `https://civora-web.onrender.com`, `/healthz` answers
+**200** with every adapter bound, and **its first page read takes 51.7–56.2 s,
+with intermittent 502** when the free instance's own health check restarts it
+during the synchronous build of the demonstration world — every read pays that
+build again, because no instance survives long enough to cache it. That is stated
+here rather than left for a reader to discover.
 
 Because no Google Cloud project exists, the demonstration's host is declared as
 the **non-Google fallback** in [`render.yaml`](render.yaml): Render builds the
 same `infra/Dockerfile` from this repository, so the deployment needs no
 container runtime here, and the key is entered once in the Render Dashboard
-rather than written into the image. **That Blueprint has not been created** — the
-file is written, reviewed and validated against Render's published schema, and
-`docs/DEPLOYMENT.md` §8 is its runbook. The primary path is unchanged: if a
+rather than written into the image. **That Blueprint was created on 2026-09-30,
+and it is what produced the measurement above** — the file is written, reviewed
+and validated against Render's published schema, and `docs/DEPLOYMENT.md` §8 is
+its runbook (§8.6 is the reason its free instance cannot serve this build yet). The primary path is unchanged: if a
 project and a runtime ever arrive, `infra/deploy.sh` deploys to Cloud Run exactly
 as §3 writes it.
 
@@ -477,12 +489,13 @@ because an unstated limitation is the only kind that misleads.
 - **No ministry API is integrated and no FHIR/ABDM conformance is claimed.** No
   HMIS, e-Aushadhi, IHIP or LGD endpoint was called; the adapters, fixtures and
   mapping tables are the deliverable.
-- **There is no live deployment, and the container image has never run here.**
-  The provisioning, deploy and image-check scripts have been dry-run and their
-  failure paths exercised, and the image **has** been built by CI — on `41af8d1`,
-  `594e450`, `0830ca0` and `541a1ac` — but no container of it has ever started: no
-  Google Cloud project and no container runtime exist on this machine, so no URL
-  answers.
+- **No deployment serves the product yet, and the container image has never run
+  here.** The provisioning, deploy and image-check scripts have been dry-run and
+  their failure paths exercised, and the image **has** been built by CI — on
+  `41af8d1`, `594e450`, `0830ca0` and `541a1ac` — but no container of it has ever
+  started on this machine, and the deployment that does exist (the Render
+  fallback) takes **51.7–56.2 s** to its first page and is intermittently **502**
+  (§8.6).
   `docs/DEPLOYMENT.md` §10 lists every step that is unverified.
 - **The federation is a reference implementation, not a deployed federation.**
   Six silos are partitions of one local dataset, computed inside one process:

@@ -490,27 +490,72 @@ application that was never reached. The second column is those same two paths an
 and 0.29 s once the scan has completed. So the defect is not a slow page; it is one visitor's first
 tower read costing every other visitor half a minute.
 
-**Two remedies, one of which is applied here.**
+### 8.9 The assembled views move to start-up (2026-09-30)
 
-- **Applied: the host is kept warm, and the scan is paid at a moment nobody is watching.**
-  [`.github/workflows/keep-warm.yml`](../.github/workflows/keep-warm.yml) probes `/healthz` every
-  five minutes — the free instance spins down after 15 idle minutes, and a sleeping instance pays
-  the start-up warm again — and then `/api/command`, which performs the first tower scan away from a
-  visitor's click. It is a convenience, not a guarantee: GitHub delays scheduled runs under load,
-  disables them after 60 days without repository activity, and its minutes are unlimited only
-  because this repository is public.
-- **Not applied: the tower scan warmed at start-up, beside the store.** It is the same shape as
-  §8.7, and it needs two things that are not in this commit. First, the scan memo and the scored
-  population are module-level state in bundles Next compiles _separately_ from `instrumentation.ts`
-  — read from this build's own output rather than assumed: `server/instrumentation.js` pulls
+**The read §8.8 identified is no longer paid by a visitor.** The control tower, the intelligence read
+and the dataset inspector are warmed at start-up beside the world, and the three read paths were
+measured against this production build before and after, on the same machine:
+
+| read           | cold, before | after the start-up warm |
+| -------------- | ------------ | ----------------------- |
+| `/api/command` | 2.23 s       | **22 ms**               |
+| `/command`     | 1.91 s       | **120 ms**              |
+| `/dataset`     | 1.08 s       | **19 ms**               |
+
+The start-up work reports its own split, in one structured line — `views.warmed tookMs 2412,
+scoredPopulationMs 2227, commandTowerMs 180, datasetMs 0, districts 30, facilities 90` — and the
+split is the point: **of the 2.4 s, the scored population is 2.23 s and the tower's own scan is
+180 ms.** The scan is thousands of short reads and it now hands the event loop back on a 50 ms budget
+(`loop-breaker.ts`), so it cannot hold a health check for its whole duration; what cannot be
+interrupted is the single synchronous pass that builds the demand histories.
+
+**Four things had to be true, and three of them turned out to be defects rather than new work.**
+
+- **Start-up state has to be visible to the request path.** Next compiles `instrumentation.ts` as its
+  own chunk — in this build `server/instrumentation.js` pulls
   `server/chunks/apps_web_src_17mwiv1._.js`, while `app/api/command/route.js` pulls
-  `server/chunks/apps_web_src_lib_19-dsn4._.js` — so a warm-up would fill a memo no route reads
-  unless that state is parked on `globalThis`, the way the store's already is. Second, and the
-  reason it is not simply added: the scan is a _synchronous_ block of about 51 s on this host, so
-  warming it after the server begins listening would hold the health check unanswered for 51 s of a
-  60 s restart threshold — trading one outage window for another and adding a restart risk to a
-  deployment that is currently healthy. The change is therefore two changes: hand the event loop
-  back between facilities, then warm. The second is not worth making before the first is measured.
+  `server/chunks/apps_web_src_lib_19-dsn4._.js` — so a module imported by both is instantiated twice,
+  with two sets of module-level state, and a warm-up in one copy fills a memo the other never reads.
+  That is read from the build output, not assumed. `process-cache.ts` is now the one place that parks
+  such state on the process, and the store, the scored population, the tower's scan memo and the
+  dataset each have a slot. `process-cache.test.ts`, `live-store.test.ts` and
+  `command-service.test.ts` hold the hand-off, and the last of those proves it through the counters a
+  route reports: a copy that never scanned the country answers with **no cold scans at all**.
+- **The store's build is parked, not only its result — this was a real defect.** Until now
+  `getLiveStore()` parked the finished world and only the warm-up ever parked anything, so a second
+  copy that built its own would keep it to itself. The world is **444.5 MB of heap**; two copies
+  building it against a 512 MB instance is how the process _dies_ rather than slows down, and the
+  deployed host has already exited once with status **139** (a segmentation fault). What is parked
+  now is the build itself, so a copy that asks mid-build awaits the work already in flight.
+- **The dataset was being generated twice.** `live-store.ts` built one with `buildDemoDataset()`
+  while `/dataset` built another through the generator module — about a second of start-up CPU for a
+  second identical object, deterministic from the same seed. The store now reads the dataset module,
+  and `datasetMs` in the line above is **0**.
+- **The yield is tested as a mechanism, not as a timing.** `loop-breaker.test.ts` asserts the budget's
+  contract by queueing an immediate and reading the order afterwards; a test that watched a real scan
+  would pass or fail with the speed of the machine running it.
+
+**What is left, stated rather than hidden.** The start-up warm cannot be interrupted in one place:
+building the demand histories is a single synchronous pass (**2.23 s** of a whole core here, so
+roughly **fifty seconds** on the free plan), and while it runs the instance cannot answer its own
+health check. That is the same shape as the read this section removes — but it happens **once per
+process, at start-up**, where the keep-warm probe keeps starts rare and nobody is clicking, instead
+of **on each visitor's first click**, which is what §8.8's table measured. Measured across a full boot
+on this machine, the longest a health check waited was **2.20 s**; every read after the warm answered
+in under 120 ms.
+
+The next lever, if a host ever fails that stretch, is to make the history build interruptible the way
+the scan is. It is shared with the batch worker (`scoredPopulationFor` → `scorePopulation` →
+`buildAssessmentInputs`, in `apps/simulator`), so that is a signature change across the worker and the
+web app rather than a local one, which is why it is named here instead of done.
+
+**The host is also kept awake.**
+[`.github/workflows/keep-warm.yml`](../.github/workflows/keep-warm.yml) probes `/healthz` every five
+minutes, because the free instance spins down after 15 idle minutes and a sleeping instance pays the
+whole start-up warm again; it then probes `/api/command`, which confirms the tower actually serves
+and re-warms it if a capture has moved the ledger's revision. It is a convenience, not a guarantee:
+GitHub delays scheduled runs under load, disables them after 60 days without repository activity, and
+its minutes are unlimited only because this repository is public.
 
 ## 9. Teardown
 

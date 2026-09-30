@@ -1,26 +1,22 @@
 name: Keep the demo host warm
 
-# The demonstration's fallback host is a free Render instance, and it has two
-# properties a visitor's first click should not have to meet:
+# The demonstration's fallback host is a free Render instance, and it has a property
+# a visitor's first click should not have to meet: it spins down after 15 idle
+# minutes, and a sleeping instance pays the whole start-up warm again — about 41 s on
+# `0.1 CPU` — before it answers anything.
 #
-#  - it spins down after 15 idle minutes, and a sleeping instance pays the whole
-#    start-up warm again — about 41 s on `0.1 CPU` — before it answers anything;
-#  - the control tower's *first* read scans the country: 2.23 s of a whole core,
-#    measured against the production build, so about 51 s on this host. While
-#    that scan runs the process cannot answer Render's own health check, Render
-#    withholds traffic after 15 s of failures, and every other visitor is
-#    answered 502 by the proxy until it finishes (docs/DEPLOYMENT.md §8.8).
+# One probe every five minutes keeps it awake. `/api/command` is probed as well, for
+# two reasons that are smaller than the first but real: it confirms the tower actually
+# serves rather than only reporting healthy, and it re-warms the tower's scan if a
+# capture has moved the ledger's revision — the revision is what invalidates that memo,
+# and the scan is 180 ms here but a couple of seconds at a tenth of a core. Neither
+# path touches the model, so no Gemini quota is spent here. The start-up warm of the
+# assembled views (§8.9) is what makes this probe a confirmation rather than the thing
+# that pays for them.
 #
-# One probe every five minutes closes both: `/healthz` keeps the instance from
-# spinning down, and `/api/command` performs that first scan at a moment nobody
-# is watching, so the memo answers a visitor's click instead of being filled by
-# it. Neither path touches the model, so no Gemini quota is spent here.
-#
-# This is a convenience, not a guarantee. GitHub delays scheduled runs under
-# load and disables schedules after 60 days without repository activity, and
-# Actions minutes are unlimited here only because this repository is public. The
-# fix that needs no pinger is §8.8's: hand the scan's event loop back between
-# facilities, then warm it at start-up beside the store.
+# This is a convenience, not a guarantee. GitHub delays scheduled runs under load and
+# disables schedules after 60 days without repository activity, and Actions minutes are
+# unlimited here only because this repository is public.
 
 on:
   schedule:

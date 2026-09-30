@@ -536,13 +536,26 @@ interrupted is the single synchronous pass that builds the demand histories.
   would pass or fail with the speed of the machine running it.
 
 **What is left, stated rather than hidden.** The start-up warm cannot be interrupted in one place:
-building the demand histories is a single synchronous pass (**2.23 s** of a whole core here, so
+building the demand histories is a single synchronous pass (**2.11 s** of a whole core here, so
 roughly **fifty seconds** on the free plan), and while it runs the instance cannot answer its own
 health check. That is the same shape as the read this section removes — but it happens **once per
-process, at start-up**, where the keep-warm probe keeps starts rare and nobody is clicking, instead
-of **on each visitor's first click**, which is what §8.8's table measured. Measured across a full boot
-on this machine, the longest a health check waited was **2.20 s**; every read after the warm answered
-in under 120 ms.
+process, at start-up**, where nobody is clicking, instead of **on each visitor's first click**, which
+is what §8.8's table measured. Two things keep it survivable, and both are in the code rather than in
+a hope:
+
+- **The two heavy stretches are separated deliberately.** The platform restarts an instance that
+  fails _consecutive_ health checks for sixty seconds, and resets that count the moment one succeeds;
+  so the views warm waits **ten seconds** after the world warm — several check intervals — rather than
+  starting behind it. Measured across a full boot here, the longest a health check waited was
+  **2.11 s**, and between the two spikes the port answered flat in **3 ms**.
+- **The warm waits for the port to answer.** It probes this process's own `/healthz` first
+  (best-effort, with a 30 s ceiling), so it begins behind a serving process rather than in front of
+  one; if the probe never succeeds it warms anyway and says so — `views.warm_unprobed`.
+
+The trade this accepts is the free tier's rather than the application's: a **sleeping** instance pays
+both warms when it wakes, so the first visit after a quiet spell can wait longer than it did before
+the assembled views were warmed at all. That is why the keep-warm probe matters, and why the wake
+path is named as unmeasured in §10 rather than asserted here.
 
 The next lever, if a host ever fails that stretch, is to make the history build interruptible the way
 the scan is. It is shared with the batch worker (`scoredPopulationFor` → `scorePopulation` →

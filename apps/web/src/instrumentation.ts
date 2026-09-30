@@ -43,13 +43,20 @@
 import { logLine } from './lib/log';
 
 /**
- * How long to let the server bind its port before the second warm starts.
+ * How long to leave the process alone before the second warm starts.
  *
- * Measured: after the world warm finished, the port accepted a connection within
- * the same second, so a short delay is enough for the warm to start behind a
- * serving process rather than in front of one.
+ * The world warm is roughly forty seconds of CPU on the deployed host, and the
+ * views warm is another fifty in a single stretch (see `warmAssembledViews`). The
+ * platform restarts an instance that fails consecutive health checks for sixty
+ * seconds, and it *resets* that count the moment one succeeds — so the gap between
+ * the two is not a courtesy, it is what stops two survivable fifty-second stretches
+ * from being added up into one fatal one. Ten seconds of idle is several check
+ * intervals, and nothing waits on it.
  */
-const ASSEMBLY_DELAY_MS = 1_500;
+const ASSEMBLY_DELAY_MS = 10_000;
+
+/** How long to wait for the port to answer before warming anyway. */
+const SERVING_PROBE_TIMEOUT_MS = 30_000;
 
 export async function register(): Promise<void> {
   if (process.env.NEXT_RUNTIME !== 'nodejs') return;
@@ -86,9 +93,53 @@ export async function register(): Promise<void> {
     return;
   }
 
-  setTimeout(() => {
-    void warmAssembledViews();
-  }, ASSEMBLY_DELAY_MS);
+  // Deliberately not awaited: this function returning is what lets the server finish
+  // coming up, and a warm that held the port closed for its own duration would be the
+  // outage it exists to prevent. Whether that matters is not assumed — the probe below
+  // observes the port rather than trusting the order.
+  void warmAfterServing();
+}
+
+/**
+ * Wait until this process is answering on its own port, then warm what it serves.
+ *
+ * The probe is this process asking itself for `/healthz`. It is the smallest honest
+ * answer to "is the server up?" available from inside the server, and it is
+ * best-effort by design: if the port never answers — a host that assigns one
+ * differently from `PORT`, a development server on another — the warm still runs,
+ * because warming late is a cost and not warming at all is the behaviour this file
+ * exists to change.
+ */
+async function warmAfterServing(): Promise<void> {
+  const port = process.env.PORT ?? '3000';
+  const deadline = Date.now() + SERVING_PROBE_TIMEOUT_MS;
+  let serving = false;
+
+  while (!serving && Date.now() < deadline) {
+    try {
+      const answer = await fetch(`http://127.0.0.1:${port}/healthz`, {
+        signal: AbortSignal.timeout(2_000),
+        headers: { accept: 'application/json' },
+      });
+      // Consumed rather than dropped: an unread body holds the socket it arrived on.
+      await answer.arrayBuffer();
+      serving = true;
+    } catch {
+      await new Promise((resolve) => setTimeout(resolve, 500));
+    }
+  }
+
+  if (!serving) {
+    logLine({
+      level: 'warn',
+      event: 'views.warm_unprobed',
+      correlationId: 'startup',
+      fields: { port, waitedMs: SERVING_PROBE_TIMEOUT_MS },
+    });
+  }
+
+  await new Promise((resolve) => setTimeout(resolve, ASSEMBLY_DELAY_MS));
+  await warmAssembledViews();
 }
 
 /**
